@@ -1,0 +1,26 @@
+.product-page {
+  display: flex;
+  padding: 80px 40px 40px;
+  background: #fafafa;
+  gap: 20px;
+}
+
+/* === Product grid === */
+.product-content {
+  flex: 1;
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  color: #222;
+  
+}
+
+
+
+/* .pagination-container .ant-select {
+  margin: 5px;
+} */

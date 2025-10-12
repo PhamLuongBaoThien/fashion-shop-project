@@ -1,0 +1,34 @@
+/* ===== Section chung ===== */
+.featured-section {
+  padding: 80px 24px;
+  background: #fafafa;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.section-header h2 {
+  font-size: 2.5rem;
+  font-weight: 500;
+  margin-bottom: 16px;
+  color: #262626;
+}
+
+.section-header span {
+  font-size: 18px;
+  color: #595959;
+}
+
+
+/* ===== Nút xem thêm ===== */
+.see-more {
+  text-align: center;
+  margin-top: 40px;
+}

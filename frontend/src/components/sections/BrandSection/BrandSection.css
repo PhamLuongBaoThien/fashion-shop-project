@@ -1,0 +1,91 @@
+.brand-section {
+  padding: 60px 20px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.brand-slider,
+.product-slider {
+  margin-bottom: 40px;
+}
+
+/* Logo thương hiệu */
+.brand-item {
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+}
+
+.brand-item img {
+  max-height: 60px;
+  max-width: 100%;
+  object-fit: contain;
+  filter: grayscale(100%);
+  opacity: 0.8;
+  transition: all 0.3s ease;
+}
+
+.brand-item img:hover {
+  filter: grayscale(0%);
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+/* Ảnh sản phẩm */
+.product-item {
+  padding: 10px;
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+}
+
+.product-item img {
+  width: 100%;
+  height: auto;
+  max-height: 300px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product-item img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Slick custom */
+.slick-slide {
+  padding: 0 10px;
+}
+
+.slick-track {
+  display: flex !important;
+  align-items: center;
+}
+
+.slick-list {
+  margin: 0 -10px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .brand-item img {
+    max-height: 50px;
+  }
+
+  .product-item img {
+    max-height: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-item img {
+    max-height: 40px;
+  }
+
+  .product-item img {
+    max-height: 150px;
+  }
+}

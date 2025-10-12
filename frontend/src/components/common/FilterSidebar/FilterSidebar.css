@@ -1,0 +1,56 @@
+/* === Sidebar === */
+.filter-sidebar {
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  border: 1px solid #eee;
+  position: sticky;
+  top: 100px;
+  height: fit-content;
+  transition: all 0.3s ease;
+}
+
+.filter-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  color: #d4af37;
+  letter-spacing: 0.5px;
+}
+
+.filter-collapse .ant-collapse-item {
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px !important;
+  margin-bottom: 10px;
+  transition: all 0.3s;
+}
+
+.filter-collapse .ant-collapse-item:hover {
+  border-color: #d9d9d9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  
+}
+
+.filter-collapse .ant-collapse-header {
+  font-weight: 500;
+  font-size: 15px;
+  color: #333;
+}
+
+.price-range {
+  text-align: center;
+  font-weight: 500;
+  margin-top: 6px;
+  color: #333;
+}
+
+/* Nút xóa bộ lọc */
+.filter-sidebar .ant-btn {
+  width: 100%;
+  border: solid 1px #d9d9d9;
+  background: none;
+  box-shadow: none;
+  transition: all 0.3s;
+}

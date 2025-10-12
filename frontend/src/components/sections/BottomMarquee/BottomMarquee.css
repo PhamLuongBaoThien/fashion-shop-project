@@ -1,0 +1,38 @@
+.marquee-wrapper {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  background: black;
+  color: white;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  z-index: 2000;
+}
+
+.marquee {
+  width: 100%;
+  overflow: hidden;
+}
+
+.marquee-track {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: marquee 20s linear infinite;
+}
+
+.marquee-item {
+  margin-right: 80px; /* 👈 khoảng cách giữa từng câu */
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}

@@ -1,0 +1,96 @@
+.image-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.main-image-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  max-height: 550px;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  /* Added border for better visual separation */
+  border: 1px solid #f0f0f0;
+}
+
+/* Simplified main-image styles, removed zoom functionality */
+.main-image {
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+/* Override Ant Design Image styles to prevent distortion */
+.main-image-container .ant-image,
+.main-image-container .ant-image-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.thumbnail-list {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 4px 0;
+}
+
+.thumbnail-list::-webkit-scrollbar {
+  height: 4px;
+}
+
+.thumbnail-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 2px;
+}
+
+.thumbnail-list::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 2px;
+}
+
+.thumbnail-list::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.thumbnail {
+  flex-shrink: 0;
+  width: 80px;
+  height: 100px;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  background: #f8f8f8;
+}
+
+.thumbnail:hover {
+  border-color: #d9d9d9;
+}
+
+.thumbnail.active {
+  border-color: #000;
+}
+
+.thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 768px) {
+  .main-image-container {
+    aspect-ratio: 1;
+    max-height: none;
+  }
+
+  .thumbnail {
+    width: 60px;
+    height: 75px;
+  }
+}

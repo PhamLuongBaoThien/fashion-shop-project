@@ -1,0 +1,113 @@
+.collections-section {
+  padding: 80px 0;
+  background-color: #fafafa;
+}
+
+.collections-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  text-align: center;
+}
+
+.collections-title {
+  margin-bottom: 16px !important;
+  font-weight: 500 !important;
+}
+
+.collections-desc {
+  color: #8c8c8c !important;
+  font-size: 18px !important;
+  max-width: 800px;
+  margin: 0 auto 48px;
+}
+
+.slider-wrapper {
+  position: relative;
+}
+
+.collection-slide {
+  height: 500px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 10px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0,0,0,0.4);
+  border-radius: 16px;
+}
+
+.collection-content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  color: white;
+  max-width: 800px;
+  padding: 0 32px;
+}
+
+.collection-heading {
+  color: white !important;
+  margin-bottom: 16px !important;
+  font-weight: 300 !important;
+}
+
+.collection-text {
+  color: white !important;
+  font-size: 20px !important;
+  margin-bottom: 32px !important;
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+.collection-btn {
+  background-color: white !important;
+  color: #262626 !important;
+  border: none !important;
+  padding: 16px 32px !important;
+  height: auto !important;
+  font-size: 18px !important;
+  border-radius: 8px;
+}
+
+/* Custom dots */
+
+.custom-dot {
+  width: 30px;   /* chiều dài gạch */
+  height: 3px;   /* độ dày */
+  background: #ccc;  /* màu gạch */
+  margin: 0 5px;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+  margin: 5px;
+}
+.slick-dots li.slick-active div {
+  background: #fa8c16 !important;
+}
+
+/* Click zones */
+.click-zone {
+  position: absolute;
+  top: 0;
+  width: 15%;
+  height: 100%;
+  z-index: 20;
+  cursor: pointer;
+}
+.click-zone.left {
+  left: 0;
+}
+.click-zone.right {
+  right: 0;
+}
+.click-zone:hover {
+  background-color: rgba(0,0,0,0.025); 
+  /* box-shadow: 0 0 15px rgba(0,0,0,0.2); */
+}

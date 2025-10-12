@@ -1,0 +1,37 @@
+/* Pagination styling */
+.pagination-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.pagination-container .ant-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pagination-container .ant-pagination-item,
+.pagination-container .ant-pagination-prev,
+.pagination-container .ant-pagination-next {
+  border-radius: 4px;
+  margin: 5px;
+}
+
+.pagination-container .ant-pagination-item-active {
+  background: #272727;
+  border-color: #3d3d3c;
+}
+
+.pagination-container .ant-pagination-item-active:hover {
+  background: #474646;
+  border-color: #616160;
+}
+
+.pagination-container .ant-pagination-item-active a {
+  color: #fff;
+}
+
+.pagination-container .ant-pagination-item-active a:hover {
+  color: #fff;
+}

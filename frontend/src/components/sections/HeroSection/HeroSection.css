@@ -1,0 +1,80 @@
+.hero-section {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+  display: flex;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  width: 100%;
+  z-index: 10;
+}
+
+.hero-title {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 300;
+  line-height: 1.2;
+  color: #262626;
+  margin-bottom: 24px;
+  letter-spacing: -0.5px;
+}
+
+.hero-paragraph {
+  font-size: 20px;
+  color: #595959;
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+
+.hero-image {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50%;
+  height: 80%;
+  background-size: cover;
+  background-position: center;
+  border-radius: 24px 0 0 24px;
+  opacity: 0.8;
+  display: none;
+}
+
+/* Hiện ảnh hero khi màn hình >= 992px */
+@media (min-width: 992px) {
+  .hero-image {
+    display: block;
+  }
+}
+
+.btn-primary-custom {
+  background-color: #fa8c16;
+  border-color: #fa8c16;
+  height: 56px;
+  font-size: 18px;
+  border-radius: 28px;
+  padding: 0 32px;
+  transition: all 0.3s ease;
+}
+
+.btn-primary-custom:hover {
+  background-color: #faad14 !important; /* giữ nguyên màu */
+    border-color: #faad14 !important; /* giữ nguyên màu */
+    color: #262626 !important; /* đổi màu chữ */
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(250, 140, 22, 0.3);
+}
+
+.btn-secondary-custom {
+  height: 56px;
+  font-size: 18px;
+  border-radius: 28px;
+  padding: 0 32px;
+  border-color: #d9d9d9;
+  color: #595959;
+}

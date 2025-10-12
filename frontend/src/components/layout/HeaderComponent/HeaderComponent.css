@@ -1,0 +1,61 @@
+.header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+}
+
+
+/* Wishlist button */
+.wishlist-btn {
+  display: none;
+}
+@media (min-width: 576px) {
+  .wishlist-btn {
+    display: inline-flex;
+  }
+}
+
+/* Mobile menu toggle */
+.mobile-menu-btn {
+  display: block;
+}
+@media (min-width: 992px) {
+  .mobile-menu-btn {
+    display: none;
+  }
+}
+/* Desktop search */
+.desktop-search {
+  display: none;
+}
+@media (min-width: 768px) {
+  .desktop-search {
+    display: block;
+  }
+}
+
+/* Mobile search toggle */
+.mobile-search-btn, .wishlist-btn, .account-btn, .cart-btn, .cart-badge {
+  display: block;
+}
+@media (min-width: 768px) {
+  .mobile-search-btn {
+    display: none;
+  }
+}
+
+/* Mobile search bar */
+.mobile-search-bar {
+  padding: 16px 0;
+  border-top: 1px solid #f0f0f0;
+  display: block;
+}
+@media (min-width: 768px) {
+  .mobile-search-bar {
+    display: none;
+  }
+}
+
