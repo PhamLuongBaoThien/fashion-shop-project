@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Form, Input, Checkbox, message } from "antd"
+import { Form, Checkbox, message } from "antd"
 import { UserOutlined, LockOutlined, MailOutlined } from "@ant-design/icons"
 import { motion } from "framer-motion"
 import { Link } from "react-router-dom"
 import ButtonComponent from "../../common/ButtonComponent/ButtonComponent"
+import InputComponent from "../../common/InputComponent/InputComponent"
 // import "./SignUpComponent.css"
 
 const SignUpComponent = () => {
@@ -82,7 +83,7 @@ const SignUpComponent = () => {
                     label="Họ và tên"
                     rules={[{ required: true, message: "Vui lòng nhập họ và tên!" }]}
                   >
-                    <Input prefix={<UserOutlined />} placeholder="Nguyễn Văn A" />
+                    <InputComponent prefix={<UserOutlined />} placeholder="Nguyễn Văn A" />
                   </Form.Item>
                 </motion.div>
 
@@ -95,7 +96,7 @@ const SignUpComponent = () => {
                       { type: "email", message: "Email không hợp lệ!" },
                     ]}
                   >
-                    <Input prefix={<MailOutlined />} placeholder="example@email.com" />
+                    <InputComponent prefix={<MailOutlined />} placeholder="example@email.com" />
                   </Form.Item>
                 </motion.div>
 
@@ -108,7 +109,7 @@ const SignUpComponent = () => {
                       { min: 6, message: "Mật khẩu phải có ít nhất 6 ký tự!" },
                     ]}
                   >
-                    <Input.Password prefix={<LockOutlined />} placeholder="••••••••" />
+                    <InputComponent type={"password"} prefix={<LockOutlined />} placeholder="••••••••" />
                   </Form.Item>
                 </motion.div>
 
@@ -129,7 +130,7 @@ const SignUpComponent = () => {
                       }),
                     ]}
                   >
-                    <Input.Password prefix={<LockOutlined />} placeholder="••••••••" />
+                    <InputComponent type={"password"} prefix={<LockOutlined />} placeholder="••••••••" />
                   </Form.Item>
                 </motion.div>
 

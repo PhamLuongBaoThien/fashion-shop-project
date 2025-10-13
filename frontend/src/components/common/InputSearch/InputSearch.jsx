@@ -1,6 +1,6 @@
 // InputSearch.jsx
 import { SearchOutlined } from "@ant-design/icons";
-import InputComponents from "../InputComponent/InputComponents";
+import InputComponent from "../InputComponent/InputComponent";
 
 const InputSearch = ({
   value,
@@ -17,7 +17,7 @@ const InputSearch = ({
 
   return (
     <div className={className}>
-      <InputComponents
+      <InputComponent
         value={value}
         onChange={onChange}
         placeholder={placeholder}

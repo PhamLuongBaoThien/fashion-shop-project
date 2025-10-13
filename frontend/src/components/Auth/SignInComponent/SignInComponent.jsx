@@ -1,12 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { Form, Input, Checkbox, message } from "antd"
+import { Form, Checkbox, message } from "antd"
 import { LockOutlined, MailOutlined } from "@ant-design/icons"
 import { motion } from "framer-motion"
 import "./SignInComponent.css"
 import { Link } from "react-router-dom"
 import ButtonComponent from "../../common/ButtonComponent/ButtonComponent"
+import InputComponent from "../../common/InputComponent/InputComponent"
+
 
 const SignInComponent = () => {
   const [loading, setLoading] = useState(false)
@@ -85,7 +87,7 @@ const SignInComponent = () => {
                       { type: "email", message: "Email không hợp lệ!" },
                     ]}
                   >
-                    <Input prefix={<MailOutlined />} placeholder="example@email.com" size="large" />
+                    <InputComponent prefix={<MailOutlined />} placeholder="example@email.com" size="large" />
                   </Form.Item>
                 </motion.div>
 
@@ -95,7 +97,7 @@ const SignInComponent = () => {
                     label="Mật khẩu"
                     rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}
                   >
-                    <Input.Password prefix={<LockOutlined />} placeholder="••••••••" size="large" />
+                    <InputComponent type={'password'} prefix={<LockOutlined />} placeholder="••••••••" size="large" />
                   </Form.Item>
                 </motion.div>
 
