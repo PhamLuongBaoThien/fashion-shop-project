@@ -1,14 +1,22 @@
 const express = require("express");
 const dotenv = require("dotenv");
-const { default: mongoose } = require("mongoose");
+const mongoose = require("mongoose");
+const routes = require("./routes");
+const bodyParser = require("body-parser");
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3001;
 
-app.get("/", (req, res) => {
-  res.send("Hello World! ");
-});
+
+
+app.use(bodyParser.json()); // luôn luôn đứng trước các route
+
+
+routes(app);
+
+// app.use(express.json());
+// app.use(express.urlencoded({ extended: true }));
 
 mongoose
   .connect(
@@ -21,7 +29,7 @@ mongoose
     console.error("Failed to connect to MongoDB", err);
   });
 
-console.log(process.env.MONGO_URI);
+
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
