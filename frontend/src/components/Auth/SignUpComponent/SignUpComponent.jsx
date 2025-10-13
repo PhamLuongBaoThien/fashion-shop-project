@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Form, Checkbox, message } from "antd"
-import { UserOutlined, LockOutlined, MailOutlined } from "@ant-design/icons"
+import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined } from "@ant-design/icons"
 import { motion } from "framer-motion"
 import { Link } from "react-router-dom"
 import ButtonComponent from "../../common/ButtonComponent/ButtonComponent"
@@ -97,6 +97,22 @@ const SignUpComponent = () => {
                     ]}
                   >
                     <InputComponent prefix={<MailOutlined />} placeholder="example@email.com" />
+                  </Form.Item>
+                </motion.div>
+
+                <motion.div variants={itemVariants}>
+                  <Form.Item
+                    name="phone"
+                    label="Số điện thoại"
+                    rules={[
+                      { required: true, message: "Vui lòng nhập số điện thoại!" },
+                      {
+                        pattern: /^[0-9]{10}$/, // Kiểm tra số điện thoại 10 chữ số
+                        message: "Số điện thoại phải là 10 chữ số!",
+                      },
+                    ]}
+                  >
+                    <InputComponent prefix={<PhoneOutlined />} placeholder="0901234567" />
                   </Form.Item>
                 </motion.div>
 
