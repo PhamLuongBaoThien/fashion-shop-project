@@ -113,9 +113,45 @@ const deleteUser = (id, data) => {
   });
 };
 
+const getAllUser = () => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const allUsers = await User.find();
+      resolve({
+        status: "OK",
+        message: "successfully",
+        data: allUsers,
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+const getDetailUser = (id) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const user = await User.findById(id);
+
+      if (user === null) {
+        resolve({ status: "ERR", message: "The user is not defined" });
+      }
+      resolve({
+        status: "OK",
+        message: "successfully",
+        data: user,
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
 module.exports = {
   createUser,
   loginUser,
   updateUser,
   deleteUser,
+  getAllUser,
+  getDetailUser,
 };
