@@ -47,4 +47,32 @@ try {
   }
 };
 
-module.exports = { createUser, loginUser };
+const updateUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const data = req.body;
+    if (!userId) {
+      return res.status(400).json({ status: "ERR", message: "The userid is required" });
+    }
+    const response = await UserService.updateUser(userId, data);
+    return res.status(201).json({response});
+  } catch (error) {
+    return res.status(500).json({ status: "ERR", message: error.message });
+  }
+}
+
+const deleteUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    if (!userId) {
+      return res.status(400).json({ status: "ERR", message: "The userid is required" });
+    }
+    const response = await UserService.deleteUser(userId);
+    return res.status(201).json({response});
+  } catch (error) {
+    return res.status(500).json({ status: "ERR", message: error.message });
+  }
+}
+
+
+module.exports = { createUser, loginUser, updateUser, deleteUser };
