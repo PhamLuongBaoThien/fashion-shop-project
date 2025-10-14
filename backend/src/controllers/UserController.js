@@ -2,17 +2,29 @@ const UserService = require("../services/UserService");
 
 const createUser = async (req, res) => {
   try {
-    
+    const { username, email, password, confirmPassword, phone } = req.body;
 
+    const emailReg = /^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;
+    const phoneReg = /^(84|0[3|5|7|8|9])[0-9]{8}$/;
 
+    if (!username || !email || !password || !confirmPassword || !phone) {
+      return res.status(400).json({ status: "ERR", message: "The input is required" });
+    }
+    if (!emailReg.test(email)) {
+      return res.status(400).json({ status: "ERR", message: "The email is invalid" });
+    }
+    if (!phoneReg.test(phone)) {
+      return res.status(400).json({ status: "ERR", message: "The phone is invalid" });
+    }
+    if (password !== confirmPassword) {
+      return res.status(400).json({ status: "ERR", message: "The password is not match" });
+    }
 
-    const res = await UserService.createUser();
-    return res.status(200).json({ message: res });
+    const response = await UserService.createUser({ username, email, password, phone });
+    return res.status(201).json({ status: "OK", data: response });
   } catch (error) {
-    return res.status(404).json({ message: error.message });
+    return res.status(500).json({ status: "ERR", message: error.message });
   }
 };
 
-module.exports = {
-  createUser,
-};
+module.exports = { createUser };
