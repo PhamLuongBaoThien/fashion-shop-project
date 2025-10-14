@@ -47,8 +47,14 @@ const loginUser = (userLogin) => {
         resolve({ status: "ERR", message: "The password is incorrect" });
       }
 
-      const access_token = await generalAccessToken({ id: checkUser._id, isAdmin: checkUser.isAdmin });
-      const refresh_token = await generalRefreshToken({ id: checkUser._id, isAdmin: checkUser.isAdmin });
+      const access_token = await generalAccessToken({
+        id: checkUser._id,
+        isAdmin: checkUser.isAdmin,
+      });
+      const refresh_token = await generalRefreshToken({
+        id: checkUser._id,
+        isAdmin: checkUser.isAdmin,
+      });
       // console.log(access_token);
       resolve({
         status: "OK",
@@ -65,7 +71,6 @@ const loginUser = (userLogin) => {
 
 const updateUser = (id, data) => {
   return new Promise(async (resolve, reject) => {
-
     try {
       const checkUser = await User.findById(id);
       // console.log('checkUser', checkUser);
@@ -74,14 +79,12 @@ const updateUser = (id, data) => {
         return resolve({ status: "ERR", message: "The user is not defined" });
       }
 
-      const updatedUser = await User.findByIdAndUpdate(id, data, { new: true });
-      console.log('updateUser', updatedUser);
-
+      const updateUser = await User.findByIdAndUpdate(id, data, { new: true });
+      console.log("updateUser", updateUser);
 
       resolve({
         status: "OK",
         message: "successfully",
-
       });
     } catch (error) {
       reject(error);
@@ -91,23 +94,18 @@ const updateUser = (id, data) => {
 
 const deleteUser = (id, data) => {
   return new Promise(async (resolve, reject) => {
-
     try {
       const checkUser = await User.findById(id);
-      // console.log('checkUser', checkUser);
 
       if (checkUser === null) {
         return resolve({ status: "ERR", message: "The user is not defined" });
       }
 
-      const deletedUser = await User.findByIdAndUpdate(id, data, { new: true });
-      console.log('updateUser', updateUser);
-
+      await User.findByIdAndDelete(id);
 
       resolve({
         status: "OK",
         message: "successfully",
-
       });
     } catch (error) {
       reject(error);
@@ -119,5 +117,5 @@ module.exports = {
   createUser,
   loginUser,
   updateUser,
-  deleteUser
+  deleteUser,
 };
