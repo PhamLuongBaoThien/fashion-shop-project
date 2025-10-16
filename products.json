@@ -1,0 +1,364 @@
+[
+  {
+    "name": "Áo thun nam cổ tròn",
+    "category": "Áo",
+    "price": 150000,
+    "discount": 10,
+    "image": "http://example.com/ao-thun-nam.jpg",
+    "subImage": ["http://example.com/sub1.jpg", "http://example.com/sub2.jpg"],
+    "isNewProduct": true,
+    "status": "Còn hàng",
+    "sizes": [
+      { "size": "S", "quantity": 15 },
+      { "size": "M", "quantity": 25 },
+      { "size": "L", "quantity": 20 }
+    ],
+    "isActive": true,
+    "description": "Áo thun nam chất liệu cotton, thoáng mát, phù hợp mùa hè.",
+    "rating": 4.2
+  },
+  {
+    "name": "Áo khoác da nam",
+    "category": "Áo khoác",
+    "price": 1200000,
+    "discount": 20,
+    "image": "http://example.com/ao-khoac-da.jpg",
+    "subImage": ["http://example.com/sub3.jpg"],
+    "isNewProduct": false,
+    "status": "Còn hàng",
+    "sizes": [
+      { "size": "M", "quantity": 10 },
+      { "size": "L", "quantity": 15 },
+      { "size": "XL", "quantity": 8 }
+    ],
+    "isActive": true,
+    "description": "Áo khoác da cao cấp, phong cách cổ điển.",
+    "rating": 4.5
+  },
+  {
+    "name": "Quần jeans nam ống suông",
+    "category": "Quần",
+    "price": 450000,
+    "discount": 15,
+    "image": "http://example.com/quan-jeans.jpg",
+    "subImage": [],
+    "isNewProduct": true,
+    "status": "Hết hàng",
+    "sizes": [
+      { "size": "S", "quantity": 0 },
+      { "size": "M", "quantity": 0 },
+      { "size": "L", "quantity": 5 }
+    ],
+    "isActive": true,
+    "description": "Quần jeans ống suông, chất liệu bền đẹp.",
+    "rating": 3.8
+  },
+  {
+    "name": "Đầm maxi nữ hoa nhí",
+    "category": "Đầm",
+    "price": 600000,
+    "discount": 5,
+    "image": "http://example.com/dam-maxi.jpg",
+    "subImage": ["http://example.com/sub4.jpg", "http://example.com/sub5.jpg"],
+    "isNewProduct": false,
+    "status": "Còn hàng",
+    "sizes": [
+      { "size": "S", "quantity": 12 },
+      { "size": "M", "quantity": 18 },
+      { "size": "L", "quantity": 10 }
+    ],
+    "isActive": true,
+    "description": "Đầm maxi hoa nhí, nhẹ nhàng và thanh lịch.",
+    "rating": 4.0
+  },
+  {
+    "name": "Áo thun nữ cổ V",
+    "category": "Áo",
+    "price": 180000,
+    "discount": 0,
+    "image": "http://example.com/ao-thun-nu.jpg",
+    "subImage": [],
+    "isNewProduct": true,
+    "status": "Còn hàng",
+    "sizes": [
+      { "size": "XS", "quantity": 20 },
+      { "size": "S", "quantity": 25 },
+      { "size": "M", "quantity": 15 }
+    ],
+    "isActive": true,
+    "description": "Áo thun nữ cổ V, chất liệu mềm mại.",
+    "rating": 4.1
+  },
+  {
+    "name": "Áo khoác phao nam",
+    "category": "Áo khoác",
+    "price": 1500000,
+    "discount": 25,
+    "image": "http://example.com/ao-khoac-phao.jpg",
+    "subImage": ["http://example.com/sub6.jpg"],
+    "isNewProduct": false,
+    "status": "Còn hàng",
+    "sizes": [
+      { "size": "L", "quantity": 8 },
+      { "size": "XL", "quantity": 12 }
+    ],
+    "isActive": true,
+    "description": "Áo khoác phao giữ ấm mùa đông.",
+    "rating": 4.7
+  },
+  {
+    "name": "Quần short nam",
+    "category": "Quần",
+    "price": 250000,
+    "discount": 10,
+    "image": "http://example.com/quan-short.jpg",
+    "subImage": ["http://example.com/sub7.jpg"],
+    "isNewProduct": true,
+    "status": "Còn hàng",
+    "sizes": [
+      { "size": "M", "quantity": 30 },
+      { "size": "L", "quantity": 20 }
+    ],
+    "isActive": true,
+    "description": "Quần short nam thoải mái mùa hè.",
+    "rating": 3.9
+  },
+  {
+    "name": "Đầm công sở nữ",
+    "category": "Đầm",
+    "price": 800000,
+    "discount": 15,
+    "image": "http://example.com/dam-cong-so.jpg",
+    "subImage": ["http://example.com/sub8.jpg", "http://example.com/sub9.jpg"],
+    "isNewProduct": false,
+    "status": "Còn hàng",
+    "sizes": [
+      { "size": "S", "quantity": 10 },
+      { "size": "M", "quantity": 15 }
+    ],
+    "isActive": true,
+    "description": "Đầm công sở sang trọng, phù hợp văn phòng.",
+    "rating": 4.3
+  },
+  {
+    "name": "Áo sơ mi nam",
+    "category": "Áo",
+    "price": 350000,
+    "discount": 5,
+    "image": "http://example.com/ao-so-mi.jpg",
+    "subImage": [],
+    "isNewProduct": true,
+    "status": "Còn hàng",
+    "sizes": [
+      { "size": "M", "quantity": 20 },
+      { "size": "L", "quantity": 25 }
+    ],
+    "isActive": true,
+    "description": "Áo sơ mi nam phong cách hiện đại.",
+    "rating": 4.0
+  },
+  {
+    "name": "Áo khoác gió nữ",
+    "category": "Áo khoác",
+    "price": 700000,
+    "discount": 10,
+    "image": "http://example.com/ao-khoac-gio.jpg",
+    "subImage": ["http://example.com/sub10.jpg"],
+    "isNewProduct": false,
+    "status": "Hết hàng",
+    "sizes": [
+      { "size": "S", "quantity": 0 },
+      { "size": "M", "quantity": 0 }
+    ],
+    "isActive": false,
+    "description": "Áo khoác gió nhẹ, phù hợp thời tiết mát mẻ.",
+    "rating": 4.4
+  },
+  {
+    "name": "Quần tây nam",
+    "category": "Quần",
+    "price": 500000,
+    "discount": 0,
+    "image": "http://example.com/quan-tay.jpg",
+    "subImage": ["http://example.com/sub11.jpg"],
+    "isNewProduct": true,
+    "status": "Còn hàng",
+    "sizes": [
+      { "size": "L", "quantity": 15 },
+      { "size": "XL", "quantity": 10 }
+    ],
+    "isActive": true,
+    "description": "Quần tây nam lịch lãm, chất liệu cao cấp.",
+    "rating": 4.2
+  },
+  {
+    "name": "Đầm dạ hội nữ",
+    "category": "Đầm",
+    "price": 1500000,
+    "discount": 30,
+    "image": "http://example.com/dam-da-hoi.jpg",
+    "subImage": ["http://example.com/sub12.jpg", "http://example.com/sub13.jpg"],
+    "isNewProduct": false,
+    "status": "Còn hàng",
+    "sizes": [
+      { "size": "M", "quantity": 5 },
+      { "size": "L", "quantity": 8 }
+    ],
+    "isActive": true,
+    "description": "Đầm dạ hội lộng lẫy, phù hợp sự kiện.",
+    "rating": 4.8
+  },
+  {
+    "name": "Áo hoodie nam",
+    "category": "Áo",
+    "price": 400000,
+    "discount": 15,
+    "image": "http://example.com/ao-hoodie.jpg",
+    "subImage": [],
+    "isNewProduct": true,
+    "status": "Còn hàng",
+    "sizes": [
+      { "size": "S", "quantity": 20 },
+      { "size": "M", "quantity": 25 }
+    ],
+    "isActive": true,
+    "description": "Áo hoodie nam ấm áp, phong cách trẻ trung.",
+    "rating": 4.1
+  },
+  {
+    "name": "Áo khoác lông nữ",
+    "category": "Áo khoác",
+    "price": 2000000,
+    "discount": 25,
+    "image": "http://example.com/ao-khoac-long.jpg",
+    "subImage": ["http://example.com/sub14.jpg"],
+    "isNewProduct": false,
+    "status": "Còn hàng",
+    "sizes": [
+      { "size": "L", "quantity": 6 },
+      { "size": "XL", "quantity": 4 }
+    ],
+    "isActive": true,
+    "description": "Áo khoác lông sang trọng, giữ ấm tốt.",
+    "rating": 4.6
+  },
+  {
+    "name": "Quần jogger nam",
+    "category": "Quần",
+    "price": 300000,
+    "discount": 10,
+    "image": "http://example.com/quan-jogger.jpg",
+    "subImage": ["http://example.com/sub15.jpg"],
+    "isNewProduct": true,
+    "status": "Còn hàng",
+    "sizes": [
+      { "size": "M", "quantity": 25 },
+      { "size": "L", "quantity": 15 }
+    ],
+    "isActive": true,
+    "description": "Quần jogger nam thoải mái, phong cách thể thao.",
+    "rating": 4.0
+  },
+  {
+    "name": "Đầm suông nữ",
+    "category": "Đầm",
+    "price": 450000,
+    "discount": 5,
+    "image": "http://example.com/dam-suong.jpg",
+    "subImage": [],
+    "isNewProduct": false,
+    "status": "Còn hàng",
+    "sizes": [
+      { "size": "S", "quantity": 15 },
+      { "size": "M", "quantity": 20 }
+    ],
+    "isActive": true,
+    "description": "Đầm suông nữ đơn giản, dễ phối đồ.",
+    "rating": 3.9
+  },
+  {
+    "name": "Áo polo nam",
+    "category": "Áo",
+    "price": 250000,
+    "discount": 0,
+    "image": "http://example.com/ao-polo.jpg",
+    "subImage": ["http://example.com/sub16.jpg"],
+    "isNewProduct": true,
+    "status": "Còn hàng",
+    "sizes": [
+      { "size": "S", "quantity": 30 },
+      { "size": "M", "quantity": 25 }
+    ],
+    "isActive": true,
+    "description": "Áo polo nam lịch sự, phù hợp công sở.",
+    "rating": 4.2
+  },
+  {
+    "name": "Áo khoác bomber nam",
+    "category": "Áo khoác",
+    "price": 900000,
+    "discount": 20,
+    "image": "http://example.com/ao-khoac-bomber.jpg",
+    "subImage": ["http://example.com/sub17.jpg"],
+    "isNewProduct": false,
+    "status": "Còn hàng",
+    "sizes": [
+      { "size": "L", "quantity": 10 },
+      { "size": "XL", "quantity": 12 }
+    ],
+    "isActive": true,
+    "description": "Áo khoác bomber nam phong cách cá tính.",
+    "rating": 4.5
+  },
+  {
+    "name": "Quần kaki nam",
+    "category": "Quần",
+    "price": 350000,
+    "discount": 10,
+    "image": "http://example.com/quan-kaki.jpg",
+    "subImage": [],
+    "isNewProduct": true,
+    "status": "Còn hàng",
+    "sizes": [
+      { "size": "M", "quantity": 20 },
+      { "size": "L", "quantity": 15 }
+    ],
+    "isActive": true,
+    "description": "Quần kaki nam thoải mái, dễ phối.",
+    "rating": 4.1
+  },
+  {
+    "name": "Đầm dự tiệc nữ",
+    "category": "Đầm",
+    "price": 1000000,
+    "discount": 15,
+    "image": "http://example.com/dam-du-tiec.jpg",
+    "subImage": ["http://example.com/sub18.jpg", "http://example.com/sub19.jpg"],
+    "isNewProduct": false,
+    "status": "Còn hàng",
+    "sizes": [
+      { "size": "M", "quantity": 8 },
+      { "size": "L", "quantity": 10 }
+    ],
+    "isActive": true,
+    "description": "Đầm dự tiệc sang trọng, phù hợp sự kiện lớn.",
+    "rating": 4.7
+  },
+  {
+    "name": "Áo thun nữ in họa tiết",
+    "category": "Áo",
+    "price": 200000,
+    "discount": 5,
+    "image": "http://example.com/ao-thun-nu-hoa-tiet.jpg",
+    "subImage": ["http://example.com/sub20.jpg"],
+    "isNewProduct": true,
+    "status": "Còn hàng",
+    "sizes": [
+      { "size": "XS", "quantity": 15 },
+      { "size": "S", "quantity": 20 }
+    ],
+    "isActive": true,
+    "description": "Áo thun nữ in họa tiết, trẻ trung và cá tính.",
+    "rating": 4.0
+  }
+]
