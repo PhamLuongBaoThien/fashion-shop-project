@@ -50,7 +50,7 @@ const getDetailProduct = (productId) => {
       const product = await Product.findById(productId);
 
       if (product === null) {
-        resolve({ status: "ERR", message: "The product is not defined" });
+        return resolve({ status: "ERR", message: "The product is not defined" });
       }
       resolve({
         status: "OK",
@@ -84,9 +84,25 @@ const deleteProduct = (productId) => {
   });
 };
 
+const getAllProducts = () => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const allProducts = await Product.find();
+      resolve({
+        status: "OK",
+        message: "successfully",
+        data: allProducts,
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
 module.exports = {
   createProduct,
   updateProduct,
   getDetailProduct,
   deleteProduct,
+  getAllProducts,
 };

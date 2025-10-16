@@ -69,23 +69,33 @@ const getDetailProduct = async (req, res) => {
 };
 
 const deleteProduct = async (req, res) => {
-    try {
-        const productId = req.params.id;
-        if (!productId) {
-          return res
-            .status(400)
-            .json({ status: "ERR", message: "The userid is required" });
-        }
-        const response = await ProductService.deleteProduct(productId);
-        return res.status(201).json({ response });
-      } catch (error) {
-        return res.status(500).json({ status: "ERR", message: error.message });
-      }
-}
+  try {
+    const productId = req.params.id;
+    if (!productId) {
+      return res
+        .status(400)
+        .json({ status: "ERR", message: "The userid is required" });
+    }
+    const response = await ProductService.deleteProduct(productId);
+    return res.status(201).json({ response });
+  } catch (error) {
+    return res.status(500).json({ status: "ERR", message: error.message });
+  }
+};
+
+const getAllProducts = async (req, res) => {
+  try {
+    const response = await ProductService.getAllProducts();
+    return res.status(201).json({ response });
+  } catch (error) {
+    return res.status(500).json({ status: "ERR", message: error.message });
+  }
+};
 
 module.exports = {
   createProduct,
   updateProduct,
   getDetailProduct,
-  deleteProduct
+  deleteProduct,
+  getAllProducts,
 };
