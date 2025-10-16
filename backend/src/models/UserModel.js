@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema(
     isAdmin: { type: Boolean, default: false, required: true },
     phone: { type: String, required: true },
     access_token: { type: String, require: true },
-    refesh_token: { type: String, require: true },
+    refresh_token: { type: String, require: true },
   },
   {
     timestamps: true,
