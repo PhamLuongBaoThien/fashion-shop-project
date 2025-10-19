@@ -5,61 +5,6 @@
   overflow: hidden;
 }
 
-/* Left panel with gradient and logo */
-.auth-left {
-  flex: 0 0 45%;
-  background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.auth-left::before {
-  content: "";
-  position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle, rgba(139, 115, 85, 0.1) 0%, transparent 70%);
-  animation: float 20s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translate(0, 0) rotate(0deg);
-  }
-  50% {
-    transform: translate(-20px, 20px) rotate(180deg);
-  }
-}
-
-.auth-left-content {
-  text-align: center;
-  z-index: 1;
-  padding: 40px;
-}
-
-.auth-logo {
-  font-size: 72px;
-  font-weight: 700;
-  color: #ffffff;
-  font-family: "Playfair Display", serif;
-  letter-spacing: 8px;
-  margin-bottom: 24px;
-}
-
-.auth-left-text {
-  font-size: 18px;
-  color: rgba(255, 255, 255, 0.8);
-  max-width: 320px;
-  margin: 0 auto;
-  line-height: 1.6;
-}
-
 /* Right panel with compact form */
 .auth-right {
   flex: 1;

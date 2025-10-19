@@ -45,37 +45,7 @@ const SignUpComponent = () => {
   };
 
   return (
-    <div className="auth-page">
-      <motion.div
-        className="auth-left"
-        initial={{ opacity: 0, x: -50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-      >
-        <div className="auth-left-content">
-          <Link to="/" style={{ textDecoration: 'none' }}>
-          <motion.div
-            className="auth-logo"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-          >
-            D.E
-          </motion.div>
-          </Link>
-          <motion.p
-            className="auth-left-text"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
-          >
-            Bắt đầu hành trình thời trang của bạn
-          </motion.p>
-        </div>
-      </motion.div>
-
-      <div className="auth-right">
-        <div className="auth-form-container">
+    <div className="auth-form-container">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -249,8 +219,6 @@ const SignUpComponent = () => {
             </motion.div>
           </motion.div>
         </div>
-      </div>
-    </div>
   );
 };
 
