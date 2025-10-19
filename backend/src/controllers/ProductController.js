@@ -85,7 +85,18 @@ const deleteProduct = async (req, res) => {
 
 const getAllProducts = async (req, res) => {
   try {
-    const response = await ProductService.getAllProducts();
+    const { page, limit, search, category, priceRange, sizes, status, badges, sortOption } = req.query;
+    const response = await ProductService.getAllProducts(
+      page,
+      limit,
+      search,
+      category ? category.split(",") : null, // Chuyển chuỗi thành mảng
+      priceRange ? priceRange.split(",").map(Number) : null, // Chuyển chuỗi thành mảng số
+      sizes ? sizes.split(",") : null, // Chuyển chuỗi thành mảng
+      status,
+      badges ? badges.split(",") : null, // Chuyển chuỗi thành mảng
+      sortOption
+    );
     return res.status(201).json({ response });
   } catch (error) {
     return res.status(500).json({ status: "ERR", message: error.message });

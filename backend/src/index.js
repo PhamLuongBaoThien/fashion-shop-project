@@ -10,9 +10,8 @@ const app = express();
 const port = process.env.PORT;
 
 
-
+app.use(cors()); // tránh truy cập vào API từ domain khác
 app.use(bodyParser.json()); // luôn luôn đứng trước các route
-app.use(cors());
 
 
 routes(app);

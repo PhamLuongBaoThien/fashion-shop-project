@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const mongoosePaginate = require("mongoose-paginate-v2");
 
 const productSchema = new mongoose.Schema(
   {
@@ -84,6 +85,9 @@ const productSchema = new mongoose.Schema(
   }
 );
 
-productSchema.index({ name: "text", category: 1, price: 1 });
+productSchema.plugin(mongoosePaginate);
+
+// Tạo index để tối ưu tìm kiếm
+// productSchema.index({ name: "text", category: 1, price: 1 });
 
 module.exports = mongoose.model("Product", productSchema);

@@ -6,7 +6,10 @@ const createProduct = (productData) => {
       // Tạo sản phẩm mới
       const checkProduct = await Product.findOne({ name: productData.name });
       if (checkProduct !== null) {
-        return resolve({ status: "ERR", message: "Product name already exists" });
+        return resolve({
+          status: "ERR",
+          message: "Product name already exists",
+        });
       }
 
       const newProduct = await Product.create(productData);
@@ -50,7 +53,10 @@ const getDetailProduct = (productId) => {
       const product = await Product.findById(productId);
 
       if (product === null) {
-        return resolve({ status: "ERR", message: "The product is not defined" });
+        return resolve({
+          status: "ERR",
+          message: "The product is not defined",
+        });
       }
       resolve({
         status: "OK",
@@ -84,20 +90,114 @@ const deleteProduct = (productId) => {
   });
 };
 
-const getAllProducts = () => {
+// const getAllProducts = (page, limit, search, category) => {
+//   return new Promise(async (resolve, reject) => {
+//     try {
+//       const allProducts = await Product.find();
+//       resolve({
+//         status: "OK",
+//         message: "successfully",
+//         data: allProducts,
+//       });
+//     } catch (error) {
+//       reject(error);
+//     }
+//   });
+// }
+
+const getAllProducts = (
+  page,
+  limit,
+  search,
+  category,
+  priceRange,
+  sizes,
+  status,
+  badges,
+  sortOption
+) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const allProducts = await Product.find();
+      const query = {};
+
+      // Xử lý tìm kiếm full-text
+      if (search) {
+        query.$text = { $search: search };
+      }
+
+      // Xử lý danh mục (mảng hoặc giá trị đơn)
+      if (category && Array.isArray(category)) {
+        query.category = { $in: category }; // Lọc nhiều danh mục
+      } else if (
+        category &&
+        ["Áo", "Áo khoác", "Quần", "Đầm"].includes(category)
+      ) {
+        query.category = category; // Lọc một danh mục
+      }
+
+      // Xử lý khoảng giá
+      if (priceRange && Array.isArray(priceRange) && priceRange.length === 2) {
+        const [minPrice, maxPrice] = priceRange;
+        query.price = { $gte: minPrice, $lte: maxPrice };
+      }
+
+      // Xử lý kích cỡ (mảng)
+      if (sizes && Array.isArray(sizes) && sizes.length > 0) {
+        query.sizes = {
+          $elemMatch: { size: { $in: sizes }, quantity: { $gt: 0 } },
+        };
+      }
+
+      // Xử lý trạng thái
+      if (status && status !== "default") {
+        query.status = status;
+      }
+
+      // Xử lý nhãn sản phẩm (giả định badges liên quan đến isNewProduct)
+      if (badges && Array.isArray(badges) && badges.length > 0) {
+        if (badges.includes("isNew")) {
+          query.isNewProduct = true;
+        }
+        // Có thể mở rộng cho các nhãn khác nếu cần
+      }
+
+      const options = {
+        page: parseInt(page, 10) || 1,
+        limit: parseInt(limit, 10) || 10,
+        sort: {},
+      };
+
+      // Xử lý sắp xếp
+      switch (sortOption) {
+        case "name_asc":
+          options.sort.name = 1; // Sắp xếp tên A-Z
+          break;
+        case "price_desc":
+          options.sort.price = -1; // Sắp xếp giá cao-thấp
+          break;
+        case "default":
+        default:
+          options.sort.createdAt = -1; // Mặc định theo thời gian tạo giảm dần
+          break;
+      }
+
+      const products = await Product.paginate(query, options);
       resolve({
         status: "OK",
         message: "successfully",
-        data: allProducts,
+        data: products.docs,
+        pagination: {
+          total: products.totalDocs,
+          current: products.page,
+          pageSize: products.limit,
+          totalPages: products.totalPages,
+        },
       });
     } catch (error) {
       reject(error);
     }
   });
-}
+};
 
 module.exports = {
   createProduct,
