@@ -59,9 +59,9 @@ const loginUser = (userLogin) => {
       resolve({
         status: "OK",
         message: "Login successfully",
-        data: checkUser,
+        // data: checkUser,
         access_token,
-        refresh_token,
+        // refresh_token,
       });
     } catch (error) {
       reject(error);

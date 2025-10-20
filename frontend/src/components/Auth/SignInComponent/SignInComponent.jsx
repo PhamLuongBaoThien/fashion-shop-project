@@ -16,7 +16,7 @@ const SignInComponent = () => {
 
   // Gọi API qua mutation hook
   const mutation = useMutationHooks((data) => UserService.loginUser(data));
-  const { data, isPending, isSuccess, isError } = mutation;
+  const { data, isPending, isSuccess, isError, error } = mutation;
 
   useEffect(() => {
     // Khi mutation có phản hồi
@@ -26,7 +26,7 @@ const SignInComponent = () => {
         showSuccess(data.message || "Đăng nhập thành công!");
         // Lưu token
         localStorage.setItem("access_token", data.access_token);
-        localStorage.setItem("refresh_token", data.refresh_token);
+        // localStorage.setItem("refresh_token", data.refresh_token);
         localStorage.setItem("isAuthenticated", "true");
 
         // Redirect về trang chủ
@@ -37,11 +37,16 @@ const SignInComponent = () => {
         showError(data.message || "Email hoặc mật khẩu không đúng!");
         localStorage.removeItem("isAuthenticated");
       }
+      
     }
 
     // Lỗi hệ thống (server không phản hồi hoặc hỏng)
-    if (isError) {
-      showError("Không thể kết nối đến server!");
+    if (isError && error) { //isError trả về true khi có lỗi xảy ra, error chứa thông tin lỗi
+      if (error.response && error.response.data) {
+        showError(error.response.data.message || "Yêu cầu không hợp lệ!");
+      } else {
+        showError("Không thể kết nối đến server!");
+      }
     }
   }, [isSuccess, isError, data, navigate, showSuccess, showError]);
 
