@@ -18,6 +18,8 @@ import MobileNavigation from "../Navigation/MobileNavigation";
 // import MobileSearch from "../InputSearch/MobileSearch";
 import InputSearch from "../../common/InputSearch/InputSearch";
 import ButtonComponent from "../../common/ButtonComponent/ButtonComponent";
+import { useSelector, useDispatch } from "react-redux";
+import { logoutUser } from "../../../redux/slides/userSlide"; // tí mình sẽ tạo action này
 
 const { Header } = Layout;
 
@@ -27,7 +29,8 @@ export default function HeaderComponent() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const [searchValue, setSearchValue] = useState("");
-
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.user); // state.user là slice bạn đã tạo
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
@@ -87,13 +90,35 @@ export default function HeaderComponent() {
     ],
   };
 
-  // const handleLogin = (values) => {
-  //   console.log("Login values:", values);
-  // };
-
-  // const handleRegister = (values) => {
-  //   console.log("Register values:", values);
-  // };
+  const userMenu = {
+    items: [
+      {
+        key: "profile",
+        label: (
+          <Link to="/profile" style={{ fontWeight: 500, color: "#262626" }}>
+            Thông tin cá nhân
+          </Link>
+        ),
+      },
+      {
+        type: "divider",
+      },
+      {
+        key: "logout",
+        label: (
+          <span
+            style={{ fontWeight: 500, color: "red" }}
+            onClick={() => {
+              localStorage.removeItem("access_token");
+              dispatch(logoutUser());
+            }}
+          >
+            Đăng xuất
+          </span>
+        ),
+      },
+    ],
+  };
 
   return (
     <Header style={headerStyle}>
@@ -142,7 +167,7 @@ export default function HeaderComponent() {
 
           {/* Account */}
           <Dropdown
-            menu={authMenu}
+            menu={user && user.email ? userMenu : authMenu}
             placement="bottomRight"
             arrow
             trigger={["click"]}
@@ -156,7 +181,13 @@ export default function HeaderComponent() {
           </Dropdown>
 
           {/* Shopping Cart */}
-          <Badge count={1} size="medium" color="#fa8c16" overflowCount={99} className="cart-badge">
+          <Badge
+            count={1}
+            size="medium"
+            color="#fa8c16"
+            overflowCount={99}
+            className="cart-badge"
+          >
             <ButtonComponent
               type="text"
               size="large"

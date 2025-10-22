@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { routes } from "./routes";
 import DefaultComponent from "./components/layout/DefaultComponent/DefaultComponent";
@@ -12,9 +12,9 @@ function App() {
     queryFn: async () => {
       const apiUrl =
         process.env.REACT_APP_API_KEY; // Sử dụng biến đúng
-      console.log("Requesting URL:", `${apiUrl}/product/get-all`);
+      // console.log("Requesting URL:", `${apiUrl}/product/get-all`);
       const res = await axios.get(`${apiUrl}/product/get-all`);
-      console.log("API Response:", res.data); // Debug response
+      // console.log("API Response:", res.data); // Debug response
       return res.data; // Điều chỉnh dựa trên cấu trúc API
     },
     retry: 1, // Thử lại 1 lần nếu lỗi
@@ -22,7 +22,7 @@ function App() {
   });
 
   // Log trạng thái để debug
-  console.log("Query state:", { data, isLoading, isError, error });
+  // console.log("Query state:", { data, isLoading, isError, error });
 
   return (
     <div>

@@ -61,7 +61,7 @@ const loginUser = (userLogin) => {
         message: "Login successfully",
         // data: checkUser,
         access_token,
-        // refresh_token,
+        refresh_token,
       });
     } catch (error) {
       reject(error);
@@ -80,7 +80,7 @@ const updateUser = (id, data) => {
       }
 
       const updateUser = await User.findByIdAndUpdate(id, data, { new: true });
-      console.log("updateUser", updateUser);
+      // console.log("updateUser", updateUser);
 
       resolve({
         status: "OK",

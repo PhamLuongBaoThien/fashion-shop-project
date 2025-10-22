@@ -8,8 +8,7 @@ const authMiddleware = (req, res, next) => {
     if (err) {
       return res.status(404).json({ status: "ERR", message: "Unauthorized" });
     }
-    const { payload } = user;
-    if (payload?.isAdmin) {
+    if (user?.isAdmin) {
       next();
     } else {
       return res.status(500).json({ status: "ERR", message: "Forbidden" });
@@ -24,12 +23,19 @@ const userId = req.params.id;
     if (err) {
       return res.status(404).json({ status: "ERR", message: "Unauthorized" });
     }
-    const { payload } = user;
-    if (payload?.isAdmin || payload?.id === userId) {
-      next();
-    } else {
-      return res.status(500).json({ status: "ERR", message: "Forbidden" });
-    } 
+    // const { payload } = user;
+    // if (payload?.isAdmin || payload?.id === userId) {
+    //   next();
+    // } else {
+    //   return res.status(500).json({ status: "ERR", message: "Forbidden" });
+    // } 
+    const { id, isAdmin } = user; 
+
+      if (isAdmin || id === userId) {
+        next();
+      } else {
+        return res.status(403).json({ status: "ERR", message: "Forbidden" });
+      }
   });
 };
 module.exports = {authMiddleware, authUserMiddleware};

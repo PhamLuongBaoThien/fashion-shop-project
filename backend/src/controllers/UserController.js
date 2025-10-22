@@ -59,7 +59,15 @@ const loginUser = async (req, res) => {
     }
 
     const response = await UserService.loginUser({ email, password });
-    return res.status(201).json({ status: "OK", data: response });
+    const { refresh_token, ...newResponse } = response;
+    // console.log('refresh_token', refresh_token);
+    res.cookie("refresh_token", refresh_token, {
+      httpOnly: true, // Http only: chỉ lấy được cookie bằng giao thức HTTP và không thể lấy bằng JS
+      // secure: true, // secure: chỉ gửi cookie qua kết nối HTTPS (chặn kết nối HTTP thường)
+      sameSite: "Strict", //sameSite chống tấn công CSRF
+      maxAge: 365 * 24 * 60 * 60 * 1000, // maxAge: 1 năm
+    }); // 1 năm
+    return res.status(201).json({ status: "OK", data: newResponse });
   } catch (error) {
     return res.status(500).json({ status: "ERR", message: error.message });
   }
@@ -122,11 +130,12 @@ const getDetailUser = async (req, res) => {
 
 const refreshToken = async (req, res) => {
   try {
-    const token = req.headers.token.split(" ")[1]; // xóa Beare
+    // const token = req.cookies.refresh_token;
+    // console.log('token', token);
     if (!token) {
       return res
         .status(400)
-        .json({ status: "ERR", message: "The refreshtoken is required" });
+        .json({ status: "ERR", message: "The refresh token is required" });
     }
     const response = await JwtService.refreshTokenJwtService(token);
     return res.status(201).json({ response });

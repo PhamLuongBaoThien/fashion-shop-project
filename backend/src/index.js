@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const routes = require("./routes");
 const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
 const cors = require("cors");
 dotenv.config();
 
@@ -12,7 +13,7 @@ const port = process.env.PORT;
 
 app.use(cors()); // tránh truy cập vào API từ domain khác
 app.use(bodyParser.json()); // luôn luôn đứng trước các route
-
+app.use(cookieParser()); // luôn luôn đứng trước các route
 
 routes(app);
 

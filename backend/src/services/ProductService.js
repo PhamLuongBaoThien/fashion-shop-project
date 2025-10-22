@@ -90,20 +90,6 @@ const deleteProduct = (productId) => {
   });
 };
 
-// const getAllProducts = (page, limit, search, category) => {
-//   return new Promise(async (resolve, reject) => {
-//     try {
-//       const allProducts = await Product.find();
-//       resolve({
-//         status: "OK",
-//         message: "successfully",
-//         data: allProducts,
-//       });
-//     } catch (error) {
-//       reject(error);
-//     }
-//   });
-// }
 
 const getAllProducts = (
   page,
