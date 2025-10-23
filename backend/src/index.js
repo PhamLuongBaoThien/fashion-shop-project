@@ -11,9 +11,20 @@ const app = express();
 const port = process.env.PORT;
 
 
-app.use(cors()); // tránh truy cập vào API từ domain khác
-app.use(bodyParser.json()); // luôn luôn đứng trước các route
+// app.use(cors()); // tránh truy cập vào API từ domain khác
 app.use(cookieParser()); // luôn luôn đứng trước các route
+
+app.use(cors({
+  origin: 'http://localhost:3000',        // FE URL
+  credentials: true,                     // Cookies
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'token', 'Authorization'],
+  exposedHeaders: ['Set-Cookie']
+}));
+
+
+
+app.use(bodyParser.json()); // luôn luôn đứng trước các route
 
 routes(app);
 

@@ -63,8 +63,9 @@ const loginUser = async (req, res) => {
     // console.log('refresh_token', refresh_token);
     res.cookie("refresh_token", refresh_token, {
       httpOnly: true, // Http only: chỉ lấy được cookie bằng giao thức HTTP và không thể lấy bằng JS
-      // secure: true, // secure: chỉ gửi cookie qua kết nối HTTPS (chặn kết nối HTTP thường)
-      sameSite: "Strict", //sameSite chống tấn công CSRF
+      secure: false, // để test local (đặt true khi dùng https)
+      // sameSite: "Strict", //sameSite chống tấn công CSRF
+      sameSite: "lax",
       maxAge: 365 * 24 * 60 * 60 * 1000, // maxAge: 1 năm
     }); // 1 năm
     return res.status(201).json({ status: "OK", data: newResponse });
@@ -130,8 +131,8 @@ const getDetailUser = async (req, res) => {
 
 const refreshToken = async (req, res) => {
   try {
-    // const token = req.cookies.refresh_token;
-    // console.log('token', token);
+    const token = req.cookies.refresh_token;
+    console.log("refresh_token", token);
     if (!token) {
       return res
         .status(400)

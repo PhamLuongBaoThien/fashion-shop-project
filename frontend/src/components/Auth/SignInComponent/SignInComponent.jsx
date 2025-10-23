@@ -34,7 +34,7 @@ const SignInComponent = () => {
       if (data.status === "OK" && data.access_token) {
         showSuccess(data.message || "Đăng nhập thành công!");
         // Lưu token
-        localStorage.setItem("access_token", data?.access_token);
+        localStorage.setItem("access_token", JSON.stringify(data?.access_token));
         if (data?.access_token) {
           const decoded = jwtDecode(data?.access_token);
           // console.log("decoded", decoded);
@@ -42,7 +42,6 @@ const SignInComponent = () => {
             handGetDetailUser(decoded?.id, data?.access_token);
           }
         }
-        // localStorage.setItem("isAuthenticated", "true");
 
         // Redirect về trang chủ
         navigate("/");
@@ -50,7 +49,6 @@ const SignInComponent = () => {
       // Trường hợp lỗi đăng nhập (sai email hoặc password)
       else if (data.status === "ERR") {
         showError(data.message || "Email hoặc mật khẩu không đúng!");
-        // localStorage.removeItem("isAuthenticated");
       }
     }
 
