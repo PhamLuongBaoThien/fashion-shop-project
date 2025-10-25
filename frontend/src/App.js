@@ -13,10 +13,13 @@ import { updateUser } from "./redux/slides/userSlide";
 function App() {
   const dispatch = useDispatch();
   const handGetDetailUser = async (id, token) => {
-            const res = await UserService.getDetailUser(id, token);
-            // console.log('res', res);
-            dispatch(updateUser({...res?.response?.data, access_token: token}));
-          }
+    if (!token) {
+      return;
+    }
+    const res = await UserService.getDetailUser(id, token);
+    // console.log('res', res);
+    dispatch(updateUser({ ...res?.response?.data, access_token: token }));
+  };
 
   useEffect(() => {
     const { storageData, decoded } = handleDecoded();
@@ -41,9 +44,9 @@ function App() {
     async function (config) {
       const currentTime = new Date();
       const { decoded } = handleDecoded();
-      if(decoded?.exp < currentTime.getTime() / 1000) {
-        const data = await UserService.refreshToken()
-        config.headers['token'] = `Bearer ${data?.response?.access_token}`;
+      if (decoded?.exp < currentTime.getTime() / 1000) {
+        const data = await UserService.refreshToken();
+        config.headers["token"] = `Bearer ${data?.response?.access_token}`;
       }
       return config;
     },

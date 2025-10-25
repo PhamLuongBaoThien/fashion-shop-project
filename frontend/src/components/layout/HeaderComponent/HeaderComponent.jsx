@@ -19,7 +19,9 @@ import MobileNavigation from "../Navigation/MobileNavigation";
 import InputSearch from "../../common/InputSearch/InputSearch";
 import ButtonComponent from "../../common/ButtonComponent/ButtonComponent";
 import { useSelector, useDispatch } from "react-redux";
-import { logoutUser } from "../../../redux/slides/userSlide"; // tí mình sẽ tạo action này
+// import { logoutUser } from "../../../redux/slides/userSlide"; // tí mình sẽ tạo action này
+import * as UserService from "../../../services/UserService";
+import { resetUser } from "../../../redux/slides/userSlide";
 
 const { Header } = Layout;
 
@@ -39,6 +41,18 @@ export default function HeaderComponent() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleLogout = async () => {
+    await UserService.logoutUser();
+    localStorage.removeItem("access_token");
+    dispatch(resetUser());
+  }
+
+  const getLastName = (fullName) => {
+    if (!fullName) return "Khách";
+    const nameParts = fullName.trim().split(" ");
+    return nameParts[nameParts.length - 1]; // Lấy phần cuối
+  };
 
   const navigationItems = [
     { label: "Trang chủ", href: "/" },
@@ -108,10 +122,7 @@ export default function HeaderComponent() {
         label: (
           <span
             style={{ fontWeight: 500, color: "red" }}
-            onClick={() => {
-              localStorage.removeItem("access_token");
-              dispatch(logoutUser());
-            }}
+            onClick={handleLogout}
           >
             Đăng xuất
           </span>
@@ -144,7 +155,7 @@ export default function HeaderComponent() {
           <InputSearch
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
-            placeholder="Tìm kiếm sản phẩm..."
+            placeholder={ user.username ? `${getLastName(user.username)} cần tìm gì?` :"Tìm kiếm sản phẩm..."}
             className="desktop-search"
           />
 
