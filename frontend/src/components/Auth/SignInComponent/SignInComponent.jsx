@@ -26,7 +26,7 @@ const SignInComponent = () => {
     const handGetDetailUser = async (id, token) => {
         const res = await UserService.getDetailUser(id, token);
         // console.log('res', res);
-        dispatch(updateUser({...res?.response?.data, access_token: token}));
+        dispatch(updateUser({...res?.data, access_token: token}));
     }
     // Khi mutation có phản hồi
     if (isSuccess && data) {

@@ -1,35 +1,33 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button, Avatar, Divider, Tabs, Empty } from "antd"
-import { EditOutlined, ShoppingOutlined, HeartOutlined, StarOutlined } from "@ant-design/icons"
-import { motion } from "framer-motion"
+import { useState } from "react";
+import { Avatar, Divider, Tabs, Empty, Spin } from "antd";
+import {
+  EditOutlined,
+  ShoppingOutlined,
+  HeartOutlined,
+  StarOutlined,
+} from "@ant-design/icons";
+import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import "./ProfilePage.css"
+
+import "./ProfilePage.css";
+import { useSelector } from "react-redux";
+import ButtonComponent from "../../components/common/ButtonComponent/ButtonComponent";
 
 const ProfilePage = () => {
-  // Mock user data - trong thực tế sẽ lấy từ API/context
-  const [user] = useState({
-    id: 1,
-    fullName: "Nguyễn Văn A",
-    email: "nguyenvana@example.com",
-    phone: "0912345678",
-    address: "123 Đường Nguyễn Huệ, Quận 1, TP.HCM",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix",
-    gender: "Nam",
-    dateOfBirth: "1995-05-15",
-    createdAt: "2024-01-15",
-  })
+  const user = useSelector((state) => state.user); // Lấy dữ liệu user từ Redux
 
+  // Mock orders và reviews (sẽ thay bằng API sau)
   const [orders] = useState([
     { id: 1, date: "2024-10-20", total: 1290000, status: "Đã giao" },
     { id: 2, date: "2024-10-15", total: 890000, status: "Đang giao" },
-  ])
+  ]);
 
   const [reviews] = useState([
     { id: 1, product: "Áo sơ mi linen cao cấp", rating: 5, comment: "Sản phẩm rất tốt, giao hàng nhanh" },
     { id: 2, product: "Quần jean classic", rating: 4, comment: "Chất lượng tốt, fit vừa vặn" },
-  ])
+  ]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -40,7 +38,7 @@ const ProfilePage = () => {
         delayChildren: 0.2,
       },
     },
-  }
+  };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -49,24 +47,51 @@ const ProfilePage = () => {
       y: 0,
       transition: { duration: 0.5 },
     },
+  };
+
+  // Lấy thông tin user khi tải trang
+ 
+
+  if (!user.id) {
+    return (
+      <div className="profile-page-loading" style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+        <Spin size="large" />
+      </div>
+    );
   }
+
+  if (!user.email) {
+    return <div>Vui lòng đăng nhập để xem thông tin.</div>;
+  }
+
+  const getGenderLabel = (gender) => {
+  switch (gender) {
+    case "male":
+      return "Nam";
+    case "female":
+      return "Nữ";
+    case "other":
+      return "Khác";
+    default:
+      return "Chưa cập nhật";
+  }
+};
 
   return (
     <motion.div className="profile-page" variants={containerVariants} initial="hidden" animate="visible">
       {/* Profile Header */}
       <motion.div className="profile-header" variants={itemVariants}>
         <div className="profile-header-content">
-          <Avatar size={120} src={user.avatar} className="profile-avatar" />
+          <Avatar size={120} src={user.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} className="profile-avatar" />
           <div className="profile-info">
-            <h1>{user.fullName}</h1>
-            <p className="profile-email">{user.email}</p>
-            <p className="profile-meta">Thành viên từ {new Date(user.createdAt).toLocaleDateString("vi-VN")}</p>
+            <h1>{user.username || "Chưa cập nhật"}</h1>
+            <p className="profile-email">{user.email || "Chưa cập nhật"}</p>
+            <p className="profile-meta">Thành viên từ {user.createdAt ? new Date(user.createdAt).toLocaleDateString("vi-VN") : "Chưa cập nhật"}</p>
           </div>
         </div>
         <Link to="/edit-profile">
-          <Button type="primary" size="large" icon={<EditOutlined />} className="profile-edit-btn">
-            Chỉnh sửa thông tin
-          </Button>
+          <ButtonComponent type="primary" size="large" icon={<EditOutlined />} textButton={"Chỉnh sửa thông tin"} className="profile-edit-btn" disabled={!user.email} />
+            
         </Link>
       </motion.div>
 
@@ -86,7 +111,7 @@ const ProfilePage = () => {
           </div>
           <div className="detail-item">
             <span className="detail-label">Giới tính:</span>
-            <span className="detail-value">{user.gender || "Chưa cập nhật"}</span>
+            <span className="detail-value">{getGenderLabel(user.gender)}</span>
           </div>
           <div className="detail-item">
             <span className="detail-label">Ngày sinh:</span>
@@ -182,7 +207,7 @@ const ProfilePage = () => {
         />
       </motion.div>
     </motion.div>
-  )
-}
+  );
+};
 
-export default ProfilePage
+export default ProfilePage;

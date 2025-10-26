@@ -1,10 +1,17 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
+  id: "",
   username: "",
   email: "",
   access_token: "",
-  isLoading: false
+  phone: "",
+  address: "",
+  avatar: "",
+  gender: "",
+  createdAt: "",
+  dateOfBirth: null,
+  isLoading: false,
 };
 
 export const userSlide = createSlice({
@@ -12,21 +19,42 @@ export const userSlide = createSlice({
   initialState,
   reducers: {
     updateUser: (state, action) => {
-      const { username, email, phone, access_token } = action.payload;
+      const {
+        username,
+        email,
+        phone,
+        address = "",
+        avatar = "",
+        _id,
+        createdAt,
+        access_token,
+        gender = "",
+        dateOfBirth = null,
+      } = action.payload;
       // console.log("action", action);
+      state.id = _id;
       state.username = username;
       state.email = email;
       state.phone = phone;
+      state.address = address;
+      state.avatar = avatar;
+      state.gender = gender;
+      state.dateOfBirth = dateOfBirth;
+      state.createdAt = createdAt;
       state.access_token = access_token;
 
       //   state.email = action.payload.email;
       //   state.access_token = action.payload.access_token;
     },
     resetUser: (state) => {
-      state._id = null;
+      state.id = "";
       state.email = "";
       state.username = "";
       state.phone = "";
+      state.address = "";
+      state.avatar = "";
+      state.dateOfBirth = null;
+      state.createdAt = "";
       state.access_token = "";
     },
   },

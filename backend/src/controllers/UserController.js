@@ -1,5 +1,6 @@
 const UserService = require("../services/UserService");
 const JwtService = require("../services/JwtService");
+const cloudinary = require('../config/cloudinary');
 
 const createUser = async (req, res) => {
   try {
@@ -78,13 +79,37 @@ const updateUser = async (req, res) => {
   try {
     const userId = req.params.id;
     const data = req.body;
+
     if (!userId) {
       return res
         .status(400)
         .json({ status: "ERR", message: "The userid is required" });
     }
+
+    // Kiểm tra xem Multer có xử lý file nào không
+    if (req.file) {
+            // req.file.buffer chứa dữ liệu nhị phân của ảnh
+            const fileBuffer = req.file.buffer;
+
+            // Dùng Promise để upload từ buffer
+            const result = await new Promise((resolve, reject) => {
+                const uploadStream = cloudinary.uploader.upload_stream(
+                    { folder: "avatars" },
+                    (error, result) => {
+                        if (error) {
+                            return reject(error);
+                        }
+                        resolve(result);
+                    }
+                );
+                uploadStream.end(fileBuffer);
+            });
+            
+            data.avatar = result.secure_url;
+        }
+
     const response = await UserService.updateUser(userId, data);
-    return res.status(201).json({ response });
+    return res.status(201).json(response);
   } catch (error) {
     return res.status(500).json({ status: "ERR", message: error.message });
   }
@@ -99,7 +124,7 @@ const deleteUser = async (req, res) => {
         .json({ status: "ERR", message: "The userid is required" });
     }
     const response = await UserService.deleteUser(userId);
-    return res.status(201).json({ response });
+    return res.status(201).json(response);
   } catch (error) {
     return res.status(500).json({ status: "ERR", message: error.message });
   }
@@ -108,7 +133,7 @@ const deleteUser = async (req, res) => {
 const getAllUser = async (req, res) => {
   try {
     const response = await UserService.getAllUser();
-    return res.status(201).json({ response });
+    return res.status(201).json(response);
   } catch (error) {
     return res.status(500).json({ status: "ERR", message: error.message });
   }
@@ -123,7 +148,7 @@ const getDetailUser = async (req, res) => {
         .json({ status: "ERR", message: "The userid is required" });
     }
     const response = await UserService.getDetailUser(userId);
-    return res.status(201).json({ response });
+    return res.status(201).json(response);
   } catch (error) {
     return res.status(500).json({ status: "ERR", message: error.message });
   }
@@ -139,7 +164,7 @@ const refreshToken = async (req, res) => {
         .json({ status: "ERR", message: "The refresh token is required" });
     }
     const response = await JwtService.refreshTokenJwtService(token);
-    return res.status(201).json({ response });
+    return res.status(201).json(response);
   } catch (error) {
     return res.status(500).json({ status: "ERR", message: error.message });
   }
@@ -147,7 +172,7 @@ const refreshToken = async (req, res) => {
 
 const logoutUser = async (req, res) => {
   try {
-    res.clearCookie('refresh_token');
+    res.clearCookie("refresh_token");
     return res.status(201).json({ status: "OK", message: "Logout successful" });
   } catch (error) {
     return res.status(500).json({ status: "ERR", message: error.message });
@@ -162,5 +187,5 @@ module.exports = {
   getAllUser,
   getDetailUser,
   refreshToken,
-  logoutUser
+  logoutUser,
 };

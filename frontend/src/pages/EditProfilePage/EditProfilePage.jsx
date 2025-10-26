@@ -1,59 +1,84 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Form, Input, Button, Upload, Avatar, message, Row, Col, Select, DatePicker } from "antd"
-import { CameraOutlined } from "@ant-design/icons"
-import { motion } from "framer-motion"
-import { Link } from "react-router-dom";
-import dayjs from "dayjs"
-import "./EditProfile.css"
+import { useState, useEffect } from "react";
+import {
+  Form,
+  Input,
+  Button,
+  message,
+  Row,
+  Col,
+  Select,
+  DatePicker,
+} from "antd";
+import { motion } from "framer-motion";
+import { Link, useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
+import "./EditProfile.css";
+import { useDispatch, useSelector } from "react-redux";
+import * as UserService from "../../services/UserService";
+import { updateUser } from "../../redux/slides/userSlide";
+import { useMutationHooks } from "../../hooks/useMutationHook";
+import ButtonComponent from "../../components/common/ButtonComponent/ButtonComponent";
 
 const EditProfile = () => {
-  const [form] = Form.useForm()
-  const [loading, setLoading] = useState(false)
-  const [avatar, setAvatar] = useState("https://api.dicebear.com/7.x/avataaars/svg?seed=Felix")
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const user = useSelector((state) => state.user);
 
-  // Mock user data - trong thực tế sẽ lấy từ API/context
-  const [user] = useState({
-    fullName: "Nguyễn Văn A",
-    email: "nguyenvana@example.com",
-    phone: "0912345678",
-    address: "123 Đường Nguyễn Huệ, Quận 1, TP.HCM",
-    gender: "Nam",
-    dateOfBirth: "1995-05-15",
-  })
-
-  // Initialize form with user data
-  useState(() => {
-    form.setFieldsValue({
-      fullName: user.fullName,
-      email: user.email,
-      phone: user.phone,
-      address: user.address,
-      gender: user.gender,
-      dateOfBirth: user.dateOfBirth ? dayjs(user.dateOfBirth) : null,
-    })
-  }, [])
-
-  const handleAvatarChange = (info) => {
-    if (info.file.status === "done") {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setAvatar(e.target.result)
-        message.success("Cập nhật ảnh đại diện thành công!")
-      }
-      reader.readAsDataURL(info.file.originFileObj)
+  // Initialize form with user data from Redux
+  useEffect(() => {
+    if (user) {
+      form.setFieldsValue({
+        username: user.username || "", // Đồng bộ với Backend
+        email: user.email || "",
+        phone: user.phone || "",
+        address: user.address || "",
+        gender: user.gender || "",
+        dateOfBirth: user.dateOfBirth ? dayjs(user.dateOfBirth) : null,
+      });
     }
-  }
+  }, [user, form]);
 
-  const onFinish = async (values) => {
-    setLoading(true)
-    console.log("[v0] Form values:", values)
-    setTimeout(() => {
-      message.success("Cập nhật thông tin thành công!")
-      setLoading(false)
-    }, 1500)
-  }
+  const mutation = useMutationHooks((data) => {
+    const { _id, ...rest } = data;
+    return UserService.updateUser(_id, rest);
+  });
+
+  const { data, isPending, isSuccess, isError } = mutation;
+
+  const onFinish = (values) => {
+    setLoading(true);
+    const updatedValues = {
+      ...values,
+      dateOfBirth: values.dateOfBirth
+        ? values.dateOfBirth.format("YYYY-MM-DD")
+        : null,
+    };
+    mutation.mutate(
+      { _id: user.id, ...updatedValues },
+      {
+        onSuccess: () => {
+          dispatch(updateUser({ ...user, _id: user.id, ...updatedValues }));
+          message.success("Cập nhật thông tin thành công!");
+          navigate("/profile");
+        },
+        onError: (error) => {
+          message.error(`Cập nhật thất bại: ${error.message}`);
+        },
+      }
+    );
+  };
+
+  useEffect(() => {
+    if (isSuccess && data) {
+      setLoading(false);
+    } else if (isError) {
+      setLoading(false);
+    }
+  }, [isSuccess, isError, data]);
 
   const formVariants = {
     hidden: { opacity: 0 },
@@ -64,7 +89,7 @@ const EditProfile = () => {
         staggerChildren: 0.08,
       },
     },
-  }
+  };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 10 },
@@ -72,7 +97,7 @@ const EditProfile = () => {
       opacity: 1,
       y: 0,
     },
-  }
+  };
 
   return (
     <motion.div
@@ -81,32 +106,15 @@ const EditProfile = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Header */}
       <div className="edit-profile-header">
         <h1>Chỉnh sửa thông tin cá nhân</h1>
       </div>
-
-      {/* Form Container */}
-      <motion.div className="edit-profile-container" variants={formVariants} initial="hidden" animate="visible">
-        {/* Avatar Section */}
-        <motion.div className="avatar-section" variants={itemVariants}>
-          <div className="avatar-container">
-            <Avatar size={150} src={avatar} className="edit-avatar" />
-            <Upload
-              maxCount={1}
-              accept="image/*"
-              onChange={handleAvatarChange}
-              showUploadList={false}
-              className="avatar-upload"
-            >
-              <Button icon={<CameraOutlined />} className="upload-btn">
-                Thay đổi ảnh
-              </Button>
-            </Upload>
-          </div>
-        </motion.div>
-
-        {/* Form */}
+      <motion.div
+        className="edit-profile-container"
+        variants={formVariants}
+        initial="hidden"
+        animate="visible"
+      >
         <motion.div className="form-section" variants={itemVariants}>
           <Form
             form={form}
@@ -119,9 +127,11 @@ const EditProfile = () => {
             <Row gutter={[24, 0]}>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  name="fullName"
+                  name="username" // Thay fullName bằng username
                   label="Họ và tên"
-                  rules={[{ required: true, message: "Vui lòng nhập họ và tên!" }]}
+                  rules={[
+                    { required: true, message: "Vui lòng nhập họ và tên!" },
+                  ]}
                 >
                   <Input placeholder="Nguyễn Văn A" size="large" />
                 </Form.Item>
@@ -135,14 +145,30 @@ const EditProfile = () => {
                     { type: "email", message: "Email không hợp lệ!" },
                   ]}
                 >
-                  <Input placeholder="example@email.com" size="large" disabled />
+                  <Input
+                    placeholder="example@email.com"
+                    size="large"
+                    disabled
+                  />
                 </Form.Item>
               </Col>
             </Row>
-
             <Row gutter={[24, 0]}>
               <Col xs={24} sm={12}>
-                <Form.Item name="phone" label="Số điện thoại">
+                <Form.Item
+                  name="phone"
+                  label="Số điện thoại"
+                  rules={[
+                    // Bạn có thể bỏ dòng 'required' nếu không muốn bắt buộc người dùng nhập SĐT
+                    // { required: true, message: "Vui lòng nhập số điện thoại!" },
+                    {
+                      // Nếu người dùng có nhập, nó phải khớp với định dạng này
+                      required: true,
+                      pattern: /^(84|0[3|5|7|8|9])[0-9]{8}$/,
+                      message: "Số điện thoại không đúng định dạng Việt Nam!",
+                    },
+                  ]}
+                >
                   <Input placeholder="0912345678" size="large" />
                 </Form.Item>
               </Col>
@@ -152,44 +178,52 @@ const EditProfile = () => {
                     placeholder="Chọn giới tính"
                     size="large"
                     options={[
-                      { label: "Nam", value: "Nam" },
-                      { label: "Nữ", value: "Nữ" },
-                      { label: "Khác", value: "Khác" },
+                      { label: "Nam", value: "male" },
+                      { label: "Nữ", value: "female" },
+                      { label: "Khác", value: "other" },
                     ]}
                   />
                 </Form.Item>
               </Col>
             </Row>
-
             <Row gutter={[24, 0]}>
               <Col xs={24} sm={12}>
                 <Form.Item name="dateOfBirth" label="Ngày sinh">
-                  <DatePicker placeholder="Chọn ngày sinh" size="large" style={{ width: "100%" }} />
+                  <DatePicker
+                    placeholder="Chọn ngày sinh"
+                    size="large"
+                    style={{ width: "100%" }}
+                  />
                 </Form.Item>
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item name="address" label="Địa chỉ">
-                  <Input placeholder="123 Đường Nguyễn Huệ, Quận 1, TP.HCM" size="large" />
+                  <Input
+                    placeholder="123 Đường Nguyễn Huệ, Quận 1, TP.HCM"
+                    size="large"
+                  />
                 </Form.Item>
               </Col>
             </Row>
-
-            {/* Buttons */}
             <div className="form-actions">
               <Link to="/profile">
-                <Button size="large" className="cancel-btn">
-                  Hủy
-                </Button>
+                <ButtonComponent size="large" className="cancel-btn" textButton={"Hủy"} />
+                  
               </Link>
-              <Button type="primary" htmlType="submit" size="large" loading={loading} className="submit-btn">
-                Lưu thay đổi
-              </Button>
+              <ButtonComponent
+                type="primary"
+                htmlType="submit"
+                size="large"
+                loading={isPending}
+                className="submit-btn"
+                textButton={"Lưu thay đổi"}
+              />
             </div>
           </Form>
         </motion.div>
       </motion.div>
     </motion.div>
-  )
-}
+  );
+};
 
-export default EditProfile
+export default EditProfile;

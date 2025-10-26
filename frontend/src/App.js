@@ -9,24 +9,28 @@ import { jwtDecode } from "jwt-decode";
 import * as UserService from "./services/UserService";
 import { useDispatch } from "react-redux";
 import { updateUser } from "./redux/slides/userSlide";
+import { store } from './redux/store'; 
 
 function App() {
   const dispatch = useDispatch();
-  const handGetDetailUser = async (id, token) => {
-    if (!token) {
-      return;
+  const handGetDetailUser = async (id) => {
+    try {
+        const res = await UserService.getDetailUser(id); // Gọi không cần token
+        if (res?.status === 'OK') {
+            // Lấy token từ localStorage để đảm bảo luôn là token mới nhất
+            const token = localStorage.getItem('access_token');
+            dispatch(updateUser({ ...res?.data, access_token: JSON.parse(token) }));
+        }
+    } catch (error) {
+        console.error("handGetDetailUser error:", error);
     }
-    const res = await UserService.getDetailUser(id, token);
-    // console.log('res', res);
-    dispatch(updateUser({ ...res?.response?.data, access_token: token }));
-  };
+};
 
   useEffect(() => {
-    const { storageData, decoded } = handleDecoded();
+    const { decoded } = handleDecoded();
     if (decoded?.id) {
-      handGetDetailUser(decoded?.id, storageData);
+      handGetDetailUser(decoded?.id);
     }
-    console.log("storageData", storageData);
   }, []);
 
   const handleDecoded = () => {
@@ -43,12 +47,41 @@ function App() {
   UserService.axiosJWT.interceptors.request.use(
     async function (config) {
       const currentTime = new Date();
-      const { decoded } = handleDecoded();
+      let { storageData, decoded } = handleDecoded();
       if (decoded?.exp < currentTime.getTime() / 1000) {
-        const data = await UserService.refreshToken();
-        config.headers["token"] = `Bearer ${data?.response?.access_token}`;
+        try {
+                    const data = await UserService.refreshToken();
+                    const newAccessToken = data?.access_token;
+                    if (newAccessToken) {
+                        localStorage.setItem("access_token", JSON.stringify(newAccessToken));
+
+                        // Lấy state user hiện tại trực tiếp từ store
+                        const currentUserState = store.getState().user;
+
+                        // Tạo một payload hoàn chỉnh: state cũ + token mới
+                        // Quan trọng: map lại state.id vào _id để reducer nhận đúng
+                        const fullPayload = {
+                            ...currentUserState,
+                            _id: currentUserState.id, 
+                            access_token: newAccessToken,
+                        };
+
+                        // Dispatch payload hoàn chỉnh này
+                        dispatch(updateUser(fullPayload));
+                        
+                        storageData = newAccessToken;
+                    }
+      } catch (err) {
+        console.error("Failed to refresh token", err);
       }
-      return config;
+    }
+
+    // 3. LUÔN LUÔN gắn token vào header trước khi gửi đi
+    if (storageData) {
+      config.headers["token"] = `Bearer ${storageData}`;
+    }
+
+    return config;
     },
     function (error) {
       return Promise.reject(error);

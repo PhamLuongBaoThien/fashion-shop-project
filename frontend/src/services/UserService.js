@@ -20,12 +20,10 @@ export const createUser = async (data) => {
   return response.data;
 };
 
-export const getDetailUser = async (id, access_token) => {
+export const getDetailUser = async (id) => {
   const response = await axiosJWT.get(
     `${process.env.REACT_APP_API_KEY}/user/get-detail/${id}`,
-    {
-      headers: { token: `Bearer ${access_token}` },
-    }
+
   );
   return response.data;
 };
@@ -42,5 +40,13 @@ export const refreshToken = async () => {
 export const logoutUser = async (data) => {
   const response = await axios.post(
     `${process.env.REACT_APP_API_KEY}/user/log-out`);
+  return response.data;
+};
+
+export const updateUser = async (id, data) => {
+  const response = await axiosJWT.put(
+    `${process.env.REACT_APP_API_KEY}/user/update-user/${id}`,
+    data
+  );
   return response.data;
 };
