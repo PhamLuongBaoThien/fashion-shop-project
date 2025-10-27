@@ -10,7 +10,10 @@ import {
   Col,
   Select,
   DatePicker,
+  Avatar,
+  Upload,
 } from "antd";
+import { CameraOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
@@ -24,9 +27,15 @@ import ButtonComponent from "../../components/common/ButtonComponent/ButtonCompo
 const EditProfile = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [avatar, setAvatar] = useState(
+    "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+  );
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector((state) => state.user);
+
+  const [avatarFile, setAvatarFile] = useState("https://api.dicebear.com/7.x/avataaars/svg?seed=Felix");
+  const [previewImage, setPreviewImage] = useState("");
 
   // Initialize form with user data from Redux
   useEffect(() => {
@@ -39,34 +48,71 @@ const EditProfile = () => {
         gender: user.gender || "",
         dateOfBirth: user.dateOfBirth ? dayjs(user.dateOfBirth) : null,
       });
+      setPreviewImage(user.avatar); // Hiển thị avatar hiện tại
     }
   }, [user, form]);
 
+  // const handleAvatarChange = (info) => {
+  //   if (info.file.status === "done") {
+  //     const reader = new FileReader();
+  //     reader.onload = (e) => {
+  //       setAvatar(e.target.result);
+  //       message.success("Cập nhật ảnh đại diện thành công!");
+  //     };
+  //     reader.readAsDataURL(info.file.originFileObj);
+  //   }
+  // };
   const mutation = useMutationHooks((data) => {
-    const { _id, ...rest } = data;
-    return UserService.updateUser(_id, rest);
+    const { _id, formData } = data;
+    return UserService.updateUser(_id, formData);
   });
 
   const { data, isPending, isSuccess, isError } = mutation;
 
+  const handleBeforeUpload = (file) => {
+    setAvatarFile(file); // Lưu file thật vào state
+    setPreviewImage(URL.createObjectURL(file)); // Tạo URL tạm để xem trước
+    return false; // Ngăn Ant Design tự động upload
+  };
+
   const onFinish = (values) => {
-    setLoading(true);
-    const updatedValues = {
-      ...values,
-      dateOfBirth: values.dateOfBirth
-        ? values.dateOfBirth.format("YYYY-MM-DD")
-        : null,
-    };
+    const formData = new FormData();
+
+    Object.keys(values).forEach((key) => {
+      if (key === "dateOfBirth" && values[key]) {
+        formData.append(key, values[key].format("YYYY-MM-DD"));
+      } else if (values[key] !== null && values[key] !== undefined) {
+        formData.append(key, values[key]);
+      }
+    });
+
+    if (avatarFile instanceof File) { // Sửa: Chỉ append nếu avatarFile là một File
+        formData.append("avatar", avatarFile);
+    }
+
     mutation.mutate(
-      { _id: user.id, ...updatedValues },
+      { _id: user.id, formData },
       {
-        onSuccess: () => {
-          dispatch(updateUser({ ...user, _id: user.id, ...updatedValues }));
-          message.success("Cập nhật thông tin thành công!");
-          navigate("/profile");
+        onSuccess: (data) => {
+          // `data` có thể là `{ status: 'OK', data: user }` hoặc chỉ là `user`
+    // Cách lấy an toàn nhất: Nếu data.data tồn tại thì lấy, nếu không thì coi chính data là user
+    const updatedUserFromServer = data?.data;
+
+    // Kiểm tra xem chúng ta có thực sự lấy được object user không
+    if (updatedUserFromServer?._id) {
+        dispatch(updateUser(updatedUserFromServer));
+        message.success("Cập nhật thông tin thành công!");
+        navigate("/profile");
+    } else {
+        // Nếu không lấy được, báo lỗi để biết
+        message.error("Không nhận được dữ liệu người dùng từ máy chủ.");
+        console.error("Dữ liệu không hợp lệ từ onSuccess:", data);
+    }
         },
         onError: (error) => {
-          message.error(`Cập nhật thất bại: ${error.message}`);
+          message.error(
+            `Cập nhật thất bại: ${error.message || "Đã có lỗi xảy ra"}`
+          );
         },
       }
     );
@@ -115,6 +161,26 @@ const EditProfile = () => {
         initial="hidden"
         animate="visible"
       >
+        <motion.div className="avatar-section" variants={itemVariants}>
+          <div className="avatar-container">
+            <Avatar
+              size={150}
+src={previewImage || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} // <-- FIX: Use the previewImage state              className="edit-avatar"
+            />
+            <Upload
+              maxCount={1}
+              accept="image/*"
+              beforeUpload={handleBeforeUpload}
+              showUploadList={false}
+              className="avatar-upload"
+            >
+              <Button icon={<CameraOutlined />} className="upload-btn">
+                Thay đổi ảnh
+              </Button>
+            </Upload>
+          </div>
+        </motion.div>
+
         <motion.div className="form-section" variants={itemVariants}>
           <Form
             form={form}
@@ -207,8 +273,11 @@ const EditProfile = () => {
             </Row>
             <div className="form-actions">
               <Link to="/profile">
-                <ButtonComponent size="large" className="cancel-btn" textButton={"Hủy"} />
-                  
+                <ButtonComponent
+                  size="large"
+                  className="cancel-btn"
+                  textButton={"Hủy"}
+                />
               </Link>
               <ButtonComponent
                 type="primary"

@@ -20,6 +20,11 @@ const createProduct = async (req, res) => {
 
     // Gọi service để tạo sản phẩm
     const response = await ProductService.createProduct(productData);
+
+    if (response.status === 'ERR') {
+            return res.status(400).json(response);
+        }
+
     return res.status(201).json(response);
   } catch (error) {
     return res.status(500).json({ status: "ERR", message: error.message });
@@ -47,6 +52,10 @@ const updateProduct = async (req, res) => {
 
     // Gọi service để cập nhật sản phẩm
     const response = await ProductService.updateProduct(productId, productData);
+    if (response.status === 'ERR') {
+            return res.status(400).json(response);
+        }
+        
     return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({ status: "ERR", message: error.message });
@@ -62,7 +71,7 @@ const getDetailProduct = async (req, res) => {
         .json({ status: "ERR", message: "The productId is required" });
     }
     const response = await ProductService.getDetailProduct(productId);
-    return res.status(201).json({ response });
+    return res.status(200).json({ response });
   } catch (error) {
     return res.status(500).json({ status: "ERR", message: error.message });
   }
@@ -77,7 +86,7 @@ const deleteProduct = async (req, res) => {
         .json({ status: "ERR", message: "The userid is required" });
     }
     const response = await ProductService.deleteProduct(productId);
-    return res.status(201).json({ response });
+    return res.status(200).json({ response });
   } catch (error) {
     return res.status(500).json({ status: "ERR", message: error.message });
   }
@@ -97,7 +106,7 @@ const getAllProducts = async (req, res) => {
       badges ? badges.split(",") : null, // Chuyển chuỗi thành mảng
       sortOption
     );
-    return res.status(201).json({ response });
+    return res.status(200).json({ response });
   } catch (error) {
     return res.status(500).json({ status: "ERR", message: error.message });
   }

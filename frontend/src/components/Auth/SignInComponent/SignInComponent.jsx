@@ -24,22 +24,23 @@ const SignInComponent = () => {
 
   useEffect(() => {
     const handGetDetailUser = async (id, token) => {
-        const res = await UserService.getDetailUser(id, token);
+        const res = await UserService.getDetailUser(id);
         // console.log('res', res);
         dispatch(updateUser({...res?.data, access_token: token}));
     }
     // Khi mutation có phản hồi
     if (isSuccess && data) {
       // Trường hợp login thành công thật sự
-      if (data.status === "OK" && data.access_token) {
+      if (data.status === "OK" && data?.data?.access_token) {
+        const newAccessToken = data.data.access_token;
         showSuccess(data.message || "Đăng nhập thành công!");
         // Lưu token
-        localStorage.setItem("access_token", JSON.stringify(data?.access_token));
-        if (data?.access_token) {
-          const decoded = jwtDecode(data?.access_token);
+        localStorage.setItem("access_token", JSON.stringify(newAccessToken));
+        if (newAccessToken) {
+          const decoded = jwtDecode(newAccessToken);
           // console.log("decoded", decoded);
           if(decoded?.id){
-            handGetDetailUser(decoded?.id, data?.access_token);
+            handGetDetailUser(decoded?.id, newAccessToken);
           }
         }
 

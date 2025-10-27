@@ -1,6 +1,6 @@
 const UserService = require("../services/UserService");
 const JwtService = require("../services/JwtService");
-const cloudinary = require('../config/cloudinary');
+const cloudinary = require("../config/cloudinary");
 
 const createUser = async (req, res) => {
   try {
@@ -36,6 +36,10 @@ const createUser = async (req, res) => {
       password,
       phone,
     });
+    if (response.status === "ERR") {
+      return res.status(400).json(response);
+    }
+
     return res.status(201).json({ status: "OK", data: response });
   } catch (error) {
     return res.status(500).json({ status: "ERR", message: error.message });
@@ -60,6 +64,11 @@ const loginUser = async (req, res) => {
     }
 
     const response = await UserService.loginUser({ email, password });
+
+    if (response.status === "ERR") {
+      return res.status(400).json(response); // Trả về lỗi 400 Bad Request
+    }
+
     const { refresh_token, ...newResponse } = response;
     // console.log('refresh_token', refresh_token);
     res.cookie("refresh_token", refresh_token, {
@@ -88,25 +97,25 @@ const updateUser = async (req, res) => {
 
     // Kiểm tra xem Multer có xử lý file nào không
     if (req.file) {
-            // req.file.buffer chứa dữ liệu nhị phân của ảnh
-            const fileBuffer = req.file.buffer;
+      // req.file.buffer chứa dữ liệu nhị phân của ảnh
+      const fileBuffer = req.file.buffer;
 
-            // Dùng Promise để upload từ buffer
-            const result = await new Promise((resolve, reject) => {
-                const uploadStream = cloudinary.uploader.upload_stream(
-                    { folder: "avatars" },
-                    (error, result) => {
-                        if (error) {
-                            return reject(error);
-                        }
-                        resolve(result);
-                    }
-                );
-                uploadStream.end(fileBuffer);
-            });
-            
-            data.avatar = result.secure_url;
-        }
+      // Dùng Promise để upload từ buffer
+      const result = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: "avatars" },
+          (error, result) => {
+            if (error) {
+              return reject(error);
+            }
+            resolve(result);
+          }
+        );
+        uploadStream.end(fileBuffer);
+      });
+
+      data.avatar = result.secure_url;
+    }
 
     const response = await UserService.updateUser(userId, data);
     return res.status(201).json(response);
