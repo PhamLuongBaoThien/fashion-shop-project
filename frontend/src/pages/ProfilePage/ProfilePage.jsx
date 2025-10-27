@@ -107,7 +107,12 @@ const ProfilePage = () => {
           </div>
           <div className="detail-item">
             <span className="detail-label">Địa chỉ:</span>
-            <span className="detail-value">{user.address || "Chưa cập nhật"}</span>
+            <span className="detail-value">{
+            // Ghép các phần địa chỉ lại, lọc ra các phần rỗng và nối chúng bằng dấu phẩy
+            [user.address?.detailAddress, user.address?.ward, user.address?.district, user.address?.province]
+                .filter(Boolean) // Lọc bỏ các giá trị null, undefined hoặc chuỗi rỗng
+                .join(', ') || "Chưa cập nhật"
+        }</span>
           </div>
           <div className="detail-item">
             <span className="detail-label">Giới tính:</span>

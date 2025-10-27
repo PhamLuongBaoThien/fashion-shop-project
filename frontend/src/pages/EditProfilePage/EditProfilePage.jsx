@@ -13,7 +13,7 @@ import {
   Avatar,
   Upload,
 } from "antd";
-import { CameraOutlined } from "@ant-design/icons";
+import { UserOutlined, CameraOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
@@ -23,126 +23,181 @@ import * as UserService from "../../services/UserService";
 import { updateUser } from "../../redux/slides/userSlide";
 import { useMutationHooks } from "../../hooks/useMutationHook";
 import ButtonComponent from "../../components/common/ButtonComponent/ButtonComponent";
+import * as ExternalApiService from "../../services/ExternalApiService";
 
 const EditProfile = () => {
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
-  const [avatar, setAvatar] = useState(
-    "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
-  );
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector((state) => state.user);
 
-  const [avatarFile, setAvatarFile] = useState("https://api.dicebear.com/7.x/avataaars/svg?seed=Felix");
+  const [avatarFile, setAvatarFile] = useState(null);
   const [previewImage, setPreviewImage] = useState("");
 
-  // Initialize form with user data from Redux
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [wards, setWards] = useState([]);
+
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      try {
+        const provinceData = await ExternalApiService.getProvinces();
+        const provinceOptions = provinceData.map((p) => ({
+          label: p.name,
+          value: p.code,
+        }));
+        setProvinces(provinceOptions);
+      } catch (error) {
+        console.error("Failed to fetch provinces:", error);
+      }
+    };
+    fetchProvinces();
+  }, []);
+
+  const handleProvinceChange = async (provinceCode) => {
+    try {
+      const districtData = await ExternalApiService.getDistricts(provinceCode);
+      const districtOptions = districtData.map((d) => ({
+        label: d.name,
+        value: d.code,
+      }));
+      setDistricts(districtOptions);
+      setWards([]);
+      form.setFieldsValue({ district: null, ward: null });
+    } catch (error) {
+      console.error("Failed to fetch districts:", error);
+    }
+  };
+
+  const handleDistrictChange = async (districtCode) => {
+    try {
+      const wardData = await ExternalApiService.getWards(districtCode);
+      const wardOptions = wardData.map((w) => ({
+        label: w.name,
+        value: w.code,
+      }));
+      setWards(wardOptions);
+      form.setFieldsValue({ ward: null });
+    } catch (error) {
+      console.error("Failed to fetch wards:", error);
+    }
+  };
+
+  // 1. useEffect để điền thông tin cơ bản
   useEffect(() => {
     if (user) {
       form.setFieldsValue({
-        username: user.username || "", // Đồng bộ với Backend
+        username: user.username || "",
         email: user.email || "",
         phone: user.phone || "",
-        address: user.address || "",
         gender: user.gender || "",
         dateOfBirth: user.dateOfBirth ? dayjs(user.dateOfBirth) : null,
+        address: {
+          detailAddress: user.address?.detailAddress,
+        },
       });
-      setPreviewImage(user.avatar); // Hiển thị avatar hiện tại
+      setPreviewImage(user.avatar);
     }
   }, [user, form]);
 
-  // const handleAvatarChange = (info) => {
-  //   if (info.file.status === "done") {
-  //     const reader = new FileReader();
-  //     reader.onload = (e) => {
-  //       setAvatar(e.target.result);
-  //       message.success("Cập nhật ảnh đại diện thành công!");
-  //     };
-  //     reader.readAsDataURL(info.file.originFileObj);
-  //   }
-  // };
+  // 2. useEffect riêng để xử lý Tỉnh
+  useEffect(() => {
+    if (user?.address?.province && provinces.length > 0) {
+      const savedProvince = provinces.find(
+        (p) => p.label === user.address?.province
+      );
+      if (savedProvince) {
+        form.setFieldsValue({ address: { province: savedProvince.value } });
+        handleProvinceChange(savedProvince.value); // Tải danh sách huyện
+      }
+    }
+  }, [user?.address?.province, provinces]);
+
+  // 3. useEffect riêng để xử lý Huyện
+  useEffect(() => {
+    if (user?.address?.district && districts.length > 0) {
+      const savedDistrict = districts.find(
+        (d) => d.label === user.address?.district
+      );
+      if (savedDistrict) {
+        form.setFieldsValue({ address: { district: savedDistrict.value } });
+        handleDistrictChange(savedDistrict.value); // Tải danh sách xã
+      }
+    }
+  }, [user?.address?.district, districts]);
+
+  // 4. useEffect riêng để xử lý Xã
+  useEffect(() => {
+    if (user?.address?.ward && wards.length > 0) {
+      const savedWard = wards.find((w) => w.label === user.address?.ward);
+      if (savedWard) {
+        form.setFieldsValue({ address: { ward: savedWard.value } });
+      }
+    }
+  }, [user?.address?.ward, wards]);
+
   const mutation = useMutationHooks((data) => {
     const { _id, formData } = data;
     return UserService.updateUser(_id, formData);
   });
-
-  const { data, isPending, isSuccess, isError } = mutation;
+  const { isPending } = mutation;
 
   const handleBeforeUpload = (file) => {
-    setAvatarFile(file); // Lưu file thật vào state
-    setPreviewImage(URL.createObjectURL(file)); // Tạo URL tạm để xem trước
-    return false; // Ngăn Ant Design tự động upload
+    setAvatarFile(file);
+    setPreviewImage(URL.createObjectURL(file));
+    return false;
   };
 
   const onFinish = (values) => {
     const formData = new FormData();
 
+    const addressValues = values.address || {};
+    const provinceName = provinces.find(
+      (p) => p.value === addressValues.province
+    )?.label;
+    const districtName = districts.find(
+      (d) => d.value === addressValues.district
+    )?.label;
+    const wardName = wards.find((w) => w.value === addressValues.ward)?.label;
+
+    formData.append("address[province]", provinceName || "");
+    formData.append("address[district]", districtName || "");
+    formData.append("address[ward]", wardName || "");
+    formData.append(
+      "address[detailAddress]",
+      addressValues.detailAddress || ""
+    );
+
     Object.keys(values).forEach((key) => {
-      if (key === "dateOfBirth" && values[key]) {
-        formData.append(key, values[key].format("YYYY-MM-DD"));
-      } else if (values[key] !== null && values[key] !== undefined) {
-        formData.append(key, values[key]);
+      if (key !== "address") {
+        // Chỉ xử lý các key không phải 'address'
+        if (key === "dateOfBirth" && values[key]) {
+          formData.append(key, values[key].format("YYYY-MM-DD"));
+        } else if (values[key] !== null && values[key] !== undefined) {
+          formData.append(key, values[key]);
+        }
       }
     });
 
-    if (avatarFile instanceof File) { // Sửa: Chỉ append nếu avatarFile là một File
-        formData.append("avatar", avatarFile);
+    if (avatarFile instanceof File) {
+      formData.append("avatar", avatarFile);
     }
 
     mutation.mutate(
       { _id: user.id, formData },
       {
         onSuccess: (data) => {
-          // `data` có thể là `{ status: 'OK', data: user }` hoặc chỉ là `user`
-    // Cách lấy an toàn nhất: Nếu data.data tồn tại thì lấy, nếu không thì coi chính data là user
-    const updatedUserFromServer = data?.data;
-
-    // Kiểm tra xem chúng ta có thực sự lấy được object user không
-    if (updatedUserFromServer?._id) {
-        dispatch(updateUser(updatedUserFromServer));
-        message.success("Cập nhật thông tin thành công!");
-        navigate("/profile");
-    } else {
-        // Nếu không lấy được, báo lỗi để biết
-        message.error("Không nhận được dữ liệu người dùng từ máy chủ.");
-        console.error("Dữ liệu không hợp lệ từ onSuccess:", data);
-    }
+          const updatedUserFromServer = data?.data;
+          dispatch(updateUser(updatedUserFromServer));
+          message.success("Cập nhật thông tin thành công!");
+          navigate("/profile");
         },
-        onError: (error) => {
+        onError: (error) =>
           message.error(
             `Cập nhật thất bại: ${error.message || "Đã có lỗi xảy ra"}`
-          );
-        },
+          ),
       }
     );
-  };
-
-  useEffect(() => {
-    if (isSuccess && data) {
-      setLoading(false);
-    } else if (isError) {
-      setLoading(false);
-    }
-  }, [isSuccess, isError, data]);
-
-  const formVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.4,
-        staggerChildren: 0.08,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: {
-      opacity: 1,
-      y: 0,
-    },
   };
 
   return (
@@ -157,15 +212,16 @@ const EditProfile = () => {
       </div>
       <motion.div
         className="edit-profile-container"
-        variants={formVariants}
         initial="hidden"
         animate="visible"
       >
-        <motion.div className="avatar-section" variants={itemVariants}>
+        <motion.div className="avatar-section">
           <div className="avatar-container">
             <Avatar
               size={150}
-src={previewImage || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} // <-- FIX: Use the previewImage state              className="edit-avatar"
+              src={previewImage}
+              icon={<UserOutlined />}
+              className="edit-avatar"
             />
             <Upload
               maxCount={1}
@@ -180,8 +236,7 @@ src={previewImage || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} //
             </Upload>
           </div>
         </motion.div>
-
-        <motion.div className="form-section" variants={itemVariants}>
+        <motion.div className="form-section">
           <Form
             form={form}
             name="editProfile"
@@ -193,7 +248,7 @@ src={previewImage || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} //
             <Row gutter={[24, 0]}>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  name="username" // Thay fullName bằng username
+                  name="username"
                   label="Họ và tên"
                   rules={[
                     { required: true, message: "Vui lòng nhập họ và tên!" },
@@ -225,11 +280,8 @@ src={previewImage || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} //
                   name="phone"
                   label="Số điện thoại"
                   rules={[
-                    // Bạn có thể bỏ dòng 'required' nếu không muốn bắt buộc người dùng nhập SĐT
-                    // { required: true, message: "Vui lòng nhập số điện thoại!" },
+                    { required: true, message: "Vui lòng nhập số điện thoại!" },
                     {
-                      // Nếu người dùng có nhập, nó phải khớp với định dạng này
-                      required: true,
                       pattern: /^(84|0[3|5|7|8|9])[0-9]{8}$/,
                       message: "Số điện thoại không đúng định dạng Việt Nam!",
                     },
@@ -262,10 +314,51 @@ src={previewImage || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} //
                   />
                 </Form.Item>
               </Col>
-              <Col xs={24} sm={12}>
-                <Form.Item name="address" label="Địa chỉ">
+            </Row>
+            <Row gutter={[24, 0]}>
+              <Col xs={24} sm={8}>
+                <Form.Item
+                  name={["address", "province"]}
+                  label="Tỉnh/Thành phố"
+                >
+                  <Select
+                    placeholder="Chọn Tỉnh/Thành"
+                    size="large"
+                    onChange={handleProvinceChange}
+                    options={provinces}
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={8}>
+                <Form.Item name={["address", "district"]} label="Quận/Huyện">
+                  <Select
+                    placeholder="Chọn Quận/Huyện"
+                    size="large"
+                    onChange={handleDistrictChange}
+                    options={districts}
+                    disabled={!districts.length}
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={8}>
+                <Form.Item name={["address", "ward"]} label="Phường/Xã">
+                  <Select
+                    placeholder="Chọn Phường/Xã"
+                    size="large"
+                    options={wards}
+                    disabled={!wards.length}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row>
+              <Col span={24}>
+                <Form.Item
+                  name={["address", "detailAddress"]}
+                  label="Địa chỉ cụ thể (Số nhà, tên đường...)"
+                >
                   <Input
-                    placeholder="123 Đường Nguyễn Huệ, Quận 1, TP.HCM"
+                    placeholder="Ví dụ: 123 Đường Nguyễn Huệ"
                     size="large"
                   />
                 </Form.Item>

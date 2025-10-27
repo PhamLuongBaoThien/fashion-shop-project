@@ -1,17 +1,21 @@
 const mongoose = require("mongoose");
 const userSchema = new mongoose.Schema(
   {
-    username: { type: String, required: true},
-    email: { type: String, required: true, unique: true },
+    username: { type: String, required: true, trim: true },
+    email: { type: String, required: true, trim: true, unique: true },
     password: { type: String, required: true },
     isAdmin: { type: Boolean, default: false, required: true },
-    phone: { type: String, required: true },
-    avatar: {type: String, default: ""},
-    address: {type: String, default: ""},
-    gender: {type: String, default: ""},
+    phone: { type: String, required: true, trim: true },
+    avatar: { type: String, default: "" },
+    address: {
+      province: { type: String, trim: true, default: "" }, // Thêm default
+      district: { type: String, trim: true, default: "" }, // Thêm default
+      ward: { type: String, trim: true, default: "" }, // Thêm default
+      detailAddress: { type: String, trim: true, default: "" }, // Thêm default
+    },
+    gender: { type: String, default: "" },
     dateOfBirth: { type: Date, default: null },
-    // access_token: { type: String},
-    // refresh_token: { type: String},
+
   },
   {
     timestamps: true,

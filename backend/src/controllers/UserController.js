@@ -95,6 +95,26 @@ const updateUser = async (req, res) => {
         .json({ status: "ERR", message: "The userid is required" });
     }
 
+    // ✅ BƯỚC 1: TẠO MỘT OBJECT DỮ LIỆU MỚI ĐỂ CHUẨN BỊ
+    const updateData = {};
+
+    // ✅ BƯỚC 2: TÁI CẤU TRÚC DỮ LIỆU ĐỊA CHỈ
+    // Gom các trường địa chỉ vào một object con
+    updateData.address = {
+        province: data.province,
+        district: data.district,
+        ward: data.ward,
+        detailAddress: data.detailAddress,
+    };
+
+    // ✅ BƯỚC 3: THÊM CÁC TRƯỜNG CÒN LẠI VÀO updateData
+    // Duyệt qua các key trong req.body và thêm vào nếu nó không phải là trường địa chỉ
+    Object.keys(data).forEach(key => {
+        if (!['province', 'district', 'ward', 'detailAddress'].includes(key)) {
+            updateData[key] = data[key];
+        }
+    });
+
     // Kiểm tra xem Multer có xử lý file nào không
     if (req.file) {
       // req.file.buffer chứa dữ liệu nhị phân của ảnh
@@ -114,10 +134,10 @@ const updateUser = async (req, res) => {
         uploadStream.end(fileBuffer);
       });
 
-      data.avatar = result.secure_url;
+      updateData.avatar = result.secure_url;
     }
 
-    const response = await UserService.updateUser(userId, data);
+    const response = await UserService.updateUser(userId, updateData);
     return res.status(201).json(response);
   } catch (error) {
     return res.status(500).json({ status: "ERR", message: error.message });
