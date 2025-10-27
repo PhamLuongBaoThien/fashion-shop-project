@@ -1,6 +1,5 @@
-"use client";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Avatar, Divider, Tabs, Empty, Spin } from "antd";
 import {
   EditOutlined,
@@ -17,6 +16,14 @@ import ButtonComponent from "../../components/common/ButtonComponent/ButtonCompo
 
 const ProfilePage = () => {
   const user = useSelector((state) => state.user); // Lấy dữ liệu user từ Redux
+  const navigate = useNavigate();
+
+  useEffect(() => {
+        // Nếu user.id đã tồn tại (nghĩa là đã đăng nhập)
+        if (!user.id) {
+          navigate("/sign-in"); // Chuyển hướng về trang chủ
+        }
+      }, [user.id, navigate]); // Chạy lại khi user.id hoặc navigate thay đổi
 
   // Mock orders và reviews (sẽ thay bằng API sau)
   const [orders] = useState([

@@ -30,13 +30,20 @@ const EditProfile = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector((state) => state.user);
-
+  
   const [avatarFile, setAvatarFile] = useState(null);
   const [previewImage, setPreviewImage] = useState("");
 
   const [provinces, setProvinces] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [wards, setWards] = useState([]);
+
+  useEffect(() => {
+      // Nếu user.id đã tồn tại (nghĩa là đã đăng nhập)
+      if (!user.id) {
+        navigate("/sign-in"); // Chuyển hướng về trang chủ
+      }
+    }, [user.id, navigate]); // Chạy lại khi user.id hoặc navigate thay đổi
 
   useEffect(() => {
     const fetchProvinces = async () => {

@@ -8,6 +8,7 @@ import SignInPage from "../pages/SignInPage/SignInPage";
 import ProfilePage from "../pages/ProfilePage/ProfilePage.jsx";
 import EditProfilePage from "../pages/EditProfilePage/EditProfilePage.jsx";
 import AdminPage from "../pages/AdminPage/AdminPage.jsx"
+import AdminSignInPage from "../pages/AdminSignInPage/AdminSignInPage.jsx"
 
 export const routes = [
   {
@@ -54,6 +55,11 @@ export const routes = [
     isShowHeader: false,
     isPrivate: true
   },
+  {
+        path: "/admin/sign-in",
+        page: AdminSignInPage,
+        isShowHeader: false, // Trang login admin thường không có header/footer chung
+    },
   {
     path: "*",
     page: NotFoundPage,

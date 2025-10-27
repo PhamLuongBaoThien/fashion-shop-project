@@ -126,13 +126,12 @@ function App() {
         <Routes>
           {routes.map((route) => {
             const Page = route.page;
-            const isCheckAuth = !route.isPrivate || user.isAdmin;
             const Layout = route.isShowHeader
               ? DefaultComponent
               : React.Fragment;
 
             if (route.isPrivate && !user.isAdmin) {
-              return null; // Không xây cửa
+              return null; // Trang cho admin, nhưng
             }
             return (
               <Route

@@ -50,3 +50,11 @@ export const updateUser = async (id, data) => {
   );
   return response.data;
 };
+
+export const loginAdmin = async (data) => {
+  const response = await axios.post(
+    `${process.env.REACT_APP_API_KEY}/user/admin/sign-in`,
+    data
+  );
+  return response.data;
+};

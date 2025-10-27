@@ -8,7 +8,7 @@ import {
   HeartOutlined,
 } from "@ant-design/icons";
 import { Badge, Layout, Space, Dropdown } from "antd";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import "./HeaderComponent.css";
 import Logo from "../../common/Logo/Logo";
 import DesktopNavigation from "../Navigation/DesktopNavigation";
@@ -19,6 +19,7 @@ import MobileNavigation from "../Navigation/MobileNavigation";
 import InputSearch from "../../common/InputSearch/InputSearch";
 import ButtonComponent from "../../common/ButtonComponent/ButtonComponent";
 import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 // import { logoutUser } from "../../../redux/slides/userSlide"; // tí mình sẽ tạo action này
 import * as UserService from "../../../services/UserService";
 import { resetUser } from "../../../redux/slides/userSlide";
@@ -32,6 +33,8 @@ export default function HeaderComponent() {
 
   const [searchValue, setSearchValue] = useState("");
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const user = useSelector((state) => state.user); // state.user là slice bạn đã tạo
   useEffect(() => {
     const handleScroll = () => {
@@ -46,7 +49,8 @@ export default function HeaderComponent() {
     await UserService.logoutUser();
     localStorage.removeItem("access_token");
     dispatch(resetUser());
-  }
+    navigate("/sign-in");
+  };
 
   const getLastName = (fullName) => {
     if (!fullName) return "Khách";
@@ -105,31 +109,69 @@ export default function HeaderComponent() {
   };
 
   const userMenu = {
-    items: [
-      {
-        key: "profile",
-        label: (
-          <Link to="/profile" style={{ fontWeight: 500, color: "#262626" }}>
-            Thông tin cá nhân
-          </Link>
-        ),
-      },
-      {
-        type: "divider",
-      },
-      {
-        key: "logout",
-        label: (
-          <span
-            style={{ fontWeight: 500, color: "red" }}
-            onClick={handleLogout}
-          >
-            Đăng xuất
-          </span>
-        ),
-      },
-    ],
+    items: user.isAdmin
+      ? [
+          // Mảng dành cho ADMIN
+          
+          {
+            key: "profile",
+            label: (
+              <Link to="/profile" style={{ fontWeight: 500, color: "#262626" }}>
+                Thông tin cá nhân
+              </Link>
+            ),
+          },
+          { type: "divider" },
+          {
+            key: "logout",
+            label: (
+              <span
+                style={{ fontWeight: 500, color: "red", cursor: "pointer" }}
+                onClick={handleLogout}
+              >
+                Đăng xuất
+              </span>
+            ),
+          },
+          { type: "divider" },
+          {
+            key: "admin",
+            label: (
+              <Link
+                to="/system/admin"
+                style={{ fontWeight: 600, color: "#1890ff" }}
+              >
+                Quản lý hệ thống
+              </Link>
+            ),
+          },
+          
+        ]
+      : [
+          // Mảng dành cho CUSTOMER
+          {
+            key: "profile",
+            label: (
+              <Link to="/profile" style={{ fontWeight: 500, color: "#262626" }}>
+                Thông tin cá nhân
+              </Link>
+            ),
+          },
+          { type: "divider" },
+          {
+            key: "logout",
+            label: (
+              <span
+                style={{ fontWeight: 500, color: "red", cursor: "pointer" }}
+                onClick={handleLogout}
+              >
+                Đăng xuất
+              </span>
+            ),
+          },
+        ],
   };
+
 
   return (
     <Header style={headerStyle}>
@@ -155,7 +197,11 @@ export default function HeaderComponent() {
           <InputSearch
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
-            placeholder={ user.username ? `${getLastName(user.username)} cần tìm gì?` :"Tìm kiếm sản phẩm..."}
+            placeholder={
+              user.username
+                ? `${getLastName(user.username)} cần tìm gì?`
+                : "Tìm kiếm sản phẩm..."
+            }
             className="desktop-search"
           />
 

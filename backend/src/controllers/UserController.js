@@ -95,10 +95,10 @@ const updateUser = async (req, res) => {
         .json({ status: "ERR", message: "The userid is required" });
     }
 
-    // ✅ BƯỚC 1: TẠO MỘT OBJECT DỮ LIỆU MỚI ĐỂ CHUẨN BỊ
+    // BƯỚC 1: TẠO MỘT OBJECT DỮ LIỆU MỚI ĐỂ CHUẨN BỊ
     const updateData = {};
 
-    // ✅ BƯỚC 2: TÁI CẤU TRÚC DỮ LIỆU ĐỊA CHỈ
+    // BƯỚC 2: TÁI CẤU TRÚC DỮ LIỆU ĐỊA CHỈ
     // Gom các trường địa chỉ vào một object con
     updateData.address = {
         province: data.province,
@@ -107,7 +107,7 @@ const updateUser = async (req, res) => {
         detailAddress: data.detailAddress,
     };
 
-    // ✅ BƯỚC 3: THÊM CÁC TRƯỜNG CÒN LẠI VÀO updateData
+    // BƯỚC 3: THÊM CÁC TRƯỜNG CÒN LẠI VÀO updateData
     // Duyệt qua các key trong req.body và thêm vào nếu nó không phải là trường địa chỉ
     Object.keys(data).forEach(key => {
         if (!['province', 'district', 'ward', 'detailAddress'].includes(key)) {
@@ -208,6 +208,42 @@ const logoutUser = async (req, res) => {
   }
 };
 
+const loginAdmin = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        const emailReg = /^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;
+        if (!email || !password) {
+            return res.status(400).json({ status: "ERR", message: "The input is required" });
+        }
+        if (!emailReg.test(email)) {
+            return res.status(400).json({ status: "ERR", message: "The email is invalid" });
+        }
+
+        // Gọi đến một service function mới chỉ dành cho admin
+        const response = await UserService.loginAdmin({ email, password });
+        
+        // Đoạn code này giống hệt loginUser
+        const { refresh_token, ...newResponse } = response;
+        res.cookie("refresh_token", refresh_token, {
+            httpOnly: true,
+            secure: false, 
+            sameSite: "lax",
+            maxAge: 365 * 24 * 60 * 60 * 1000,
+        });
+        return res.status(200).json({ status: "OK", data: newResponse });
+
+    } catch (error) {
+        // Khối catch này sẽ bắt lỗi "Không phải admin" hoặc "Sai mật khẩu"
+        return res.status(400).json({ 
+            status: "ERR", 
+            message: error.message 
+        });
+    }
+};
+
+
+
 module.exports = {
   createUser,
   loginUser,
@@ -217,4 +253,5 @@ module.exports = {
   getDetailUser,
   refreshToken,
   logoutUser,
+  loginAdmin,
 };

@@ -148,6 +148,45 @@ const getDetailUser = (id) => {
   });
 };
 
+const loginAdmin = (userLogin) => {
+    return new Promise(async (resolve, reject) => {
+        const { email, password } = userLogin;
+        try {
+            // ĐIỀU KIỆN QUAN TRỌNG: Tìm user có email khớp VÀ isAdmin: true
+            const checkUser = await User.findOne({ email: email, isAdmin: true });
+            
+            if (checkUser === null) {
+                // Lỗi chung để bảo mật, không cho biết email có tồn tại hay không
+                return reject(new Error("Wrong email, password or you are not an admin")); 
+            }
+            
+            const comparePassword = bcrypt.compareSync(password, checkUser.password);
+            if (!comparePassword) {
+                return reject(new Error("Wrong email, password or you are not an admin"));
+            }
+
+            // Nếu thành công, tạo token như bình thường
+            const access_token = await generalAccessToken({
+                id: checkUser._id,
+                isAdmin: checkUser.isAdmin,
+            });
+            const refresh_token = await generalRefreshToken({
+                id: checkUser._id,
+                isAdmin: checkUser.isAdmin,
+            });
+            
+            resolve({
+                status: "OK",
+                message: "Login successfully",
+                access_token,
+                refresh_token,
+            });
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
 module.exports = {
   createUser,
   loginUser,
@@ -155,4 +194,5 @@ module.exports = {
   deleteUser,
   getAllUser,
   getDetailUser,
+  loginAdmin
 };
