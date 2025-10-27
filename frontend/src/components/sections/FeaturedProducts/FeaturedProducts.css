@@ -1,7 +1,8 @@
 /* ===== Section chung ===== */
 .featured-section {
-  padding: 80px 24px;
+  padding: 80px 0;
   background: #fafafa;
+  overflow-x: hidden; 
 }
 
 .container {
@@ -31,4 +32,73 @@
 .see-more {
   text-align: center;
   margin-top: 40px;
+  
+}
+
+.btn-see-more {
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  color: #1a1a1a;
+}
+
+.btn-see-more:hover {
+  border-color: #1a1a1a !important;
+  color: #1a1a1a !important;
+}
+
+/* === CSS MỚI CHO SLIDER VÀ MŨI TÊN === */
+
+.featured-section .slick-slider {
+  position: relative;
+}
+
+/* Tạo khoảng hở (gutter) giữa các slide */
+.featured-section .slick-slide > div {
+  padding: 0 12px;
+}
+.featured-section .slick-list {
+  margin: 0 -12px;
+}
+
+.featured-section .slick-prev,
+.featured-section .slick-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.8); /* Nền trắng bán trong suốt */
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+/* Icon bên trong mũi tên */
+.featured-section .slick-prev:before,
+.featured-section .slick-next:before {
+  font-family: 'slick';
+  font-size: 18px;
+  color: #333; /* Icon màu tối */
+  opacity: 1; /* Hiển thị rõ */
+}
+
+/* Vị trí mới: Nằm bên trong và đè lên slider */
+.featured-section .slick-prev {
+  left: 5px; /* Cách lề trái 20px */
+}
+
+.featured-section .slick-next {
+  right: 5px; /* Cách lề phải 20px */
+}
+
+/* Hiệu ứng khi hover */
+.featured-section .slick-prev:hover,
+.featured-section .slick-next:hover {
+  background: white; /* Nền trắng đục khi hover */
+  transform: translateY(-50%) scale(1.1); /* Phóng to nhẹ */
 }

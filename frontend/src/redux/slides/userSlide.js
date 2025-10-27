@@ -11,7 +11,7 @@ const initialState = {
   gender: "",
   createdAt: "",
   dateOfBirth: null,
-  isLoading: false,
+  isAdmin: false,
 };
 
 export const userSlide = createSlice({
@@ -30,6 +30,7 @@ export const userSlide = createSlice({
         access_token,
         gender = "",
         dateOfBirth = null,
+        isAdmin,
       } = action.payload;
       // console.log("action", action);
       state.id = _id;
@@ -42,6 +43,7 @@ export const userSlide = createSlice({
       state.dateOfBirth = dateOfBirth;
       state.createdAt = createdAt;
       state.access_token = access_token;
+      state.isAdmin = isAdmin;
 
       //   state.email = action.payload.email;
       //   state.access_token = action.payload.access_token;
@@ -56,6 +58,7 @@ export const userSlide = createSlice({
       state.dateOfBirth = null;
       state.createdAt = "";
       state.access_token = "";
+      state.isAdmin = false;
     },
   },
 });

@@ -1,93 +1,48 @@
 "use client";
-import { Row, Col, Typography } from "antd";
+import { Typography } from "antd";
+import { Link } from "react-router-dom";
 import "./FeaturedProducts.css";
-import ImgProductA1 from "../../../assets/images/imgProducts/a1.jpg";
-import ImgProductA2 from "../../../assets/images/imgProducts/a2.jpeg";
-import ImgProductB1 from "../../../assets/images/imgProducts/b1.jpg";
-import ImgProductB2 from "../../../assets/images/imgProducts/b2.jpeg";
-import ImgProductC1 from "../../../assets/images/imgProducts/c1.jpeg";
-import ImgProductC2 from "../../../assets/images/imgProducts/c2.jpeg";
-import ImgProductD1 from "../../../assets/images/imgProducts/d1.jpeg";
-import ImgProductD2 from "../../../assets/images/imgProducts/d2.jpeg";
+
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+
 import CardComponent from "../../common/CardComponent/CardComponent";
 import ButtonComponent from "../../common/ButtonComponent/ButtonComponent";
 
 const { Title, Text } = Typography;
 // Dùng discount thay cho originalPrice
-const products = [
-    {
-      id: 1,
-      name: "Áo sơ mi linen cao cấp",
-      category: "Áo",
-      price: 1290000,
-      discount: 20,
-      image: ImgProductA1,
-      subImage: [ImgProductA2],
-      badge: "Sale",
-      isNew: false,
-      status: "Còn hàng",
-      sizes: [
-        { size: "S", quantity: 12 },
-        { size: "M", quantity: 5 },
-        { size: "L", quantity: 0 },
-        { size: "XL", quantity: 5 },
-      ],
-    },
-    {
-      id: 2,
-      name: "Váy midi silk premium",
-      category: "Đầm",
-      price: 2490000,
-      discount: 0,
-      image: ImgProductB1,
-      subImage: [ImgProductB2],
-      badge: "New",
-      isNew: true,
-      status: "Còn hàng",
-      sizes: [
-        { size: "S", quantity: 8 },
-        { size: "M", quantity: 2 },
-        { size: "L", quantity: 1 },
-      ],
-    },
-    {
-      id: 3,
-      name: "Blazer wool cao cấp",
-      category: "Áo khoác",
-      price: 3290000,
-      discount: 15,
-      image: ImgProductC1,
-      subImage: [ImgProductC2],
-      badge: "Sale",
-      isNew: false,
-      status: "Hết hàng",
-      sizes: [
-        { size: "M", quantity: 0 },
-        { size: "L", quantity: 0 },
-        { size: "XL", quantity: 0 },
-      ],
-    },
-    {
-      id: 4,
-      name: "Quần tây straight fit",
-      category: "Quần",
-      price: 1890000,
-      discount: 0,
-      image: ImgProductD1,
-      subImage: [ImgProductD2],
-      badge: "",
-      isNew: false,
-      status: "Còn hàng",
-      sizes: [
-        { size: "S", quantity: 4 },
-        { size: "M", quantity: 3 },
-        { size: "L", quantity: 2 },
-        { size: "XL", quantity: 0 },
-      ],
-    },
-  ];
 
-export default function FeaturedProducts() {
+export default function FeaturedProducts({ products, textButton }) {
+  const settings = {
+    dots: false,
+    infinite: true, // Vòng lặp sẽ tốt hơn nếu bạn có nhiều hơn 4 sản phẩm
+    speed: 500,
+    slidesToShow: 3,
+    slidesToScroll: 1,
+    arrows: true,
+    responsive: [
+      {
+        breakpoint: 1024, // Dưới 1024px
+        settings: {
+          slidesToShow: 3,
+        },
+      },
+      {
+        breakpoint: 768, // Dưới 768px
+        settings: {
+          slidesToShow: 2,
+        },
+      },
+      {
+        breakpoint: 480, // Dưới 480px
+        settings: {
+          slidesToShow: 1,
+        },
+      },
+    ],
+  };
+
   return (
     <section className="featured-section">
       <div className="container">
@@ -99,20 +54,24 @@ export default function FeaturedProducts() {
           </Text>
         </div>
 
-        <Row gutter={[24, 24]}>
-          {products.map((p) => {
-            
-
-            return (
-              <Col xs={24} sm={12} lg={6} key={p.id}>
-                <CardComponent product={p} />
-              </Col>
-            );
-          })}
-        </Row>
+        {/* ✅ 3. SỬ DỤNG SLIDER */}
+        <Slider {...settings}>
+          {products.map((p) => (
+            // Sử dụng _id từ MongoDB làm key
+            <div key={p._id}>
+              <CardComponent product={p} />
+            </div>
+          ))}
+        </Slider>
 
         <div className="see-more">
-          <ButtonComponent size={"large"} textButton={"Xem tất cả sản phẩm"} />
+          <Link to="/products">
+            <ButtonComponent
+              className="btn-see-more"
+              size={"large"}
+              textButton={textButton}
+            />
+          </Link>
         </div>
       </div>
     </section>

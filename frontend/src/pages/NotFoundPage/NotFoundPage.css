@@ -1,0 +1,135 @@
+.not-found-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #faf9f6 0%, #f5f3f0 100%);
+  position: relative;
+  overflow: hidden;
+  padding: 20px;
+}
+
+/* Decorative circles */
+.circle {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.1;
+}
+
+.circle-1 {
+  width: 300px;
+  height: 300px;
+  border: 2px solid #1a1a1a;
+  top: -100px;
+  right: -100px;
+}
+
+.circle-2 {
+  width: 200px;
+  height: 200px;
+  border: 2px solid #1a1a1a;
+  bottom: -50px;
+  left: -50px;
+}
+
+/* Container */
+.not-found-container {
+  text-align: center;
+  z-index: 1;
+  max-width: 600px;
+}
+
+/* 404 Number */
+.not-found-number {
+  margin-bottom: 20px;
+}
+
+.not-found-number span {
+  font-size: 120px;
+  font-weight: 900;
+  color: #1a1a1a;
+  font-family: "Georgia", serif;
+  display: inline-block;
+  letter-spacing: -5px;
+}
+
+/* Title */
+.not-found-title {
+  font-size: 36px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 20px 0;
+  letter-spacing: -0.5px;
+}
+
+/* Description */
+.not-found-description {
+  font-size: 16px;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 40px;
+}
+
+/* Illustration */
+.not-found-illustration {
+  margin: 40px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.not-found-illustration svg {
+  width: 150px;
+  height: 150px;
+}
+
+/* Button */
+.not-found-button {
+  margin-top: 40px;
+}
+
+.home-button {
+  background-color: #1a1a1a;
+  border-color: #1a1a1a;
+  height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.home-button:hover {
+  background-color: #333;
+  border-color: #333;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .not-found-number span {
+    font-size: 80px;
+  }
+
+  .not-found-title {
+    font-size: 28px;
+  }
+
+  .not-found-description {
+    font-size: 14px;
+  }
+
+  .not-found-illustration svg {
+    width: 120px;
+    height: 120px;
+  }
+
+  .circle-1 {
+    width: 200px;
+    height: 200px;
+  }
+
+  .circle-2 {
+    width: 150px;
+    height: 150px;
+  }
+}
