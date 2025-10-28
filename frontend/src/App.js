@@ -8,7 +8,7 @@ import * as UserService from "./services/UserService";
 import { useDispatch, useSelector } from "react-redux";
 import { updateUser } from "./redux/slides/userSlide";
 import { store } from "./redux/store";
-import { Spin } from 'antd';
+import { Spin } from "antd";
 
 function App() {
   const dispatch = useDispatch();
@@ -118,37 +118,70 @@ function App() {
     <div>
       {/* 5. Hiển thị Spin hoặc Router dựa trên state isLoading */}
       {isLoading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+          }}
+        >
           <Spin size="large" />
         </div>
       ) : (
         <Router>
-        <Routes>
-          {routes.map((route) => {
-            const Page = route.page;
-            const Layout = route.isShowHeader
-              ? DefaultComponent
-              : React.Fragment;
+          <Routes>
+            {routes.map((route) => {
+              const Page = route.page;
+              const Layout = route.isShowHeader
+                ? DefaultComponent
+                : React.Fragment;
 
-            if (route.isPrivate && !user.isAdmin) {
-              return null; // Trang cho admin, nhưng
-            }
-            return (
-              <Route
-                key={route.path}
-                path={route.path}
-                element={
-                  <Layout>
-                    <Page />
-                  </Layout>
-                }
-              />
-            );
-          })}
-        </Routes>
-      </Router>
+              // SỬA LẠI: Nếu route có children, tạo một Route cha lồng các con
+              if (route.children) {
+                return (
+                  <Route
+                    key={route.path}
+                    path={route.path}
+                    element={
+                      <Layout>
+                        <Page />
+                      </Layout>
+                    }
+                  >
+                    {route.children.map((childRoute) => {
+                      const ChildPage = childRoute.page;
+                      return (
+                        <Route
+                          key={childRoute.path}
+                          path={childRoute.path}
+                          element={<ChildPage />}
+                        />
+                      );
+                    })}
+                  </Route>
+                );
+              }
+              
+              // Render route bình thường nếu không có children
+              if (route.isPrivate && !user.isAdmin) {
+                return null; // Trang cho admin, nhưng
+              }
+              return (
+                <Route
+                  key={route.path}
+                  path={route.path}
+                  element={
+                    <Layout>
+                      <Page />
+                    </Layout>
+                  }
+                />
+              );
+            })}
+          </Routes>
+        </Router>
       )}
-      
     </div>
   );
 }
