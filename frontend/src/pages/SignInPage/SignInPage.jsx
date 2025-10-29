@@ -11,13 +11,10 @@ const SignInPage = () => {
   const user = useSelector((state) => state.user);
   useEffect(() => {
         // Nếu user.id đã tồn tại (nghĩa là đã đăng nhập)
-        if (user.id && !user.isAdmin) {
+        if (user.id) {
             navigate('/'); // Chuyển hướng về trang chủ
         }
 
-        if (user.id && user.isAdmin) {
-            navigate('/system/admin'); // Chuyển hướng về trang chủ
-        }
 
     }, [user.id, user.isAdmin, navigate]); // Chạy lại khi user.id hoặc navigate thay đổi
 

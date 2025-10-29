@@ -90,7 +90,6 @@ const deleteProduct = (productId) => {
   });
 };
 
-
 const getAllProducts = (
   page,
   limit,
@@ -151,6 +150,7 @@ const getAllProducts = (
         page: parseInt(page, 10) || 1,
         limit: parseInt(limit, 10) || 10,
         sort: {},
+        collation: { locale: "vi" },
       };
 
       // Xử lý sắp xếp
@@ -158,8 +158,14 @@ const getAllProducts = (
         case "name_asc":
           options.sort.name = 1; // Sắp xếp tên A-Z
           break;
+        case "name_desc":
+          options.sort.name = -1; // Tên: Z-A
+          break;
         case "price_desc":
           options.sort.price = -1; // Sắp xếp giá cao-thấp
+          break;
+        case "price_asc":
+          options.sort.price = 1; // Giá: Thấp đến Cao
           break;
         case "default":
         default:

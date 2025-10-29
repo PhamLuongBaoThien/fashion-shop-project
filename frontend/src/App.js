@@ -23,10 +23,10 @@ function App() {
         const token = localStorage.getItem("access_token");
         dispatch(updateUser({ ...res?.data, access_token: JSON.parse(token) }));
       }
+      setIsLoading(false);
     } catch (error) {
       console.error("handGetDetailUser error:", error);
-    } finally {
-      setIsLoading(false); // 3. Dừng loading sau khi API hoàn tất (dù thành công hay thất bại)
+      setIsLoading(false);
     }
   };
 
@@ -97,23 +97,6 @@ function App() {
     }
   );
 
-  // Sử dụng useQuery để lấy dữ liệu sản phẩm
-  // const { data, isLoading, isError, error } = useQuery({
-  //   queryKey: ["products"],
-  //   queryFn: async () => {
-  //     const apiUrl = process.env.REACT_APP_API_KEY; // Sử dụng biến đúng
-  //     // console.log("Requesting URL:", `${apiUrl}/product/get-all`);
-  //     const res = await axios.get(`${apiUrl}/product/get-all`);
-  //     // console.log("API Response:", res.data); // Debug response
-  //     return res.data; // Điều chỉnh dựa trên cấu trúc API
-  //   },
-  //   retry: 1, // Thử lại 1 lần nếu lỗi
-  //   staleTime: 5000, // Dữ liệu giữ mới trong 5 giây
-  // });
-
-  // // Log trạng thái để debug
-  // // console.log("Query state:", { data, isLoading, isError, error });
-
   return (
     <div>
       {/* 5. Hiển thị Spin hoặc Router dựa trên state isLoading */}
@@ -137,6 +120,11 @@ function App() {
                 ? DefaultComponent
                 : React.Fragment;
 
+              // Render route bình thường nếu không có children
+              if (route.isPrivate && !user.isAdmin) {
+                return null; // Trang cho admin, nhưng
+              }
+
               // SỬA LẠI: Nếu route có children, tạo một Route cha lồng các con
               if (route.children) {
                 return (
@@ -150,6 +138,10 @@ function App() {
                     }
                   >
                     {route.children.map((childRoute) => {
+                      if (childRoute.isPrivate && !user.isAdmin) {
+                        return null;
+                      }
+
                       const ChildPage = childRoute.page;
                       return (
                         <Route
@@ -162,11 +154,7 @@ function App() {
                   </Route>
                 );
               }
-              
-              // Render route bình thường nếu không có children
-              if (route.isPrivate && !user.isAdmin) {
-                return null; // Trang cho admin, nhưng
-              }
+
               return (
                 <Route
                   key={route.path}
