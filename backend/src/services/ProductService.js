@@ -174,10 +174,23 @@ const getAllProducts = (
       }
 
       const products = await Product.paginate(query, options);
+
+      // Chuyển Mongoose documents thành plain JavaScript objects
+      const plainProducts = products.docs.map(doc => doc.toObject());
+
+      // Lặp qua và thêm trường inventoryStatus
+      const productsWithStatus = plainProducts.map(product => {
+        const totalStock = product.sizes.reduce((total, size) => total + size.quantity, 0);
+        return {
+          ...product,
+          inventoryStatus: totalStock > 0 ? 'Còn hàng' : 'Hết hàng',
+        };
+      });
+
       resolve({
         status: "OK",
         message: "successfully",
-        data: products.docs,
+        data: productsWithStatus,
         pagination: {
           total: products.totalDocs,
           current: products.page,

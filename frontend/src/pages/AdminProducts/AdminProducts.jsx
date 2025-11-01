@@ -13,6 +13,9 @@ import {
   Spin,
   Alert,
   Select,
+  Switch,
+  Col,
+  Row,
 } from "antd";
 import {
   PlusOutlined,
@@ -20,18 +23,16 @@ import {
   DeleteOutlined,
   UploadOutlined,
   SearchOutlined,
+  MinusCircleOutlined,
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query"; // 1. Import useQuery
 import * as ProductService from "../../services/ProductService"; // 2. Import ProductService
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 
 const { Search } = Input;
 
 const AdminProducts = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [form] = Form.useForm();
-
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Number(searchParams.get("page")) || 1; // Đọc 'page' từ URL
   const limit = Number(searchParams.get("limit")) || 10; // Đọc 'limit' từ URL
@@ -59,9 +60,9 @@ const AdminProducts = () => {
     keepPreviousData: true, // Giữ lại dữ liệu cũ khi đang fetch dữ liệu mới, tránh màn hình nháy
   });
 
-  // Tách dữ liệu sản phẩm và thông tin phân trang từ response
-  const products = data?.response?.data;
-  const totalProducts = data?.response?.pagination?.total;
+  // Tách dữ liệu sản phẩm và thông tin phân trang
+  const products = data?.data;
+  const totalProducts = data?.pagination?.total;
 
   const handleTableChange = (pagination) => {
     // Cập nhật URL thay vì cập nhật state
@@ -101,13 +102,38 @@ const AdminProducts = () => {
       key: "price",
       render: (price) => (price ? `${price.toLocaleString()}đ` : "0đ"),
     },
+    {
+            title: "Giá sau khi giảm",
+            key: "finalPrice",
+            // `record` ở đây là nguyên object của một sản phẩm
+            render: (_, record) => {
+                // Tính giá cuối cùng
+                const finalPrice = record.price * (1 - (record.discount || 0) / 100);
+                
+                return (
+                    <strong style={{ color: '#c92127' }}>
+                        {finalPrice.toLocaleString()}đ
+                    </strong>
+                );
+            }
+        },
     // { title: "Tồn kho", dataIndex: "stock", key: "stock" },
     {
-      title: "Trạng thái",
-      dataIndex: "status",
-      key: "status",
+      title: "Tình trạng kho",
+      dataIndex: "inventoryStatus", // Đọc từ trường đã tính toán
+      key: "inventoryStatus",
       render: (status) => (
         <Tag color={status === "Còn hàng" ? "green" : "red"}>{status}</Tag>
+      ),
+    },
+    {
+      title: "Hiển thị",
+      dataIndex: "isActive",
+      key: "isActive",
+      render: (isActive) => (
+        <Tag color={isActive ? "blue" : "default"}>
+          {isActive ? "Đang hoạt động" : "Ngừng"}
+        </Tag>
       ),
     },
     {
@@ -115,21 +141,14 @@ const AdminProducts = () => {
       key: "actions",
       render: (_, record) => (
         <Space>
-          <Button type="primary" size="small" icon={<EditOutlined />} />
+          <Link to={`/system/admin/products/update/${record._id}`}>
+            <Button type="primary" size="small" icon={<EditOutlined />} />
+          </Link>
           <Button danger size="small" icon={<DeleteOutlined />} />
         </Space>
       ),
     },
   ];
-
-  const handleAddProduct = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleModalOk = () => {
-    setIsModalOpen(false);
-    form.resetFields();
-  };
 
   // 5. Xử lý trạng thái Loading và Lỗi
   if (isLoading) {
@@ -161,13 +180,11 @@ const AdminProducts = () => {
       <Card>
         <div className="admin-page-header">
           <h1>Quản lý Sản phẩm</h1>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleAddProduct}
-          >
-            Thêm Sản phẩm
-          </Button>
+          <Link to="/system/admin/products/add">
+            <Button type="primary" icon={<PlusOutlined />}>
+              Thêm Sản phẩm
+            </Button>
+          </Link>
         </div>
 
         {/* THÊM BỘ LỌC VÀO GIAO DIỆN */}
@@ -201,10 +218,10 @@ const AdminProducts = () => {
               onChange={handleSortChange}
               options={[
                 { value: "default", label: "Sắp xếp Mặc định" },
-                { value: "price_asc", label: "Giá: Thấp đến Cao" }, 
+                { value: "price_asc", label: "Giá: Thấp đến Cao" },
                 { value: "price_desc", label: "Giá: Cao đến Thấp" },
                 { value: "name_asc", label: "Tên: A-Z" },
-                { value: 'name_desc', label: 'Tên: Z-A' },
+                { value: "name_desc", label: "Tên: Z-A" },
               ]}
             />
             {/* Thêm các bộ lọc khác ở đây nếu cần */}
@@ -225,45 +242,6 @@ const AdminProducts = () => {
           className="admin-table"
         />
       </Card>
-
-      <Modal
-        title="Thêm Sản phẩm mới"
-        open={isModalOpen}
-        onOk={handleModalOk}
-        onCancel={() => setIsModalOpen(false)}
-        width={600}
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            label="Tên Sản phẩm"
-            name="name"
-            rules={[{ required: true }]}
-          >
-            <Input placeholder="Nhập tên sản phẩm" />
-          </Form.Item>
-          <Form.Item
-            label="Danh mục"
-            name="category"
-            rules={[{ required: true }]}
-          >
-            <Input placeholder="Chọn danh mục" />
-          </Form.Item>
-          <Form.Item label="Giá" name="price" rules={[{ required: true }]}>
-            <InputNumber placeholder="Nhập giá" style={{ width: "100%" }} />
-          </Form.Item>
-          <Form.Item label="Tồn kho" name="stock" rules={[{ required: true }]}>
-            <InputNumber
-              placeholder="Nhập số lượng tồn kho"
-              style={{ width: "100%" }}
-            />
-          </Form.Item>
-          <Form.Item label="Ảnh Sản phẩm" name="image">
-            <Upload>
-              <Button icon={<UploadOutlined />}>Tải ảnh lên</Button>
-            </Upload>
-          </Form.Item>
-        </Form>
-      </Modal>
     </motion.div>
   );
 };

@@ -16,6 +16,9 @@ import AdminUsers from "../pages/AdminUsers/AdminUsers.jsx";
 import AdminOrders from "../pages/AdminOrders/AdminOrders.jsx";
 import AdminRoles from "../pages/AdminRoles/AdminRoles.jsx";
 import AdminProfile from "../pages/AdminProfile/AdminProfile.jsx";
+import AdminAddProductPage from "../pages/AdminProducts/AdminAddProduct.jsx";
+import AdminUpdateProductPage from "../pages/AdminProducts/AdminUpdateProductPage.jsx";
+
 
 export const routes = [
   {
@@ -71,6 +74,14 @@ export const routes = [
         path: "products", // URL: /system/admin/products
         page: AdminProducts,
       },
+      {
+        path: "products/add", // URL: /system/admin/products
+        page: AdminAddProductPage,
+      },
+      {
+        path: "products/update/:id",
+        page: AdminUpdateProductPage,
+    },
       {
         path: "categories", // URL: /system/admin/users
         page: AdminCategories,
