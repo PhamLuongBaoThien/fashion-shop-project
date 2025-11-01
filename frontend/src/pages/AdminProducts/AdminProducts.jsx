@@ -16,6 +16,7 @@ import {
   Switch,
   Col,
   Row,
+  message,
 } from "antd";
 import {
   PlusOutlined,
@@ -26,7 +27,7 @@ import {
   MinusCircleOutlined,
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query"; // 1. Import useQuery
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // 1. Import useQuery
 import * as ProductService from "../../services/ProductService"; // 2. Import ProductService
 import { useSearchParams, Link } from "react-router-dom";
 
@@ -34,11 +35,15 @@ const { Search } = Input;
 
 const AdminProducts = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deletingProductId, setDeletingProductId] = useState(null);
   const page = Number(searchParams.get("page")) || 1; // Đọc 'page' từ URL
   const limit = Number(searchParams.get("limit")) || 10; // Đọc 'limit' từ URL
   const search = searchParams.get("search") || "";
   const category = searchParams.get("category") || "all";
   const sortOption = searchParams.get("sortOption") || "default";
+
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -59,6 +64,38 @@ const AdminProducts = () => {
     retryDelay: 1000,
     keepPreviousData: true, // Giữ lại dữ liệu cũ khi đang fetch dữ liệu mới, tránh màn hình nháy
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => {
+      return ProductService.deleteProduct(id);
+    },
+    onSuccess: () => {
+      message.success("Xóa sản phẩm thành công!");
+      // Ra lệnh đi lấy lại danh sách sản phẩm mới nhất
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+    },
+    onError: (error) => {
+      message.error(`Xóa thất bại: ${error.message}`);
+    },
+  });
+
+  const handleDeleteProduct = (productId) => {
+    console.log("Bước 1: handleDeleteProduct được gọi với ID:", productId);
+    setDeletingProductId(productId);
+    setIsDeleteModalOpen(true); // HIỆN MODAL
+  };
+
+  const confirmDelete = () => {
+  console.log("Bước 2: Xác nhận xóa → gọi mutation với ID:", deletingProductId);
+  deleteMutation.mutate(deletingProductId);
+  setIsDeleteModalOpen(false);
+};
+
+const cancelDelete = () => {
+  console.log("Hủy xóa");
+  setIsDeleteModalOpen(false);
+  setDeletingProductId(null);
+};
 
   // Tách dữ liệu sản phẩm và thông tin phân trang
   const products = data?.data;
@@ -103,20 +140,20 @@ const AdminProducts = () => {
       render: (price) => (price ? `${price.toLocaleString()}đ` : "0đ"),
     },
     {
-            title: "Giá sau khi giảm",
-            key: "finalPrice",
-            // `record` ở đây là nguyên object của một sản phẩm
-            render: (_, record) => {
-                // Tính giá cuối cùng
-                const finalPrice = record.price * (1 - (record.discount || 0) / 100);
-                
-                return (
-                    <strong style={{ color: '#c92127' }}>
-                        {finalPrice.toLocaleString()}đ
-                    </strong>
-                );
-            }
-        },
+      title: "Giá sau khi giảm",
+      key: "finalPrice",
+      // `record` ở đây là nguyên object của một sản phẩm
+      render: (_, record) => {
+        // Tính giá cuối cùng
+        const finalPrice = record.price * (1 - (record.discount || 0) / 100);
+
+        return (
+          <strong style={{ color: "#c92127" }}>
+            {finalPrice.toLocaleString()}đ
+          </strong>
+        );
+      },
+    },
     // { title: "Tồn kho", dataIndex: "stock", key: "stock" },
     {
       title: "Tình trạng kho",
@@ -144,7 +181,16 @@ const AdminProducts = () => {
           <Link to={`/system/admin/products/update/${record._id}`}>
             <Button type="primary" size="small" icon={<EditOutlined />} />
           </Link>
-          <Button danger size="small" icon={<DeleteOutlined />} />
+          <Button
+            danger
+            size="small"
+            icon={<DeleteOutlined />}
+            onClick={() => handleDeleteProduct(record._id)}
+            loading={
+              deleteMutation.isPending &&
+              deleteMutation.variables === record._id
+            }
+          />
         </Space>
       ),
     },
@@ -172,77 +218,95 @@ const AdminProducts = () => {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <Card>
-        <div className="admin-page-header">
-          <h1>Quản lý Sản phẩm</h1>
-          <Link to="/system/admin/products/add">
-            <Button type="primary" icon={<PlusOutlined />}>
-              Thêm Sản phẩm
-            </Button>
-          </Link>
-        </div>
+    <>
+      {/* MODAL XÁC NHẬN XÓA */}
+      <Modal
+        title="Xác nhận xóa sản phẩm"
+        open={isDeleteModalOpen}
+        onOk={confirmDelete}
+        onCancel={cancelDelete}
+        okText="Xóa"
+        cancelText="Hủy"
+        okButtonProps={{ danger: true }}
+        confirmLoading={deleteMutation.isPending}
+      >
+        <p>
+          Bạn có chắc chắn muốn xóa sản phẩm này? Hành động này{" "}
+          <strong>không thể hoàn tác</strong>.
+        </p>
+      </Modal>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <Card>
+          <div className="admin-page-header">
+            <h1>Quản lý Sản phẩm</h1>
+            <Link to="/system/admin/products/add">
+              <Button type="primary" icon={<PlusOutlined />}>
+                Thêm Sản phẩm
+              </Button>
+            </Link>
+          </div>
 
-        {/* THÊM BỘ LỌC VÀO GIAO DIỆN */}
-        <Space
-          direction="vertical"
-          size="middle"
-          style={{ width: "100%", marginBottom: 24 }}
-        >
-          <Search
-            placeholder="Tìm kiếm theo tên sản phẩm..."
-            onSearch={onSearch}
-            enterButton
-            defaultValue={search}
-          />
-          <Space wrap>
-            <Select
-              defaultValue={category}
-              style={{ width: 200 }}
-              onChange={handleCategoryChange}
-              options={[
-                { value: "all", label: "Tất cả Danh mục" },
-                { value: "Áo", label: "Áo" },
-                { value: "Quần", label: "Quần" },
-                { value: "Áo khoác", label: "Áo khoác" },
-                { value: "Đầm", label: "Đầm" },
-              ]}
+          {/* THÊM BỘ LỌC VÀO GIAO DIỆN */}
+          <Space
+            direction="vertical"
+            size="middle"
+            style={{ width: "100%", marginBottom: 24 }}
+          >
+            <Search
+              placeholder="Tìm kiếm theo tên sản phẩm..."
+              onSearch={onSearch}
+              enterButton
+              defaultValue={search}
             />
-            <Select
-              defaultValue={sortOption}
-              style={{ width: 200 }}
-              onChange={handleSortChange}
-              options={[
-                { value: "default", label: "Sắp xếp Mặc định" },
-                { value: "price_asc", label: "Giá: Thấp đến Cao" },
-                { value: "price_desc", label: "Giá: Cao đến Thấp" },
-                { value: "name_asc", label: "Tên: A-Z" },
-                { value: "name_desc", label: "Tên: Z-A" },
-              ]}
-            />
-            {/* Thêm các bộ lọc khác ở đây nếu cần */}
+            <Space wrap>
+              <Select
+                defaultValue={category}
+                style={{ width: 200 }}
+                onChange={handleCategoryChange}
+                options={[
+                  { value: "all", label: "Tất cả Danh mục" },
+                  { value: "Áo", label: "Áo" },
+                  { value: "Quần", label: "Quần" },
+                  { value: "Áo khoác", label: "Áo khoác" },
+                  { value: "Đầm", label: "Đầm" },
+                ]}
+              />
+              <Select
+                defaultValue={sortOption}
+                style={{ width: 200 }}
+                onChange={handleSortChange}
+                options={[
+                  { value: "default", label: "Sắp xếp Mặc định" },
+                  { value: "price_asc", label: "Giá: Thấp đến Cao" },
+                  { value: "price_desc", label: "Giá: Cao đến Thấp" },
+                  { value: "name_asc", label: "Tên: A-Z" },
+                  { value: "name_desc", label: "Tên: Z-A" },
+                ]}
+              />
+              {/* Thêm các bộ lọc khác ở đây nếu cần */}
+            </Space>
           </Space>
-        </Space>
 
-        <Table
-          columns={columns}
-          dataSource={products}
-          rowKey="_id" // 6. Sửa rowKey thành "_id" để khớp với MongoDB
-          loading={isLoading}
-          pagination={{
-            current: page,
-            pageSize: limit,
-            total: totalProducts,
-          }}
-          onChange={handleTableChange}
-          className="admin-table"
-        />
-      </Card>
-    </motion.div>
+          <Table
+            columns={columns}
+            dataSource={products}
+            rowKey="_id" // 6. Sửa rowKey thành "_id" để khớp với MongoDB
+            loading={isLoading}
+            pagination={{
+              current: page,
+              pageSize: limit,
+              total: totalProducts,
+            }}
+            onChange={handleTableChange}
+            className="admin-table"
+          />
+        </Card>
+      </motion.div>
+    </>
   );
 };
 

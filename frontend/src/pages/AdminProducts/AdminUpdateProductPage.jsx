@@ -18,6 +18,7 @@ import { motion } from "framer-motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import * as ProductService from "../../services/ProductService";
+import RichTextEditor from "../../components/common/RichTextEditor/RichTextEditor";
 import {
   PlusOutlined,
   MinusCircleOutlined,
@@ -216,9 +217,12 @@ const AdminUpdateProductPage = () => {
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item label="Mô tả" name="description">
-            <Input.TextArea rows={4} />
-          </Form.Item>
+           <Form.Item label="Mô tả" name="description">
+                        {/* Ant Design Form sẽ tự động truyền 'value' và 'onChange' 
+                          cho component con, rất tiện lợi!
+                        */}
+                        <RichTextEditor />
+                    </Form.Item>
           <Form.Item label="Kích cỡ & Số lượng" required>
             <Form.List
               name="sizes"

@@ -7,6 +7,7 @@ import { useNavigate, Link } from "react-router-dom";
 import * as ProductService from "../../services/ProductService";
 import { PlusOutlined, MinusCircleOutlined, UploadOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
+import RichTextEditor from "../../components/common/RichTextEditor/RichTextEditor";
 
 const AdminAddProductPage = () => {
     const [form] = Form.useForm();
@@ -102,7 +103,10 @@ const AdminAddProductPage = () => {
                     </Row>
                     
                     <Form.Item label="Mô tả" name="description">
-                        <Input.TextArea rows={4} placeholder="Mô tả chi tiết về sản phẩm" />
+                        {/* Ant Design Form sẽ tự động truyền 'value' và 'onChange' 
+                          cho component con, rất tiện lợi!
+                        */}
+                        <RichTextEditor />
                     </Form.Item>
 
                     <Form.Item label="Kích cỡ & Số lượng" required>

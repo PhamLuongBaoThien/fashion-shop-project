@@ -1,0 +1,41 @@
+/* src/components/common/RichTextEditor/RichTextEditor.css */
+
+.tiptap-container {
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  background-color: #fff;
+}
+
+.editor-toolbar {
+  padding: 8px;
+  border-bottom: 1px solid #d9d9d9;
+}
+
+.editor-toolbar .ant-btn {
+  border: none;
+}
+
+.editor-toolbar .is-active {
+  background-color: #e6f7ff; /* Màu xanh nhạt của Ant Design */
+  color: #1890ff;
+}
+
+.tiptap-editor {
+  padding: 12px;
+  min-height: 150px;
+  outline: none;
+}
+
+/* Style cho các thẻ HTML bên trong editor */
+.tiptap-editor h1, .tiptap-editor h2, .tiptap-editor h3 {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.tiptap-editor p {
+  margin: 0;
+}
+
+.tiptap-editor ul, .tiptap-editor ol {
+  padding-left: 20px;
+}

@@ -198,7 +198,7 @@ const deleteProduct = async (req, res) => {
         .json({ status: "ERR", message: "The userid is required" });
     }
     const response = await ProductService.deleteProduct(productId);
-    return res.status(200).json({ response });
+    return res.status(200).json( response );
   } catch (error) {
     return res.status(500).json({ status: "ERR", message: error.message });
   }

@@ -1,4 +1,10 @@
 const Product = require("../models/ProductModel");
+const createDOMPurify = require('dompurify'); // dùng để làm sạch HTML
+const { JSDOM } = require('jsdom'); //  dùng để tạo mô hình DOM trong môi trường Node.js
+
+// Thiết lập DOMPurify
+const window = new JSDOM('').window;
+const DOMPurify = createDOMPurify(window);
 
 const createProduct = (productData) => {
   return new Promise(async (resolve, reject) => {
@@ -10,6 +16,11 @@ const createProduct = (productData) => {
           status: "ERR",
           message: "Product name already exists",
         });
+      }
+
+      if (productData.description) {
+        // DOMPurify sẽ loại bỏ tất cả các thẻ nguy hiểm như <script>
+        productData.description = DOMPurify.sanitize(productData.description);
       }
 
       const newProduct = await Product.create(productData);
@@ -27,6 +38,10 @@ const createProduct = (productData) => {
 const updateProduct = (productId, productData) => {
   return new Promise(async (resolve, reject) => {
     try {
+
+      if (productData.description) {
+        productData.description = DOMPurify.sanitize(productData.description);
+      }
       // Cập nhật sản phẩm với dữ liệu mới
       const updatedProduct = await Product.findByIdAndUpdate(
         productId,
@@ -169,21 +184,24 @@ const getAllProducts = (
           break;
         case "default":
         default:
-          options.sort.createdAt = -1; // Mặc định theo thời gian tạo giảm dần
+          options.sort = { createdAt: -1, _id: 1 };
           break;
       }
 
       const products = await Product.paginate(query, options);
 
       // Chuyển Mongoose documents thành plain JavaScript objects
-      const plainProducts = products.docs.map(doc => doc.toObject());
+      const plainProducts = products.docs.map((doc) => doc.toObject());
 
       // Lặp qua và thêm trường inventoryStatus
-      const productsWithStatus = plainProducts.map(product => {
-        const totalStock = product.sizes.reduce((total, size) => total + size.quantity, 0);
+      const productsWithStatus = plainProducts.map((product) => {
+        const totalStock = product.sizes.reduce(
+          (total, size) => total + size.quantity,
+          0
+        );
         return {
           ...product,
-          inventoryStatus: totalStock > 0 ? 'Còn hàng' : 'Hết hàng',
+          inventoryStatus: totalStock > 0 ? "Còn hàng" : "Hết hàng",
         };
       });
 
