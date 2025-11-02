@@ -12,7 +12,7 @@ const CardComponent = ({ product }) => {
       ? Math.round(product.price / (1 - product.discount / 100))
       : null;
 
-  const isSoldOut = product.status === "Hết hàng";
+  const isSoldOut = product.inventoryStatus === "Hết hàng";
 
   return (
     <Card

@@ -114,7 +114,7 @@ const getAllProducts = (
   page,
   limit,
   search,
-  categorySlug,
+  categorySlugs,
   priceRange,
   sizes,
   status,
@@ -130,18 +130,19 @@ const getAllProducts = (
         query.$text = { $search: search };
       }
 
-      // Xử lý danh mục (mảng hoặc giá trị đơn)
-      if (categorySlug) {
-        const category = await Category.findOne({ slug: categorySlug });
-        if (category) {
-          query.category = category._id; // Lọc sản phẩm bằng _id của category
+     // XỬ LÝ DANH MỤC: MẢNG SLUG
+      if (categorySlugs && Array.isArray(categorySlugs) && categorySlugs.length > 0) {
+        const categories = await Category.find({ slug: { $in: categorySlugs } });
+        const categoryIds = categories.map(cat => cat._id);
+
+        if (categoryIds.length > 0) {
+          query.category = { $in: categoryIds };
         } else {
-          // Nếu không tìm thấy slug, trả về mảng rỗng vì không có sản phẩm nào khớp
+          // Không tìm thấy → trả rỗng
           return resolve({
             status: "OK",
-            message: "Category not found",
             data: [],
-            pagination: { total: 0, current: 1, pageSize: limit, totalPages: 0 },
+            pagination: { total: 0, current: 1, pageSize: 10, totalPages: 0 }
           });
         }
       }
@@ -159,9 +160,24 @@ const getAllProducts = (
         };
       }
 
-      // Xử lý trạng thái
-      if (status && status !== "default") {
-        query.status = status;
+      // XỬ LÝ TRẠNG THÁI
+      if (status && typeof status === 'string') {
+        const statusList = status.split(',').map(s => s.trim());
+
+        if (statusList.length > 0) {
+          const orConditions = [];
+
+          if (statusList.includes('on-sale')) {
+            orConditions.push({ discount: { $gt: 0 } });
+          }
+          if (statusList.includes('new-arrival')) {
+            orConditions.push({ isNewProduct: true });
+          }
+
+          if (orConditions.length > 0) {
+            query.$or = orConditions;
+          }
+        }
       }
 
       // Xử lý nhãn sản phẩm (giả định badges liên quan đến isNewProduct)

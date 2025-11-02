@@ -8,7 +8,7 @@ import {
   HeartOutlined,
 } from "@ant-design/icons";
 import { Badge, Layout, Space, Dropdown } from "antd";
-import { Link, Navigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./HeaderComponent.css";
 import Logo from "../../common/Logo/Logo";
 import DesktopNavigation from "../Navigation/DesktopNavigation";
@@ -19,7 +19,6 @@ import MobileNavigation from "../Navigation/MobileNavigation";
 import InputSearch from "../../common/InputSearch/InputSearch";
 import ButtonComponent from "../../common/ButtonComponent/ButtonComponent";
 import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
 // import { logoutUser } from "../../../redux/slides/userSlide"; // tí mình sẽ tạo action này
 import * as UserService from "../../../services/UserService";
 import { resetUser } from "../../../redux/slides/userSlide";
@@ -108,11 +107,20 @@ export default function HeaderComponent() {
     ],
   };
 
+ const onSearch = (value) => {
+  console.log("SEARCH TRIGGERED:", value); // ← DEBUG
+  if (value) {
+    navigate(`/products?search=${encodeURIComponent(value)}`);
+    setSearchValue(""); // XÓA Ô TÌM KIẾM
+    setIsSearchOpen(false); // ĐÓNG MOBILE
+  }
+};
+
   const userMenu = {
     items: user.isAdmin
       ? [
           // Mảng dành cho ADMIN
-          
+
           {
             key: "profile",
             label: (
@@ -145,7 +153,6 @@ export default function HeaderComponent() {
               </Link>
             ),
           },
-          
         ]
       : [
           // Mảng dành cho CUSTOMER
@@ -172,7 +179,6 @@ export default function HeaderComponent() {
         ],
   };
 
-
   return (
     <Header style={headerStyle}>
       <div className="header-container">
@@ -197,6 +203,7 @@ export default function HeaderComponent() {
           <InputSearch
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
+            onSearch={onSearch}
             placeholder={
               user.username
                 ? `${getLastName(user.username)} cần tìm gì?`
@@ -269,6 +276,7 @@ export default function HeaderComponent() {
         <InputSearch
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
+          onSearch={onSearch}
           placeholder="Tìm kiếm sản phẩm..."
           // width="100%"
           className="mobile-search-bar"

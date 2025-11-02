@@ -5,6 +5,7 @@ import InputComponent from "../InputComponent/InputComponent";
 const InputSearch = ({
   value,
   onChange,
+  onSearch,
   placeholder,
   className = "",
   style = {},
@@ -20,12 +21,12 @@ const InputSearch = ({
       <InputComponent
         value={value}
         onChange={onChange}
+        onPressEnter={e => onSearch(e.currentTarget.value)}
         placeholder={placeholder}
         prefix={
           <SearchOutlined
             style={{
               color: "#bfbfbf",
-              
             }}
           />
         }

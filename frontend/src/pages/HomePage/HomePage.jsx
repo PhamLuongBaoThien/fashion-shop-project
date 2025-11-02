@@ -24,7 +24,7 @@ const HomePage = () => {
     queryKey: ["products"],
     queryFn: async () => {
       const res = await ProductService.getAllProducts();
-      return res?.response?.data || []; // Trả về mảng data hoặc mảng rỗng nếu có lỗi
+      return res?.data || []; // Trả về mảng data hoặc mảng rỗng nếu có lỗi
     },
     retry: 3, // Thử lại 3 lần nếu lỗi
     retryDelay: 1000, // Chờ 1s giữa các lần thử

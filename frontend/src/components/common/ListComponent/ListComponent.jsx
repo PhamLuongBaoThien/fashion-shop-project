@@ -26,8 +26,7 @@ const ListComponent = ({ products }) => {
           item.discount > 0
             ? Math.round(item.price / (1 - item.discount / 100))
             : null;
-        const isSoldOut = item.status === "Hết hàng";
-
+        const isSoldOut = item.inventoryStatus === "Hết hàng";
         return (
           <motion.div
             key={item.id || index}
@@ -62,7 +61,7 @@ const ListComponent = ({ products }) => {
                 title={<span className="product-title">{item.name}</span>}
                 description={
                   <Space direction="vertical" size={4}>
-                    <Text>{item.category}</Text>
+                    <Text>{item.category?.name}</Text>
                     <Space direction="vertical" size={2}>
                       <Text strong style={{ color: "#fa8c16" }}>
                         {item.price.toLocaleString()}đ

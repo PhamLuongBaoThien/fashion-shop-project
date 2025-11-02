@@ -1,21 +1,50 @@
 import { axiosJWT } from "./UserService"; // Hoặc import axios nếu không cần xác thực
+import axios from "axios";
 
-export const getAllProducts = async (page = 1, limit = 10, search = "", category = null, sortOption = null) => {
-    // Bắt đầu xây dựng chuỗi truy vấn với page và limit
+
+export const getAllProducts = async (params = {}) => {
+    const { 
+        page = 1, 
+        limit = 10, 
+        search, 
+        category, 
+        sortOption, 
+        priceRange, 
+        sizes,
+        status
+    } = params;
+
     let queryString = `page=${page}&limit=${limit}`;
 
-    // Nối thêm các tham số nếu chúng có giá trị
     if (search) {
-        queryString += `&search=${search}`;
-    }
-    if (category) {
-        queryString += `&category=${category}`;
+        queryString += `&search=${encodeURIComponent(search)}`;
     }
     if (sortOption) {
-        queryString += `&sortOption=${sortOption}`;
+        queryString += `&sortOption=${encodeURIComponent(sortOption)}`;
+    }
+    
+    // 1. Nếu category là một mảng (từ trang Customer)
+    if (Array.isArray(category) && category.length > 0) {
+        queryString += `&category=${encodeURIComponent(category.join(','))}`;
+    } 
+    // 2. Nếu category là một chuỗi (từ trang Admin)
+    else if (typeof category === 'string' && category) {
+        queryString += `&category=${encodeURIComponent(category)}`;
     }
 
-    const response = await axiosJWT.get(
+    // Các bộ lọc khác giữ nguyên
+    if (Array.isArray(priceRange) && priceRange.length > 0) {
+        queryString += `&priceRange=${encodeURIComponent(priceRange.join(','))}`;
+    }
+    if (Array.isArray(sizes) && sizes.length > 0) {
+        queryString += `&sizes=${encodeURIComponent(sizes.join(','))}`;
+    }
+
+    if (Array.isArray(status) && status.length > 0) {
+    queryString += `&status=${encodeURIComponent(status.join(','))}`;
+  }
+
+    const response = await axios.get(
         `${process.env.REACT_APP_API_KEY}/product/get-all?${queryString}`
     );
     return response.data;

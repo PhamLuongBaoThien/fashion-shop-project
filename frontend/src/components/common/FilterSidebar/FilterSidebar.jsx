@@ -10,20 +10,20 @@ const FilterSidebar = ({
   categories,
   sizes,
   statuses,
-  badges,
   sortOptions,
   priceRange,
   selectedCategories,
   selectedSizes,
   selectedStatus,
-  selectedBadges,
   sortOption,
+
+  // Các hàm xử lý từ component cha
   setPriceRange,
   setSelectedCategories,
   setSelectedSizes,
   setSelectedStatus,
-  setSelectedBadges,
   setSortOption,
+  onClearFilters
 }) => {
   return (
     <div className="filter-sidebar">
@@ -91,7 +91,7 @@ const FilterSidebar = ({
             label: "Trạng thái",
             children: (
               <FilterItem
-                type="radio"
+                type="checkbox"
                 options={statuses}
                 value={selectedStatus}
                 onChange={setSelectedStatus}
@@ -100,18 +100,6 @@ const FilterSidebar = ({
           },
           {
             key: "5",
-            label: "Nhãn sản phẩm",
-            children: (
-              <FilterItem
-                type="checkbox"
-                options={badges}
-                value={selectedBadges}
-                onChange={setSelectedBadges}
-              />
-            ),
-          },
-          {
-            key: "6",
             label: "Sắp xếp",
             children: (
               <FilterItem
@@ -131,14 +119,7 @@ const FilterSidebar = ({
         styleButton={{ marginTop: 10, padding: 0 }}
         styleTextButton={{ color: "#1890ff" }}
         textButton="Xóa bộ lọc"
-        onClick={() => {
-          setSelectedCategories([]);
-          setPriceRange([0, 4000000]);
-          setSelectedSizes([]);
-          setSelectedStatus("default");
-          setSelectedBadges([]);
-          setSortOption("default");
-        }}
+        onClick={onClearFilters}
       />
     </div>
   );

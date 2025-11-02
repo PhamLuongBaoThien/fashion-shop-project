@@ -12,11 +12,7 @@ import {
   Select,
   message,
 } from "antd";
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-} from "@ant-design/icons";
+import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // 1. Import useQuery
 import * as ProductService from "../../services/ProductService"; // 2. Import ProductService
@@ -50,13 +46,13 @@ const AdminProducts = () => {
     // queryKey bao gồm cả pagination để tự động fetch lại khi chuyển trang
     queryKey: ["admin-products", page, limit, search, category, sortOption],
     queryFn: () =>
-      ProductService.getAllProducts(
+      ProductService.getAllProducts({
         page,
         limit,
         search,
-        category === "all" ? null : category,
-        sortOption
-      ),
+        category: category === "all" ? null : category,
+        sortOption,
+      }),
     retry: 3,
     retryDelay: 1000,
     keepPreviousData: true, // Giữ lại dữ liệu cũ khi đang fetch dữ liệu mới, tránh màn hình nháy
@@ -132,7 +128,11 @@ const AdminProducts = () => {
 
   const columns = [
     { title: "Tên Sản phẩm", dataIndex: "name", key: "name" },
-    { title: "Danh mục", dataIndex: "category", key: "category" },
+    {
+      title: "Danh mục",
+      dataIndex: ["category", "name"], // Ra lệnh: vào 'category', rồi lấy 'name'
+      key: "category",
+    },
     {
       title: "Giá",
       dataIndex: "price",
@@ -268,6 +268,7 @@ const AdminProducts = () => {
                 style={{ width: 200 }}
                 onChange={handleCategoryChange}
                 loading={isLoadingCategories}
+                
                 options={[
                   { value: "all", label: "Tất cả Danh mục" },
                   // Map qua dữ liệu từ API

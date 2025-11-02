@@ -217,11 +217,19 @@ const getAllProducts = async (req, res) => {
       badges,
       sortOption,
     } = req.query;
+
+    let categorySlugs = null;
+    if (category) {
+      categorySlugs = category
+        .split(",")
+        .map(s => s.trim().toLowerCase().replace(/\s+/g, "-"));
+    }
+
     const response = await ProductService.getAllProducts(
       page,
       limit,
       search,
-      category ? category.split(",") : null, // Chuyển chuỗi thành mảng
+      categorySlugs, // Chuyển chuỗi thành mảng
       priceRange ? priceRange.split(",").map(Number) : null, // Chuyển chuỗi thành mảng số
       sizes ? sizes.split(",") : null, // Chuyển chuỗi thành mảng
       status,
