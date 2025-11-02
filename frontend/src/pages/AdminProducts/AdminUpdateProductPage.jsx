@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import {
   Card,
   Form,
@@ -189,6 +189,7 @@ const AdminUpdateProductPage = () => {
               >
                 <Select
                   size="large"
+                  loading={isLoadingCategories}
                   options={categoriesData?.data?.map((cat) => ({
                     label: cat.name,
                     value: cat._id, // Giá trị là ID

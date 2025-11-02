@@ -1,6 +1,5 @@
 // src/pages/Admin/AdminAddProductPage.jsx
 
-import { useState } from "react";
 import {
   Card,
   Form,
