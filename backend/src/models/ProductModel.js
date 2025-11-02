@@ -9,10 +9,15 @@ const productSchema = new mongoose.Schema(
       trim: true,
       maxlength: [100, "Product name cannot exceed 100 characters"],
     },
+    // category: {
+    //   type: String,
+    //   enum: ["Áo", "Áo khoác", "Quần", "Đầm"],
+    //   required: [true, "Category is required"],
+    // },
     category: {
-      type: String,
-      enum: ["Áo", "Áo khoác", "Quần", "Đầm"],
-      required: [true, "Category is required"],
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category', // "Tra cứu" trong model 'Category'
+      required: true,
     },
     price: {
       type: Number,
@@ -64,6 +69,11 @@ const productSchema = new mongoose.Schema(
       type: String,
       trim: true,
       default: "", // Có thể để trống
+    },
+    slug: {
+      type: String,
+      unique: true,
+      lowercase: true,
     },
     rating: {
       type: Number,

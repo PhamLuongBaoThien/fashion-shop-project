@@ -18,6 +18,7 @@ import { motion } from "framer-motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import * as ProductService from "../../services/ProductService";
+import * as CategoryService from "../../services/CategoryService";
 import RichTextEditor from "../../components/common/RichTextEditor/RichTextEditor";
 import {
   PlusOutlined,
@@ -38,13 +39,19 @@ const AdminUpdateProductPage = () => {
     enabled: !!productId,
   });
 
+  // DÙNG useQuery ĐỂ LẤY DANH SÁCH CATEGORY
+  const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: CategoryService.getAllCategories,
+  });
+
   // 2. DÙNG useEffect ĐỂ TỰ ĐỘNG ĐIỀN DỮ LIỆU VÀO FORM KHI CÓ
   useEffect(() => {
     if (productDetails?.data) {
       const product = productDetails.data;
       form.setFieldsValue({
         name: product.name,
-        category: product.category,
+        category: product.category?._id,
         price: product.price,
         discount: product.discount,
         description: product.description,
@@ -182,12 +189,10 @@ const AdminUpdateProductPage = () => {
               >
                 <Select
                   size="large"
-                  options={[
-                    { value: "Áo" },
-                    { value: "Quần" },
-                    { value: "Áo khoác" },
-                    { value: "Đầm" },
-                  ]}
+                  options={categoriesData?.data?.map((cat) => ({
+                    label: cat.name,
+                    value: cat._id, // Giá trị là ID
+                  }))}
                 />
               </Form.Item>
             </Col>
@@ -217,12 +222,12 @@ const AdminUpdateProductPage = () => {
               </Form.Item>
             </Col>
           </Row>
-           <Form.Item label="Mô tả" name="description">
-                        {/* Ant Design Form sẽ tự động truyền 'value' và 'onChange' 
+          <Form.Item label="Mô tả" name="description">
+            {/* Ant Design Form sẽ tự động truyền 'value' và 'onChange' 
                           cho component con, rất tiện lợi!
                         */}
-                        <RichTextEditor />
-                    </Form.Item>
+            <RichTextEditor />
+          </Form.Item>
           <Form.Item label="Kích cỡ & Số lượng" required>
             <Form.List
               name="sizes"

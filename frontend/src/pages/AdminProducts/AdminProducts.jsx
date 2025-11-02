@@ -29,6 +29,7 @@ import {
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // 1. Import useQuery
 import * as ProductService from "../../services/ProductService"; // 2. Import ProductService
+import * as CategoryService from "../../services/CategoryService";
 import { useSearchParams, Link } from "react-router-dom";
 
 const { Search } = Input;
@@ -44,6 +45,11 @@ const AdminProducts = () => {
   const sortOption = searchParams.get("sortOption") || "default";
 
   const queryClient = useQueryClient();
+
+  const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
+        queryKey: ['categories'],
+        queryFn: CategoryService.getAllCategories,
+    });
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -268,12 +274,13 @@ const cancelDelete = () => {
                 style={{ width: 200 }}
                 onChange={handleCategoryChange}
                 options={[
-                  { value: "all", label: "Tất cả Danh mục" },
-                  { value: "Áo", label: "Áo" },
-                  { value: "Quần", label: "Quần" },
-                  { value: "Áo khoác", label: "Áo khoác" },
-                  { value: "Đầm", label: "Đầm" },
-                ]}
+                        { value: "all", label: "Tất cả Danh mục" },
+                        // Map qua dữ liệu từ API
+                        ...(categoriesData?.data?.map(cat => ({
+                            label: cat.name,
+                            value: cat.slug, // Giá trị là ID
+                        })) || [])
+                    ]}
               />
               <Select
                 defaultValue={sortOption}

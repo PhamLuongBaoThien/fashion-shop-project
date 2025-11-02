@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const productRouter = require("../controllers/ProductController");
+const ProductController = require("../controllers/ProductController");
 const { authMiddleware } = require("../middleware/authMiddleware");
 const upload = require("../config/multer");
 
@@ -11,7 +11,7 @@ router.post(
     { name: "image", maxCount: 1 }, // 1 file cho ảnh chính
     { name: "subImage", maxCount: 5 }, // Tối đa 5 file cho ảnh phụ
   ]),
-  productRouter.createProduct
+  ProductController.createProduct
 );
 router.put(
   "/update/:id",
@@ -20,10 +20,10 @@ router.put(
     { name: "image", maxCount: 1 },
     { name: "subImage", maxCount: 5 },
   ]),
-  productRouter.updateProduct
+  ProductController.updateProduct
 );
-router.get("/detail/:id", productRouter.getDetailProduct);
-router.delete("/delete/:id", authMiddleware, productRouter.deleteProduct);
-router.get("/get-all", productRouter.getAllProducts);
+router.get("/detail/:id", ProductController.getDetailProduct);
+router.delete("/delete/:id", authMiddleware, ProductController.deleteProduct);
+router.get("/get-all", ProductController.getAllProducts);
 
 module.exports = router;

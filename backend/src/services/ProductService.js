@@ -1,9 +1,10 @@
 const Product = require("../models/ProductModel");
-const createDOMPurify = require('dompurify'); // dùng để làm sạch HTML
-const { JSDOM } = require('jsdom'); //  dùng để tạo mô hình DOM trong môi trường Node.js
+const Category = require("../models/CategoryModel");
+const createDOMPurify = require("dompurify"); // dùng để làm sạch HTML
+const { JSDOM } = require("jsdom"); //  dùng để tạo mô hình DOM trong môi trường Node.js
 
 // Thiết lập DOMPurify
-const window = new JSDOM('').window;
+const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
 
 const createProduct = (productData) => {
@@ -24,10 +25,15 @@ const createProduct = (productData) => {
       }
 
       const newProduct = await Product.create(productData);
+
+      const populatedProduct = await Product.findById(newProduct._id).populate(
+        "category"
+      );
+
       resolve({
         status: "OK",
         message: "Product created successfully",
-        data: newProduct,
+        data: populatedProduct,
       });
     } catch (error) {
       reject(error);
@@ -38,7 +44,6 @@ const createProduct = (productData) => {
 const updateProduct = (productId, productData) => {
   return new Promise(async (resolve, reject) => {
     try {
-
       if (productData.description) {
         productData.description = DOMPurify.sanitize(productData.description);
       }
@@ -47,7 +52,7 @@ const updateProduct = (productId, productData) => {
         productId,
         { ...productData, updatedAt: Date.now() }, // Cập nhật updatedAt thủ công
         { new: true, runValidators: true } // Trả về tài liệu mới và chạy validation
-      );
+      ).populate("category");
       if (!updatedProduct) {
         return resolve({ status: "ERR", message: "Product not found" });
       }
@@ -65,7 +70,7 @@ const updateProduct = (productId, productData) => {
 const getDetailProduct = (productId) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const product = await Product.findById(productId);
+      const product = await Product.findById(productId).populate("category");
 
       if (product === null) {
         return resolve({
@@ -109,7 +114,7 @@ const getAllProducts = (
   page,
   limit,
   search,
-  category,
+  categorySlug,
   priceRange,
   sizes,
   status,
@@ -126,13 +131,19 @@ const getAllProducts = (
       }
 
       // Xử lý danh mục (mảng hoặc giá trị đơn)
-      if (category && Array.isArray(category)) {
-        query.category = { $in: category }; // Lọc nhiều danh mục
-      } else if (
-        category &&
-        ["Áo", "Áo khoác", "Quần", "Đầm"].includes(category)
-      ) {
-        query.category = category; // Lọc một danh mục
+      if (categorySlug) {
+        const category = await Category.findOne({ slug: categorySlug });
+        if (category) {
+          query.category = category._id; // Lọc sản phẩm bằng _id của category
+        } else {
+          // Nếu không tìm thấy slug, trả về mảng rỗng vì không có sản phẩm nào khớp
+          return resolve({
+            status: "OK",
+            message: "Category not found",
+            data: [],
+            pagination: { total: 0, current: 1, pageSize: limit, totalPages: 0 },
+          });
+        }
       }
 
       // Xử lý khoảng giá
@@ -166,6 +177,7 @@ const getAllProducts = (
         limit: parseInt(limit, 10) || 10,
         sort: {},
         collation: { locale: "vi" },
+        populate: 'category'
       };
 
       // Xử lý sắp xếp
