@@ -268,7 +268,6 @@ const AdminProducts = () => {
                 style={{ width: 200 }}
                 onChange={handleCategoryChange}
                 loading={isLoadingCategories}
-                
                 options={[
                   { value: "all", label: "Tất cả Danh mục" },
                   // Map qua dữ liệu từ API

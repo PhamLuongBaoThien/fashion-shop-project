@@ -21,7 +21,7 @@ const InputSearch = ({
       <InputComponent
         value={value}
         onChange={onChange}
-        onPressEnter={e => onSearch(e.currentTarget.value)}
+        onPressEnter={(e) => onSearch(e.currentTarget.value)}
         placeholder={placeholder}
         prefix={
           <SearchOutlined

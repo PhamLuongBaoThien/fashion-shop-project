@@ -23,7 +23,7 @@ const FilterSidebar = ({
   setSelectedSizes,
   setSelectedStatus,
   setSortOption,
-  onClearFilters
+  onClearFilters,
 }) => {
   return (
     <div className="filter-sidebar">

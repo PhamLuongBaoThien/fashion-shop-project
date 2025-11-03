@@ -130,10 +130,16 @@ const getAllProducts = (
         query.$text = { $search: search };
       }
 
-     // XỬ LÝ DANH MỤC: MẢNG SLUG
-      if (categorySlugs && Array.isArray(categorySlugs) && categorySlugs.length > 0) {
-        const categories = await Category.find({ slug: { $in: categorySlugs } });
-        const categoryIds = categories.map(cat => cat._id);
+      // XỬ LÝ DANH MỤC: MẢNG SLUG
+      if (
+        categorySlugs &&
+        Array.isArray(categorySlugs) &&
+        categorySlugs.length > 0
+      ) {
+        const categories = await Category.find({
+          slug: { $in: categorySlugs },
+        });
+        const categoryIds = categories.map((cat) => cat._id);
 
         if (categoryIds.length > 0) {
           query.category = { $in: categoryIds };
@@ -142,7 +148,7 @@ const getAllProducts = (
           return resolve({
             status: "OK",
             data: [],
-            pagination: { total: 0, current: 1, pageSize: 10, totalPages: 0 }
+            pagination: { total: 0, current: 1, pageSize: 10, totalPages: 0 },
           });
         }
       }
@@ -161,16 +167,16 @@ const getAllProducts = (
       }
 
       // XỬ LÝ TRẠNG THÁI
-      if (status && typeof status === 'string') {
-        const statusList = status.split(',').map(s => s.trim());
+      if (status && typeof status === "string") {
+        const statusList = status.split(",").map((s) => s.trim());
 
         if (statusList.length > 0) {
           const orConditions = [];
 
-          if (statusList.includes('on-sale')) {
+          if (statusList.includes("on-sale")) {
             orConditions.push({ discount: { $gt: 0 } });
           }
-          if (statusList.includes('new-arrival')) {
+          if (statusList.includes("new-arrival")) {
             orConditions.push({ isNewProduct: true });
           }
 
@@ -193,7 +199,7 @@ const getAllProducts = (
         limit: parseInt(limit, 10) || 10,
         sort: {},
         collation: { locale: "vi" },
-        populate: 'category'
+        populate: "category",
       };
 
       // Xử lý sắp xếp

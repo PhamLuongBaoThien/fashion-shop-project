@@ -1,12 +1,12 @@
-import React from 'react'
-import ProductDetail from '../../components/Products/ProductDetail/ProductDetail'
+import React from "react";
+import ProductDetail from "../../components/Products/ProductDetail/ProductDetail";
 
 const ProductDetailPage = () => {
   return (
     <>
-    <ProductDetail />
+      <ProductDetail />
     </>
-  )
-}
+  );
+};
 
-export default ProductDetailPage
+export default ProductDetailPage;

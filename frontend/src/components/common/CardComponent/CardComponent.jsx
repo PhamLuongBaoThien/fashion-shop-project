@@ -34,24 +34,25 @@ const CardComponent = ({ product }) => {
           )}
 
           {/* Badge */}
-         <div className="product-badges-container">
+          <div className="product-badges-container">
             {/* 1. Hiển thị badge 'Hết hàng' (Ưu tiên cao nhất) */}
             {isSoldOut && (
-              <Badge count="Hết hàng" style={{ backgroundColor: "#bfbfbf", color: "#fff" }} />
+              <Badge
+                count="Hết hàng"
+                style={{ backgroundColor: "#bfbfbf", color: "#fff" }}
+              />
             )}
-            
+
             {/* 2. Hiển thị badge 'Giảm giá' */}
-            {product.discount > 0 && !isSoldOut && (
+            {product.discount > 0 && (
               <Badge count={`-${product.discount}%`} color="#fa8c16" />
             )}
 
             {/* 3. Hiển thị badge 'Mới' */}
-            {product.isNewProduct && !isSoldOut && (
-               <Badge count="Mới" color="#52c41a" />
+            {product.isNewProduct && (
+              <Badge count="Mới" color="#52c41a" />
             )}
           </div>
-
-      
 
           {/* Wishlist button */}
           <ButtonComponent
@@ -65,9 +66,11 @@ const CardComponent = ({ product }) => {
           {/* Overlay khi hover */}
           {!isSoldOut && (
             <div className="product-overlay">
-              <ButtonComponent textButton="Thêm vào giỏ" type="primary" icon={<ShoppingCartOutlined />} />
-                
-
+              <ButtonComponent
+                textButton="Thêm vào giỏ"
+                type="primary"
+                icon={<ShoppingCartOutlined />}
+              />
             </div>
           )}
         </div>

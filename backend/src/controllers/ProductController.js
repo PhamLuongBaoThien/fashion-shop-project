@@ -183,7 +183,7 @@ const getDetailProduct = async (req, res) => {
         .json({ status: "ERR", message: "The productId is required" });
     }
     const response = await ProductService.getDetailProduct(productId);
-    return res.status(200).json( response );
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({ status: "ERR", message: error.message });
   }
@@ -198,7 +198,7 @@ const deleteProduct = async (req, res) => {
         .json({ status: "ERR", message: "The userid is required" });
     }
     const response = await ProductService.deleteProduct(productId);
-    return res.status(200).json( response );
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({ status: "ERR", message: error.message });
   }
@@ -222,7 +222,7 @@ const getAllProducts = async (req, res) => {
     if (category) {
       categorySlugs = category
         .split(",")
-        .map(s => s.trim().toLowerCase().replace(/\s+/g, "-"));
+        .map((s) => s.trim().toLowerCase().replace(/\s+/g, "-"));
     }
 
     const response = await ProductService.getAllProducts(
@@ -236,7 +236,7 @@ const getAllProducts = async (req, res) => {
       badges ? badges.split(",") : null, // Chuyển chuỗi thành mảng
       sortOption
     );
-    return res.status(200).json( response );
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({ status: "ERR", message: error.message });
   }
