@@ -34,27 +34,24 @@ const CardComponent = ({ product }) => {
           )}
 
           {/* Badge */}
-          {product.badge && (
-            <Badge
-              count={product.badge}
-              style={{
-                backgroundColor: product.isNew ? "#47c41aff" : "#fa8c16",
-              }}
-              className="product-badge"
-            />
-          )}
+         <div className="product-badges-container">
+            {/* 1. Hiển thị badge 'Hết hàng' (Ưu tiên cao nhất) */}
+            {isSoldOut && (
+              <Badge count="Hết hàng" style={{ backgroundColor: "#bfbfbf", color: "#fff" }} />
+            )}
+            
+            {/* 2. Hiển thị badge 'Giảm giá' */}
+            {product.discount > 0 && !isSoldOut && (
+              <Badge count={`-${product.discount}%`} color="#fa8c16" />
+            )}
 
-          {/* Nhãn Hết hàng */}
-          {isSoldOut && (
-            <Badge
-              count="Hết hàng"
-              style={{
-                backgroundColor: "#bfbfbf",
-                color: "#fff",
-              }}
-              className="sold-out-badge"
-            />
-          )}
+            {/* 3. Hiển thị badge 'Mới' */}
+            {product.isNewProduct && !isSoldOut && (
+               <Badge count="Mới" color="#52c41a" />
+            )}
+          </div>
+
+      
 
           {/* Wishlist button */}
           <ButtonComponent
