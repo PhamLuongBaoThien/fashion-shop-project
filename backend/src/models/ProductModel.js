@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const mongoosePaginate = require("mongoose-paginate-v2");
+const slugify = require("slugify");
 
 const productSchema = new mongoose.Schema(
   {
@@ -43,11 +44,11 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    status: {
-      type: String,
-      enum: ["Còn hàng", "Hết hàng"],
-      default: "Còn hàng",
-    },
+    // status: {
+    //   type: String,
+    //   enum: ["Còn hàng", "Hết hàng"],
+    //   default: "Còn hàng",
+    // },
     sizes: {
       type: [
         {
@@ -95,9 +96,22 @@ const productSchema = new mongoose.Schema(
   }
 );
 
+// Middleware: Tự động tạo slug từ 'name' trước khi lưu
+productSchema.pre('save', function(next) {
+  // Chỉ tạo slug nếu trường 'name' được tạo mới hoặc bị thay đổi
+  if (this.isModified('name')) {
+    this.slug = slugify(this.name, { lower: true, strict: true, locale: 'vi' });
+  }
+  next(); // Tiếp tục quá trình lưu
+});
+
 productSchema.plugin(mongoosePaginate);
 
 // Tạo index để tối ưu tìm kiếm
-// productSchema.index({ name: "text", category: 1, price: 1 });
+productSchema.index({ name: "text", description: "text" }); // Tối ưu: Thêm cả description vào text search
+
+// (Tùy chọn nâng cao) có thể tạo thêm một index riêng cho việc lọc và sắp xếp
+productSchema.index({ category: 1, price: 1, createdAt: -1 });
+
 
 module.exports = mongoose.model("Product", productSchema);

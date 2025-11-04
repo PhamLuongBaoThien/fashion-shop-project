@@ -48,11 +48,8 @@ const EditProfile = () => {
   useEffect(() => {
     const fetchProvinces = async () => {
       try {
-        const provinceData = await ExternalApiService.getProvinces();
-        const provinceOptions = provinceData.map((p) => ({
-          label: p.name,
-          value: p.code,
-        }));
+        // ✅ SỬA LẠI: Dùng trực tiếp dữ liệu đã được "dịch"
+        const provinceOptions = await ExternalApiService.getProvinces();
         setProvinces(provinceOptions);
       } catch (error) {
         console.error("Failed to fetch provinces:", error);
@@ -63,11 +60,8 @@ const EditProfile = () => {
 
   const handleProvinceChange = async (provinceCode) => {
     try {
-      const districtData = await ExternalApiService.getDistricts(provinceCode);
-      const districtOptions = districtData.map((d) => ({
-        label: d.name,
-        value: d.code,
-      }));
+      // ✅ SỬA LẠI: Dùng trực tiếp dữ liệu đã được "dịch"
+      const districtOptions = await ExternalApiService.getDistricts(provinceCode);
       setDistricts(districtOptions);
       setWards([]);
       form.setFieldsValue({ district: null, ward: null });
@@ -78,11 +72,8 @@ const EditProfile = () => {
 
   const handleDistrictChange = async (districtCode) => {
     try {
-      const wardData = await ExternalApiService.getWards(districtCode);
-      const wardOptions = wardData.map((w) => ({
-        label: w.name,
-        value: w.code,
-      }));
+      // ✅ SỬA LẠI: Dùng trực tiếp dữ liệu đã được "dịch"
+      const wardOptions = await ExternalApiService.getWards(districtCode);
       setWards(wardOptions);
       form.setFieldsValue({ ward: null });
     } catch (error) {

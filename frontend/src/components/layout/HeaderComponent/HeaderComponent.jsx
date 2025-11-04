@@ -12,16 +12,13 @@ import { Link, useNavigate } from "react-router-dom";
 import "./HeaderComponent.css";
 import Logo from "../../common/Logo/Logo";
 import DesktopNavigation from "../Navigation/DesktopNavigation";
-// import AuthModal from "./AuthModal";
 import MobileNavigation from "../Navigation/MobileNavigation";
-// import DesktopSearch from "../InputSearch/DesktopSearch";
-// import MobileSearch from "../InputSearch/MobileSearch";
 import InputSearch from "../../common/InputSearch/InputSearch";
 import ButtonComponent from "../../common/ButtonComponent/ButtonComponent";
 import { useSelector, useDispatch } from "react-redux";
-// import { logoutUser } from "../../../redux/slides/userSlide"; // tí mình sẽ tạo action này
 import * as UserService from "../../../services/UserService";
 import { resetUser } from "../../../redux/slides/userSlide";
+import { useDebounce } from "../../../hooks/useDebounce";
 
 const { Header } = Layout;
 
@@ -35,6 +32,9 @@ export default function HeaderComponent() {
   const navigate = useNavigate();
 
   const user = useSelector((state) => state.user); // state.user là slice bạn đã tạo
+
+  const debouncedSearchValue = useDebounce(searchValue, 500);
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
@@ -50,6 +50,13 @@ export default function HeaderComponent() {
     dispatch(resetUser());
     navigate("/sign-in");
   };
+
+  useEffect(() => {
+    // Chỉ thực hiện khi có giá trị đã trì hoãn (và không phải chuỗi rỗng)
+    if (debouncedSearchValue.trim()) {
+      navigate(`/products?search=${encodeURIComponent(debouncedSearchValue.trim())}`);
+    }
+  }, [debouncedSearchValue, navigate]); // Chạy lại mỗi khi giá trị trì hoãn thay đổi
 
   const getLastName = (fullName) => {
     if (!fullName) return "Khách";
@@ -107,14 +114,14 @@ export default function HeaderComponent() {
     ],
   };
 
- const onSearch = (value) => {
-  console.log("SEARCH TRIGGERED:", value); // ← DEBUG
-  if (value) {
-    navigate(`/products?search=${encodeURIComponent(value)}`);
-    setSearchValue(""); // XÓA Ô TÌM KIẾM
-    setIsSearchOpen(false); // ĐÓNG MOBILE
-  }
-};
+//  const onSearch = (value) => {
+//   console.log("SEARCH TRIGGERED:", value); // ← DEBUG
+//   if (value) {
+//     navigate(`/products?search=${encodeURIComponent(value)}`);
+//     setSearchValue(""); // XÓA Ô TÌM KIẾM
+//     setIsSearchOpen(false); // ĐÓNG MOBILE
+//   }
+// };
 
   const userMenu = {
     items: user.isAdmin
@@ -203,7 +210,7 @@ export default function HeaderComponent() {
           <InputSearch
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
-            onSearch={onSearch}
+            // onSearch={onSearch}
             placeholder={
               user.username
                 ? `${getLastName(user.username)} cần tìm gì?`
@@ -276,7 +283,7 @@ export default function HeaderComponent() {
         <InputSearch
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
-          onSearch={onSearch}
+          // onSearch={onSearch}
           placeholder="Tìm kiếm sản phẩm..."
           // width="100%"
           className="mobile-search-bar"
