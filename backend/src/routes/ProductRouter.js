@@ -24,6 +24,7 @@ router.put(
 );
 router.get("/detail/:id", ProductController.getDetailProduct);
 router.delete("/delete/:id", authMiddleware, ProductController.deleteProduct);
+router.post("/delete-many", authMiddleware, ProductController.deleteManyProducts);
 router.get("/get-all", ProductController.getAllProducts);
 
 module.exports = router;

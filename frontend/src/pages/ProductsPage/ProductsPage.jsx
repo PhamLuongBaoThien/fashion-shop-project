@@ -33,6 +33,7 @@ const ProductsPage = () => {
     viewMode: searchParams.get("viewMode") || "card",
     status: searchParams.get("status")?.split(",") || [],
     search: searchParams.get("search") || "",
+    isActive: true
   };
 
   // 2. XÓA BỎ TOÀN BỘ useState và hàm filterAndPaginateProducts() CŨ
@@ -40,7 +41,12 @@ const ProductsPage = () => {
   // Luôn cuộn lên đầu khi chuyển trang phân trang
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [params.page]);
+  }, [params.page,
+      params.category.toString(), // Dùng .toString() để có một giá trị ổn định
+      params.sizes.toString(), 
+      params.sortOption, 
+      params.priceRange.toString(), 
+      params.status.toString()]);
 
   // Lấy danh sách danh mục cho bộ lọc
   const { data: categoriesData } = useQuery({

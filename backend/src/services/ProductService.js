@@ -119,7 +119,8 @@ const getAllProducts = (
   sizes,
   status,
   badges,
-  sortOption
+  sortOption,
+  isActive
 ) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -128,6 +129,11 @@ const getAllProducts = (
       // Xử lý tìm kiếm full-text
       if (search) {
         query.$text = { $search: search };
+      }
+
+      // Nếu có tham số `isActive`, chỉ lọc các sản phẩm có trạng thái đó
+      if (isActive !== undefined && isActive !== null) {
+        query.isActive = (isActive === 'true'); // Chuyển chuỗi "true" thành boolean
       }
 
       // XỬ LÝ DANH MỤC: MẢNG SLUG
@@ -256,10 +262,28 @@ const getAllProducts = (
   });
 };
 
+const deleteManyProducts = (ids) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            // Dùng deleteMany và toán tử $in để xóa tất cả sản phẩm có _id nằm trong mảng ids
+            const result = await Product.deleteMany({ _id: { $in: ids } });
+            
+            resolve({
+                status: "OK",
+                message: "Products deleted successfully",
+                data: result, // Trả về kết quả (vd: { deletedCount: 3 })
+            });
+        } catch (error) {
+            reject(error);
+        }
+    });
+};
+
 module.exports = {
   createProduct,
   updateProduct,
   getDetailProduct,
   deleteProduct,
   getAllProducts,
+  deleteManyProducts,
 };

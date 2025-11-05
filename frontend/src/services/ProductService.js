@@ -11,7 +11,8 @@ export const getAllProducts = async (params = {}) => {
         sortOption, 
         priceRange, 
         sizes,
-        status
+        status,
+        isActive
     } = params;
 
     let queryString = `page=${page}&limit=${limit}`;
@@ -44,6 +45,10 @@ export const getAllProducts = async (params = {}) => {
     queryString += `&status=${encodeURIComponent(status.join(','))}`;
   }
 
+    if (isActive !== undefined) {
+        queryString += `&isActive=${encodeURIComponent(isActive)}`;
+    }
+
     const response = await axios.get(
         `${process.env.REACT_APP_API_KEY}/product/get-all?${queryString}`
     );
@@ -74,5 +79,11 @@ export const updateProduct = async (id, data) => {
 
 export const deleteProduct = async (id) => {
     const res = await axiosJWT.delete(`${process.env.REACT_APP_API_KEY}/product/delete/${id}`);
+    return res.data; 
+};
+
+export const deleteManyProducts = async (ids) => {
+    // Gửi một mảng các ID lên body
+    const res = await axiosJWT.post(`${process.env.REACT_APP_API_KEY}/product/delete-many`, { ids });
     return res.data; 
 };

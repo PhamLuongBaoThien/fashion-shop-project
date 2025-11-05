@@ -216,6 +216,7 @@ const getAllProducts = async (req, res) => {
       status,
       badges,
       sortOption,
+      isActive
     } = req.query;
 
     let categorySlugs = null;
@@ -234,12 +235,26 @@ const getAllProducts = async (req, res) => {
       sizes ? sizes.split(",") : null, // Chuyển chuỗi thành mảng
       status,
       badges ? badges.split(",") : null, // Chuyển chuỗi thành mảng
-      sortOption
+      sortOption,
+      isActive
     );
     return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({ status: "ERR", message: error.message });
   }
+};
+
+const deleteManyProducts = async (req, res) => {
+    try {
+        const ids = req.body.ids; // Lấy mảng ids từ body
+        if (!ids || !Array.isArray(ids)) {
+            return res.status(400).json({ status: "ERR", message: "IDs is required and must be an array" });
+        }
+        const response = await ProductService.deleteManyProducts(ids);
+        return res.status(200).json(response);
+    } catch (error) {
+        return res.status(500).json({ status: "ERR", message: error.message });
+    }
 };
 
 module.exports = {
@@ -248,4 +263,5 @@ module.exports = {
   getDetailProduct,
   deleteProduct,
   getAllProducts,
+  deleteManyProducts,
 };

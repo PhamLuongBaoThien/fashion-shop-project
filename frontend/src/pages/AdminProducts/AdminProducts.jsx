@@ -25,6 +25,10 @@ const AdminProducts = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deletingProductId, setDeletingProductId] = useState(null);
+
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [isDeleteManyModalOpen, setIsDeleteManyModalOpen] = useState(false);
+
   const page = Number(searchParams.get("page")) || 1; // Đọc 'page' từ URL
   const limit = Number(searchParams.get("limit")) || 10; // Đọc 'limit' từ URL
   const search = searchParams.get("search") || "";
@@ -91,6 +95,29 @@ const AdminProducts = () => {
     console.log("Hủy xóa");
     setIsDeleteModalOpen(false);
     setDeletingProductId(null);
+  };
+
+  const deleteManyMutation = useMutation({
+    mutationFn: (ids) => ProductService.deleteManyProducts(ids),
+    onSuccess: () => {
+      message.success("Đã xóa các sản phẩm đã chọn!");
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      setSelectedRowKeys([]); // Xóa các lựa chọn sau khi xóa thành công
+    },
+    onError: (error) => message.error(error.message),
+  });
+
+  const handleDeleteManyProducts = () => {
+    setIsDeleteManyModalOpen(true);
+  };
+
+  const confirmDeleteMany = () => {
+    deleteManyMutation.mutate(selectedRowKeys);
+    setIsDeleteManyModalOpen(false);
+  };
+
+  const cancelDeleteMany = () => {
+    setIsDeleteManyModalOpen(false);
   };
 
   // Tách dữ liệu sản phẩm và thông tin phân trang
@@ -183,6 +210,7 @@ const AdminProducts = () => {
           </Link>
           <Button
             danger
+            type="primary"
             size="small"
             icon={<DeleteOutlined />}
             onClick={() => handleDeleteProduct(record._id)}
@@ -195,6 +223,16 @@ const AdminProducts = () => {
       ),
     },
   ];
+
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys) => {
+      console.log("Selected products:", newSelectedRowKeys); // DEBUG
+      setSelectedRowKeys(newSelectedRowKeys);
+    },
+  };
+
+  const hasSelected = selectedRowKeys.length > 0;
 
   // 5. Xử lý trạng thái Loading và Lỗi
   if (isLoading) {
@@ -235,6 +273,24 @@ const AdminProducts = () => {
           <strong>không thể hoàn tác</strong>.
         </p>
       </Modal>
+
+      {/* MODAL XÁC NHẬN XÓA NHIỀU */}
+      <Modal
+        title={`Xác nhận xóa ${selectedRowKeys.length} sản phẩm`}
+        open={isDeleteManyModalOpen}
+        onOk={confirmDeleteMany}
+        onCancel={cancelDeleteMany}
+        okText="Xóa"
+        cancelText="Hủy"
+        okButtonProps={{ danger: true }}
+        confirmLoading={deleteManyMutation.isPending}
+      >
+        <p>Bạn có chắc chắn muốn xóa {selectedRowKeys.length} sản phẩm này?</p>
+        <p>
+          <strong>Hành động này không thể hoàn tác.</strong>
+        </p>
+      </Modal>
+      {/* NỘI DUNG CHÍNH CỦA TRANG */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -262,39 +318,61 @@ const AdminProducts = () => {
               enterButton
               defaultValue={search}
             />
-            <Space wrap>
-              <Select
-                defaultValue={category}
-                style={{ width: 200 }}
-                onChange={handleCategoryChange}
-                loading={isLoadingCategories}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: "8px",
+              }}
+            >
+              <Space wrap>
+                <Select
+                  defaultValue={category}
+                  style={{ width: 200 }}
+                  onChange={handleCategoryChange}
+                  loading={isLoadingCategories}
+                  options={[
+                    { value: "all", label: "Tất cả Danh mục" },
+                    ...(categoriesData?.data?.map((cat) => ({
+                      label: cat.name,
+                      value: cat.slug,
+                    })) || []),
+                  ]}
+                />
+                <Select
+                  defaultValue={sortOption}
+                  style={{ width: 200 }}
+                  onChange={handleSortChange}
+                  options={[
+                    { value: "default", label: "Sắp xếp Mặc định" },
+                    { value: "price_asc", label: "Giá: Thấp đến Cao" },
+                    { value: "price_desc", label: "Giá: Cao đến Thấp" },
+                    { value: "name_asc", label: "Tên: A-Z" },
+                    { value: "name_desc", label: "Tên: Z-A" },
+                  ]}
+                />
+                {/* Thêm các bộ lọc khác ở đây nếu cần */}
                 
-                options={[
-                  { value: "all", label: "Tất cả Danh mục" },
-                  // Map qua dữ liệu từ API
-                  ...(categoriesData?.data?.map((cat) => ({
-                    label: cat.name,
-                    value: cat.slug, // Giá trị là ID
-                  })) || []),
-                ]}
-              />
-              <Select
-                defaultValue={sortOption}
-                style={{ width: 200 }}
-                onChange={handleSortChange}
-                options={[
-                  { value: "default", label: "Sắp xếp Mặc định" },
-                  { value: "price_asc", label: "Giá: Thấp đến Cao" },
-                  { value: "price_desc", label: "Giá: Cao đến Thấp" },
-                  { value: "name_asc", label: "Tên: A-Z" },
-                  { value: "name_desc", label: "Tên: Z-A" },
-                ]}
-              />
-              {/* Thêm các bộ lọc khác ở đây nếu cần */}
-            </Space>
+              </Space>
+              {/* NÚT XÓA NHIỀU */}
+                {hasSelected && (
+                  <Button
+                    danger
+                    type="primary"
+                    icon={<DeleteOutlined />}
+                    onClick={handleDeleteManyProducts}
+                    loading={deleteManyMutation.isPending}
+                  >
+                    Xóa {selectedRowKeys.length} mục
+                  </Button>
+                )}
+            </div>
           </Space>
 
           <Table
+            rowSelection={rowSelection}
             columns={columns}
             dataSource={products}
             rowKey="_id" // 6. Sửa rowKey thành "_id" để khớp với MongoDB

@@ -223,6 +223,8 @@
   border-bottom: 1px solid #f0f0f0;
 }
 
+
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .admin-toggle-btn {
