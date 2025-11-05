@@ -4,6 +4,11 @@ const createProduct = async (req, res) => {
   try {
     // Lấy dữ liệu từ body
     const productData = req.body;
+    const userId = req.user.id;
+
+    if (!userId) {
+        return res.status(401).json({ status: "ERR", message: "Unauthorized: Missing user ID" });
+    }
 
     // Vì FormData gửi mọi thứ dưới dạng string, ta cần parse lại thanh object/array
     if (productData.sizes) {
@@ -71,7 +76,7 @@ const createProduct = async (req, res) => {
     }
 
     // Gọi service để tạo sản phẩm
-    const response = await ProductService.createProduct(productData);
+    const response = await ProductService.createProduct(productData, userId);
 
     if (response.status === "ERR") {
       return res.status(400).json(response);

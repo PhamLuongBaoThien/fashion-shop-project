@@ -90,6 +90,11 @@ const productSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User', // Tham chiếu đến User model
+      required: true, // Bắt buộc phải có người tạo
+    },
   },
   {
     timestamps: true,

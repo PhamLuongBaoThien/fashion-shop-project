@@ -7,7 +7,7 @@ const { JSDOM } = require("jsdom"); //  dùng để tạo mô hình DOM trong
 const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
 
-const createProduct = (productData) => {
+const createProduct = (productData, userId) => {
   return new Promise(async (resolve, reject) => {
     try {
       // Tạo sản phẩm mới
@@ -24,11 +24,14 @@ const createProduct = (productData) => {
         productData.description = DOMPurify.sanitize(productData.description);
       }
 
-      const newProduct = await Product.create(productData);
+      const newProduct = await Product.create({
+          ...productData,
+          createdBy: userId // Gán "dấu vân tay"
+      });
 
-      const populatedProduct = await Product.findById(newProduct._id).populate(
-        "category"
-      );
+      const populatedProduct = await Product.findById(newProduct._id)
+      .populate("category")
+      .populate('createdBy', 'username email'); // Lấy username và email người tạo;
 
       resolve({
         status: "OK",
@@ -205,7 +208,10 @@ const getAllProducts = (
         limit: parseInt(limit, 10) || 10,
         sort: {},
         collation: { locale: "vi" },
-        populate: "category",
+        populate: [
+            { path: 'category', select: 'name slug' },
+            { path: 'createdBy', select: 'username' } // Chỉ lấy trường 'username'
+        ]
       };
 
       // Xử lý sắp xếp

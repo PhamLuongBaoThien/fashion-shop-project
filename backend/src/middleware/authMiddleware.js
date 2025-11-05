@@ -9,6 +9,7 @@ const authMiddleware = (req, res, next) => {
       return res.status(404).json({ status: "ERR", message: "Unauthorized" });
     }
     if (user?.isAdmin) {
+      req.user = user;
       next();
     } else {
       return res.status(403).json({ status: "ERR", message: "Forbidden" });
@@ -29,6 +30,7 @@ const userId = req.params.id;
     }
 
       if (user?.isAdmin || user?.id === userId) {
+        req.user = user;
         next();
       } else {
         return res.status(403).json({ status: "ERR", message: "Forbidden" });

@@ -214,13 +214,13 @@ const AdminProducts = () => {
       key: "category",
     },
     {
-      title: "Giá",
+      title: "Giá gốc",
       dataIndex: "price",
       key: "price",
       render: (price) => (price ? `${price.toLocaleString()}đ` : "0đ"),
     },
     {
-      title: "Giá sau khi giảm",
+      title: "Giá bán",
       key: "finalPrice",
       // `record` ở đây là nguyên object của một sản phẩm
       render: (_, record) => {
@@ -252,6 +252,12 @@ const AdminProducts = () => {
           {isActive ? "Đang hoạt động" : "Ngừng"}
         </Tag>
       ),
+    },
+    {
+      title: "Người tạo",
+      dataIndex: ["createdBy", "username"], // Lấy record.createdBy.username
+      key: "createdBy",
+      render: (username) => username || 'Không rõ', // Hiển thị 'Không rõ' nếu thiếu
     },
     {
       title: "Hành động",
