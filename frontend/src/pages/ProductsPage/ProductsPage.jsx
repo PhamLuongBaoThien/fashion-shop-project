@@ -42,11 +42,11 @@ const ProductsPage = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [params.page,
-      params.category.toString(), // Dùng .toString() để có một giá trị ổn định
-      params.sizes.toString(), 
+      params.category, // Dùng .toString() để có một giá trị ổn định
+      params.sizes, 
       params.sortOption, 
-      params.priceRange.toString(), 
-      params.status.toString()]);
+      params.priceRange, 
+      params.status]);
 
   // Lấy danh sách danh mục cho bộ lọc
   const { data: categoriesData } = useQuery({
