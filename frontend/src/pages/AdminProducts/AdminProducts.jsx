@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Table,
   Button,
@@ -12,12 +12,18 @@ import {
   Select,
   message,
 } from "antd";
-import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  DownloadOutlined,
+} from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // 1. Import useQuery
 import * as ProductService from "../../services/ProductService"; // 2. Import ProductService
 import * as CategoryService from "../../services/CategoryService";
 import { useSearchParams, Link } from "react-router-dom";
+import * as XLSX from "xlsx";
 
 const { Search } = Input;
 
@@ -60,6 +66,53 @@ const AdminProducts = () => {
     retry: 3,
     retryDelay: 1000,
     keepPreviousData: true, // Giữ lại dữ liệu cũ khi đang fetch dữ liệu mới, tránh màn hình nháy
+  });
+
+  // MUTATION CHO VIỆC XUẤT EXCEL
+  const exportMutation = useMutation({
+    mutationFn: (params) => ProductService.getAllProducts(params),
+    onSuccess: (data) => {
+      message.loading({ content: "Đang tạo file Excel...", key: "export" });
+
+      // Lấy toàn bộ sản phẩm từ kết quả API
+      const productsToExport = data?.data || [];
+
+      // Định dạng lại dữ liệu cho dễ đọc
+      const formattedData = productsToExport.map((product) => {
+        const finalPrice = product.price * (1 - (product.discount || 0) / 100);
+        return {
+          "ID Sản phẩm": product._id,
+          "Tên Sản phẩm": product.name,
+          "Danh mục": product.category?.name,
+          "Giá gốc (VNĐ)": product.price,
+          "Giảm giá (%)": product.discount,
+          "Giá bán (VNĐ)": finalPrice,
+          "Tình trạng kho": product.inventoryStatus,
+          "Hiển thị": product.isActive ? "Đang hoạt động" : "Ngừng",
+          "Ngày tạo": new Date(product.createdAt).toLocaleString("vi-VN"),
+        };
+      });
+
+      // Tạo file Excel
+      const worksheet = XLSX.utils.json_to_sheet(formattedData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "DanhSachSanPham"); // Tên của sheet
+
+      // Tải file về máy
+      XLSX.writeFile(workbook, "DanhSachSanPham.xlsx");
+      message.success({
+        content: "Xuất file Excel thành công!",
+        key: "export",
+        duration: 2,
+      });
+    },
+    onError: (error) => {
+      message.error({
+        content: `Xuất file thất bại: ${error.message}`,
+        key: "export",
+        duration: 2,
+      });
+    },
   });
 
   const deleteMutation = useMutation({
@@ -121,8 +174,8 @@ const AdminProducts = () => {
   };
 
   // Tách dữ liệu sản phẩm và thông tin phân trang
-  const products = data?.data;
-  const totalProducts = data?.pagination?.total;
+  const products = useMemo(() => data?.data, [data]);
+  const totalProducts = useMemo(() => data?.pagination?.total, [data]);
 
   const handleTableChange = (pagination) => {
     // Cập nhật URL thay vì cập nhật state
@@ -234,6 +287,24 @@ const AdminProducts = () => {
 
   const hasSelected = selectedRowKeys.length > 0;
 
+  // HÀM XỬ LÝ KHI NHẤN NÚT XUẤT FILE
+  const handleExportExcel = () => {
+    message.loading({
+      content: "Đang tải dữ liệu...",
+      key: "export",
+      duration: 0,
+    });
+    // Gọi API để lấy TẤT CẢ sản phẩm (page 1, limit = tổng số sản phẩm)
+    // với các bộ lọc hiện tại
+    exportMutation.mutate({
+      page: 1,
+      limit: totalProducts > 0 ? totalProducts : 1000, // Lấy tất cả
+      search,
+      category: category === "all" ? null : category,
+      sortOption,
+    });
+  };
+
   // 5. Xử lý trạng thái Loading và Lỗi
   if (isLoading) {
     return (
@@ -299,6 +370,15 @@ const AdminProducts = () => {
         <Card>
           <div className="admin-page-header">
             <h1>Quản lý Sản phẩm</h1>
+            <Button
+              type="primary"
+              icon={<DownloadOutlined />}
+              onClick={handleExportExcel}
+              loading={exportMutation.isPending}
+              style={{ backgroundColor: "#10893E", borderColor: "#10893E" }}
+            >
+              Xuất Excel
+            </Button>
             <Link to="/system/admin/products/add">
               <Button type="primary" icon={<PlusOutlined />}>
                 Thêm Sản phẩm
@@ -354,20 +434,19 @@ const AdminProducts = () => {
                   ]}
                 />
                 {/* Thêm các bộ lọc khác ở đây nếu cần */}
-                
               </Space>
               {/* NÚT XÓA NHIỀU */}
-                {hasSelected && (
-                  <Button
-                    danger
-                    type="primary"
-                    icon={<DeleteOutlined />}
-                    onClick={handleDeleteManyProducts}
-                    loading={deleteManyMutation.isPending}
-                  >
-                    Xóa {selectedRowKeys.length} mục
-                  </Button>
-                )}
+              {hasSelected && (
+                <Button
+                  danger
+                  type="primary"
+                  icon={<DeleteOutlined />}
+                  onClick={handleDeleteManyProducts}
+                  loading={deleteManyMutation.isPending}
+                >
+                  Xóa {selectedRowKeys.length} mục
+                </Button>
+              )}
             </div>
           </Space>
 
