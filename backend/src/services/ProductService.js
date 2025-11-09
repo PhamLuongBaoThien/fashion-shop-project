@@ -322,6 +322,60 @@ const deleteManyProducts = (ids) => {
     });
 };
 
+const getRelatedProducts = (slug, page, limit) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // 1. Tìm sản phẩm hiện tại để biết category của nó là gì
+      const currentProduct = await Product.findOne({ slug: slug });
+      if (!currentProduct) {
+        return resolve({ status: "OK", data: [], pagination: { total: 0 } });
+      }
+
+      const categoryId = currentProduct.category;
+
+      // 2. Xây dựng query:
+      const query = {
+        // category: categoryId, // Tìm sản phẩm cùng category
+        _id: { $ne: currentProduct._id }, // Loại trừ ($ne) chính sản phẩm đang xem
+        isActive: true // Chỉ lấy sản phẩm đang hoạt động
+      };
+
+      const options = {
+        page: parseInt(page, 10) || 1,
+        limit: parseInt(limit, 10) || 4, // Mặc định 4 sản phẩm
+        populate: 'category',// Vẫn populate để CardComponent có thể đọc
+        sort: { createdAt: -1 } // Mới nhất trước
+      };
+
+      const products = await Product.paginate(query, options);
+
+      // 3. Tính toán inventoryStatus cho các sản phẩm liên quan
+      const productsWithStatus = products.docs.map((product) => {
+        const totalStock = product.sizes.reduce((total, size) => total + size.quantity, 0);
+        return {
+          ...product.toObject(),
+          inventoryStatus: totalStock > 0 ? "Còn hàng" : "Hết hàng",
+        };
+      });
+
+      resolve({
+        status: "OK",
+        message: "successfully",
+        data: productsWithStatus,
+        pagination: {
+          total: products.totalDocs,
+          current: products.page,
+          pageSize: products.limit,
+          totalPages: products.totalPages,
+        },
+      });
+
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
 module.exports = {
   createProduct,
   updateProduct,
@@ -330,4 +384,5 @@ module.exports = {
   deleteProduct,
   getAllProducts,
   deleteManyProducts,
+  getRelatedProducts
 };

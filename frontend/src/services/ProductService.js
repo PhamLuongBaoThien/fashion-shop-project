@@ -124,3 +124,8 @@ export const getDetailProductBySlug = async (slug) => {
     throw axiosError; // Ném lỗi gốc của axios ra
   }
 };
+
+export const getRelatedProducts = async ({ slug, pageParam = 1, limit = 4 }) => {
+    const res = await axios.get(`${process.env.REACT_APP_API_KEY}/product/related/${slug}?page=${pageParam}&limit=${limit}`);
+    return res.data; // Trả về toàn bộ response { status, data, pagination }
+};

@@ -278,6 +278,21 @@ const deleteManyProducts = async (req, res) => {
     }
 };
 
+const getRelatedProducts = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const { page, limit } = req.query; // Lấy page, limit từ query string
+
+    if (!slug) {
+      return res.status(400).json({ status: "ERR", message: "Slug là bắt buộc" });
+    }
+    const response = await ProductService.getRelatedProducts(slug, page, limit);
+    return res.status(200).json(response);
+  } catch (error) {
+    return res.status(500).json({ status: "ERR", message: error.message });
+  }
+};
+
 module.exports = {
   createProduct,
   updateProduct,
@@ -286,4 +301,5 @@ module.exports = {
   deleteProduct,
   getAllProducts,
   deleteManyProducts,
+  getRelatedProducts
 };

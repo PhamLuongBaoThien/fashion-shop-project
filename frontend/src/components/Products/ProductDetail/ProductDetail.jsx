@@ -1,20 +1,37 @@
-import { useState, useEffect } from "react"
-import { Rate, InputNumber, Button, Tabs, Divider, Tag, Row, Col, Empty } from "antd"
-import { ShoppingCartOutlined, HeartOutlined, ShareAltOutlined } from "@ant-design/icons"
-import ImageGallery from "../../sections/ImageGallery/ImageGallery"
-import CardProduct from "../../common/CardComponent/CardComponent"
-import "./ProductDetail.css"
-
+import React, { useState, useEffect } from "react";
+import {
+  Rate,
+  InputNumber,
+  Button,
+  Tabs,
+  Divider,
+  Tag,
+  Row,
+  Col,
+  Empty,
+  Spin,
+} from "antd";
+import {
+  ShoppingCartOutlined,
+  HeartOutlined,
+  ShareAltOutlined,
+} from "@ant-design/icons";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import * as ProductService from "../../../services/ProductService";
+import ImageGallery from "../../sections/ImageGallery/ImageGallery";
+import CardProduct from "../../common/CardComponent/CardComponent";
+import "./ProductDetail.css";
+import ButtonComponent from "../../common/ButtonComponent/ButtonComponent";
 
 const ProductDetail = ({ product }) => {
-  const [selectedSize, setSelectedSize] = useState(null)
-  const [quantity, setQuantity] = useState(1)
-  const [isFavorite, setIsFavorite] = useState(false)
+  const [selectedSize, setSelectedSize] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   // useEffect để tự động chọn size đầu tiên còn hàng khi sản phẩm được tải
   useEffect(() => {
     if (product?.sizes && product.sizes.length > 0) {
-      const firstAvailableSize = product.sizes.find(s => s.quantity > 0);
+      const firstAvailableSize = product.sizes.find((s) => s.quantity > 0);
       if (firstAvailableSize) {
         setSelectedSize(firstAvailableSize.size);
       } else {
@@ -23,69 +40,67 @@ const ProductDetail = ({ product }) => {
     }
   }, [product]); // Phụ thuộc vào `product`
 
-    if (!product) {
+  // Lấy sản phẩm liên quan sử dụng useInfiniteQuery
+  const {
+    data: relatedProductsData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingRelated,
+  } = useInfiniteQuery({
+    queryKey: ["related-products", product.slug],
+    queryFn: ({ pageParam = 1 }) =>
+      ProductService.getRelatedProducts({
+        slug: product.slug,
+        pageParam,
+        limit: 4, // Tải 4 sản phẩm mỗi lần
+      }),
+    // "Dạy" cho React Query cách lấy số trang tiếp theo
+    getNextPageParam: (lastPage) => {
+      const currentPage = lastPage.pagination.current;
+      const totalPages = lastPage.pagination.totalPages;
+      return currentPage < totalPages ? currentPage + 1 : undefined;
+    },
+    enabled: !!product,
+  });
+
+  if (!product) {
     return (
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Empty description="Không tìm thấy thông tin sản phẩm." />
-        </div>
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Empty description="Không tìm thấy thông tin sản phẩm." />
+      </div>
     );
   }
 
-  const originalPrice = product.discount > 0 ? Math.round(product.price / (1 - product.discount / 100)) : null
+  const originalPrice =
+    product.discount > 0
+      ? Math.round(product.price / (1 - product.discount / 100))
+      : null;
 
-  const galleryImages = [product.image, ...product.subImage]
+  const galleryImages = [product.image, ...product.subImage];
 
-  const selectedSizeData = product.sizes.find((s) => s.size === selectedSize)
-  const maxQuantity = selectedSizeData?.quantity || 0
+  const selectedSizeData = product.sizes.find((s) => s.size === selectedSize);
+  const maxQuantity = selectedSizeData?.quantity || 0;
   const isSoldOut = product.inventoryStatus === "Hết hàng";
-  const isSizeAvailable = maxQuantity > 0
-
-  const relatedProducts = [
-    {
-      id: 2,
-      name: "Áo Polo Nam",
-      price: 750000,
-      image: "/classic-polo-shirt.png",
-      rating: 4.3,
-    },
-    {
-      id: 3,
-      name: "Áo Sơ Mi Oxford",
-      price: 950000,
-      image: "/oxford-shirt.png",
-      rating: 4.7,
-    },
-    {
-      id: 4,
-      name: "Áo Hoodie Basic",
-      price: 1200000,
-      image: "/basic-hoodie.jpg",
-      rating: 4.6,
-    },
-    {
-      id: 5,
-      name: "Áo Thun Oversize",
-      price: 680000,
-      image: "/oversize-tshirt.jpg",
-      rating: 4.4,
-    },
-  ]
-
-
+  const isSizeAvailable = maxQuantity > 0;
 
   const tabItems = [
     {
       key: "description",
       label: "Mô tả sản phẩm",
       children: (
-        <div className="tab-content">
-          <h3>Chi tiết sản phẩm</h3>
-          <div 
-            className="tab-content" 
-            // Hiển thị HTML an toàn từ Rich Text Editor
-            dangerouslySetInnerHTML={{ __html: product.description }} 
+        <div
+          className="tab-content"
+          // Hiển thị HTML an toàn từ Rich Text Editor
+          dangerouslySetInnerHTML={{ __html: product.description }}
         />
-        </div>
       ),
     },
     {
@@ -125,31 +140,31 @@ const ProductDetail = ({ product }) => {
         </div>
       ),
     },
-  ]
+  ];
 
   const handleAddToCart = () => {
     if (!isSizeAvailable) {
-      console.log("[v0] Size out of stock")
-      return
+      console.log("[v0] Size out of stock");
+      return;
     }
     console.log("[v0] Add to cart:", {
       product: product.id,
       size: selectedSize,
       quantity,
-    })
-  }
+    });
+  };
 
   const handleBuyNow = () => {
     if (!isSizeAvailable) {
-      console.log("[v0] Size out of stock")
-      return
+      console.log("[v0] Size out of stock");
+      return;
     }
     console.log("[v0] Buy now:", {
       product: product.id,
       size: selectedSize,
       quantity,
-    })
-  }
+    });
+  };
 
   return (
     <div className="product-detail-page">
@@ -178,10 +193,14 @@ const ProductDetail = ({ product }) => {
 
               {product.badge && (
                 <div className="product-badges">
-                {isSoldOut && <Tag color="#bfbfbf">Hết hàng</Tag>}
-                {product.discount > 0 && !isSoldOut && <Tag color="red">Sale</Tag>}
-                {product.isNewProduct && !isSoldOut && <Tag color="green">Mới</Tag>}
-              </div>
+                  {isSoldOut && <Tag color="#bfbfbf">Hết hàng</Tag>}
+                  {product.discount > 0 && !isSoldOut && (
+                    <Tag color="red">Sale</Tag>
+                  )}
+                  {product.isNewProduct && !isSoldOut && (
+                    <Tag color="green">Mới</Tag>
+                  )}
+                </div>
               )}
 
               <div className="product-rating">
@@ -192,10 +211,14 @@ const ProductDetail = ({ product }) => {
               </div>
 
               <div className="product-price">
-                <span className="current-price">{product.price.toLocaleString("vi-VN")}đ</span>
+                <span className="current-price">
+                  {product.price.toLocaleString("vi-VN")}đ
+                </span>
                 {originalPrice && (
                   <>
-                    <span className="original-price">{originalPrice.toLocaleString("vi-VN")}đ</span>
+                    <span className="original-price">
+                      {originalPrice.toLocaleString("vi-VN")}đ
+                    </span>
                     <Tag color="red" className="discount-tag">
                       -{product.discount}%
                     </Tag>
@@ -207,19 +230,30 @@ const ProductDetail = ({ product }) => {
 
               <div className="product-options">
                 <div className="option-group">
-                  <label className="option-label">Kích thước: {selectedSize}</label>
+                  <label className="option-label">
+                    Kích thước: {selectedSize}
+                  </label>
                   <div className="size-options">
                     {product.sizes.map((sizeItem) => (
                       <div
                         key={sizeItem.size}
-                        className={`size-option ${selectedSize === sizeItem.size ? "active" : ""} ${
-                          sizeItem.quantity === 0 ? "disabled" : ""
-                        }`}
-                        onClick={() => sizeItem.quantity > 0 && setSelectedSize(sizeItem.size)}
-                        title={sizeItem.quantity === 0 ? "Hết hàng" : `Còn ${sizeItem.quantity} sản phẩm`}
+                        className={`size-option ${
+                          selectedSize === sizeItem.size ? "active" : ""
+                        } ${sizeItem.quantity === 0 ? "disabled" : ""}`}
+                        onClick={() =>
+                          sizeItem.quantity > 0 &&
+                          setSelectedSize(sizeItem.size)
+                        }
+                        title={
+                          sizeItem.quantity === 0
+                            ? "Hết hàng"
+                            : `Còn ${sizeItem.quantity} sản phẩm`
+                        }
                       >
                         {sizeItem.size}
-                        {sizeItem.quantity === 0 && <div className="size-sold-out">✕</div>}
+                        {sizeItem.quantity === 0 && (
+                          <div className="size-sold-out">✕</div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -239,8 +273,14 @@ const ProductDetail = ({ product }) => {
                       className="quantity-input"
                       disabled={!isSizeAvailable}
                     />
-                    <span className={`stock-status ${isSizeAvailable ? "in-stock" : "out-of-stock"}`}>
-                      {isSizeAvailable ? `Còn ${maxQuantity} sản phẩm` : "Hết hàng"}
+                    <span
+                      className={`stock-status ${
+                        isSizeAvailable ? "in-stock" : "out-of-stock"
+                      }`}
+                    >
+                      {isSizeAvailable
+                        ? `Còn ${maxQuantity} sản phẩm`
+                        : "Hết hàng"}
                     </span>
                   </div>
                 </div>
@@ -258,16 +298,18 @@ const ProductDetail = ({ product }) => {
                 >
                   Thêm vào giỏ hàng
                 </Button>
-                <Button size="large" onClick={handleBuyNow} className="buy-now-btn" disabled={!isSizeAvailable} block>
+                <Button
+                  size="large"
+                  onClick={handleBuyNow}
+                  className="buy-now-btn"
+                  disabled={!isSizeAvailable}
+                  block
+                >
                   Mua ngay
                 </Button>
               </div>
 
               <div className="product-meta">
-                <div className="meta-item">
-                  <span className="meta-label">SKU:</span>
-                  <span className="meta-value">{product.sku}</span>
-                </div>
                 <div className="meta-item">
                   <span className="meta-label">Danh mục:</span>
                   <span className="meta-value">{product.category?.name}</span>
@@ -288,16 +330,37 @@ const ProductDetail = ({ product }) => {
         <div className="related-products">
           <h2 className="section-title">Sản phẩm liên quan</h2>
           <Row gutter={[16, 16]}>
-            {relatedProducts.map((product) => (
-              <Col key={product.id} xs={12} sm={12} md={8} lg={6}>
-                <CardProduct product={product} />
-              </Col>
+            {relatedProductsData?.pages.map((page, i) => (
+              <React.Fragment key={i}>
+                {page.data.map((relatedProd) => (
+                  <Col key={relatedProd._id} xs={12} sm={12} md={8} lg={6}>
+                    <CardProduct product={relatedProd} />
+                  </Col>
+                ))}
+              </React.Fragment>
             ))}
           </Row>
+          {isLoadingRelated ? (
+            <div style={{ textAlign: "center", marginTop: "20px" }}>
+              <Spin />
+            </div>
+          ) : (
+            hasNextPage && (
+              <div className="load-more-container">
+                <ButtonComponent
+                  type="primary"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="load-more-button"
+                  textButton={isFetchingNextPage ? "Đang tải..." : "Xem thêm"}
+                />
+              </div>
+            )
+          )}
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ProductDetail
+export default ProductDetail;
