@@ -23,6 +23,7 @@ router.put(
   ProductController.updateProduct
 );
 router.get("/detail/:id", ProductController.getDetailProduct);
+router.get("/detail-by-slug/:slug", ProductController.getDetailProductBySlug);
 router.delete("/delete/:id", authMiddleware, ProductController.deleteProduct);
 router.post("/delete-many", authMiddleware, ProductController.deleteManyProducts);
 router.get("/get-all", ProductController.getAllProducts);

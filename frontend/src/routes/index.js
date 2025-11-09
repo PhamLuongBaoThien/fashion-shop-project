@@ -19,7 +19,6 @@ import AdminProfile from "../pages/AdminProfile/AdminProfile.jsx";
 import AdminAddProductPage from "../pages/AdminProducts/AdminAddProduct.jsx";
 import AdminUpdateProductPage from "../pages/AdminProducts/AdminUpdateProductPage.jsx";
 
-
 export const routes = [
   {
     path: "/",
@@ -37,7 +36,7 @@ export const routes = [
     isShowHeader: true,
   },
   {
-    path: "/product-detail",
+    path: "/product/:slug", // Thay vì "/product-detail"
     page: ProductDetailPage,
     isShowHeader: true,
   },
@@ -81,7 +80,7 @@ export const routes = [
       {
         path: "products/update/:id",
         page: AdminUpdateProductPage,
-    },
+      },
       {
         path: "categories", // URL: /system/admin/users
         page: AdminCategories,
@@ -102,8 +101,6 @@ export const routes = [
         path: "profile", // URL: /system/admin/users
         page: AdminProfile,
       },
-
-
     ],
   },
   {

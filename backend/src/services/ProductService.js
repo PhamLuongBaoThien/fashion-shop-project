@@ -92,6 +92,43 @@ const getDetailProduct = (productId) => {
   });
 };
 
+const getDetailProductBySlug = (slug) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // 1. Dùng findOne({ slug }) thay vì findById()
+      // 2. Populate thêm category và createdBy
+      const product = await Product.findOne({ slug: slug })
+        .populate("category") // Lấy toàn bộ object category
+        .populate("createdBy", "username email"); // Chỉ lấy username và email của người tạo
+
+      // Nếu không tìm thấy sản phẩm, HOẶC sản phẩm đó đang bị ẩn
+      if (product === null || product.isActive === false) {
+        return resolve({
+          status: "ERR",
+          message: "Sản phẩm không tìm thấy", // Trả về một lỗi 404 chung
+        });
+      }
+
+      // 3. Tính toán lại trạng thái tồn kho (Rất quan trọng cho trang chi tiết)
+      const totalStock = product.sizes.reduce((total, size) => total + size.quantity, 0);
+      const inventoryStatus = totalStock > 0 ? 'Còn hàng' : 'Hết hàng';
+
+      // 4. Gán trường 'ảo' inventoryStatus vào object
+      const productObject = product.toObject();
+      productObject.inventoryStatus = inventoryStatus;
+
+      resolve({
+        status: "OK",
+        message: "Tải sản phẩm thành công",
+        data: productObject, // Trả về sản phẩm đã được làm giàu
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+
 const deleteProduct = (productId) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -289,6 +326,7 @@ module.exports = {
   createProduct,
   updateProduct,
   getDetailProduct,
+  getDetailProductBySlug,
   deleteProduct,
   getAllProducts,
   deleteManyProducts,

@@ -3,6 +3,7 @@ import { Card, Typography, Badge, Space } from "antd";
 import { HeartOutlined, ShoppingCartOutlined } from "@ant-design/icons";
 import "./CardComponent.css";
 import ButtonComponent from "../ButtonComponent/ButtonComponent";
+import { Link } from "react-router-dom";
 const { Title, Text } = Typography;
 const { Meta } = Card;
 
@@ -15,7 +16,8 @@ const CardComponent = ({ product }) => {
   const isSoldOut = product.inventoryStatus === "Hết hàng";
 
   return (
-    <Card
+    <Link to={`/product/${product.slug}`} key={product._id} className="product-link-wrapper">
+      <Card
       className={`product-card ${isSoldOut ? "sold-out" : ""}`}
       cover={
         <div className="product-image-wrapper">
@@ -101,6 +103,8 @@ const CardComponent = ({ product }) => {
         }
       />
     </Card>
+    </Link>
+    
   );
 };
 

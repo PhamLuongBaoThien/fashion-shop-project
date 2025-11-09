@@ -194,6 +194,21 @@ const getDetailProduct = async (req, res) => {
   }
 };
 
+const getDetailProductBySlug = async (req, res) => {
+  try {
+    const slug = req.params.slug; // Lấy slug từ URL
+    if (!slug) {
+      return res
+        .status(400)
+        .json({ status: "ERR", message: "Slug là bắt buộc" });
+    }
+    const response = await ProductService.getDetailProductBySlug(slug);
+    return res.status(200).json(response);
+  } catch (error) {
+    return res.status(500).json({ status: "ERR", message: error.message });
+  }
+};
+
 const deleteProduct = async (req, res) => {
   try {
     const productId = req.params.id;
@@ -223,6 +238,7 @@ const getAllProducts = async (req, res) => {
       sortOption,
       isActive
     } = req.query;
+    
 
     let categorySlugs = null;
     if (category) {
@@ -266,6 +282,7 @@ module.exports = {
   createProduct,
   updateProduct,
   getDetailProduct,
+  getDetailProductBySlug,
   deleteProduct,
   getAllProducts,
   deleteManyProducts,
