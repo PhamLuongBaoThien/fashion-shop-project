@@ -98,8 +98,8 @@
 }
 
 .home-button:hover {
-  background-color: #333;
-  border-color: #333;
+  background-color: #333 !important;
+  border-color: #333 !important;
   transform: translateY(-2px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }

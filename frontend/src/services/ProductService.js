@@ -103,15 +103,24 @@ export const deleteManyProducts = async (ids) => {
 };
 
 export const getDetailProductBySlug = async (slug) => {
+  try {
   // API endpoint này bạn đã tạo ở backend
   const res = await axios.get(
     `${process.env.REACT_APP_API_KEY}/product/detail-by-slug/${slug}`
   );
+// Backend trả về { status: "ERR" } khi không tìm thấy
+    if (res.data.status === 'ERR') {
+      // Ném ra một lỗi tùy chỉnh để useQuery bắt
+      const error = new Error(res.data.message);
+      error.name = 'NotFoundError'; // Đặt tên cho lỗi
+      throw error;
+    }
+    
+    return res.data;
 
-  if (res.data.status === "ERR") {
-    // Ném ra một lỗi. React Query sẽ tự động bắt lỗi này.
-    throw new Error(res.data.message);
+  } catch (axiosError) {
+    // Xử lý các lỗi mạng hoặc 500 từ server
+    console.error("Lỗi API:", axiosError);
+    throw axiosError; // Ném lỗi gốc của axios ra
   }
-
-  return res.data;
 };

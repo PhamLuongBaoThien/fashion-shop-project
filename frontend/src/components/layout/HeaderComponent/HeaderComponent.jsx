@@ -8,7 +8,7 @@ import {
   HeartOutlined,
 } from "@ant-design/icons";
 import { Badge, Layout, Space, Dropdown } from "antd";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import "./HeaderComponent.css";
 import Logo from "../../common/Logo/Logo";
 import DesktopNavigation from "../Navigation/DesktopNavigation";
@@ -30,6 +30,7 @@ export default function HeaderComponent() {
   const [searchValue, setSearchValue] = useState("");
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const user = useSelector((state) => state.user); // state.user là slice bạn đã tạo
 
@@ -52,11 +53,25 @@ export default function HeaderComponent() {
   };
 
   useEffect(() => {
-    // Chỉ thực hiện khi có giá trị đã trì hoãn (và không phải chuỗi rỗng)
+    // Lấy các tham số (filters) hiện tại trên URL
+    const currentParams = new URLSearchParams(location.search);
+
+    // Nếu có giá trị tìm kiếm mới
     if (debouncedSearchValue.trim()) {
-      navigate(`/products?search=${encodeURIComponent(debouncedSearchValue.trim())}`);
+      // Cập nhật tham số 'search' và reset về trang 1
+      currentParams.set("search", debouncedSearchValue.trim());
+      currentParams.set("page", "1");
+      navigate(`/products?${currentParams.toString()}`);
     }
-  }, [debouncedSearchValue, navigate]); // Chạy lại mỗi khi giá trị trì hoãn thay đổi
+    // Nếu giá trị tìm kiếm bị xóa (chuỗi rỗng)
+    else {
+      // Chỉ xóa tham số 'search' nếu chúng ta ĐANG Ở TRÊN TRANG /products
+      if (location.pathname === "/products") {
+        currentParams.delete("search");
+        navigate(`/products?${currentParams.toString()}`);
+      }
+    }
+  }, [debouncedSearchValue, navigate, location.pathname]); // Chạy lại mỗi khi giá trị trì hoãn thay đổi
 
   const getLastName = (fullName) => {
     if (!fullName) return "Khách";
@@ -113,15 +128,6 @@ export default function HeaderComponent() {
       },
     ],
   };
-
-//  const onSearch = (value) => {
-//   console.log("SEARCH TRIGGERED:", value); // ← DEBUG
-//   if (value) {
-//     navigate(`/products?search=${encodeURIComponent(value)}`);
-//     setSearchValue(""); // XÓA Ô TÌM KIẾM
-//     setIsSearchOpen(false); // ĐÓNG MOBILE
-//   }
-// };
 
   const userMenu = {
     items: user.isAdmin
@@ -210,7 +216,6 @@ export default function HeaderComponent() {
           <InputSearch
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
-            // onSearch={onSearch}
             placeholder={
               user.username
                 ? `${getLastName(user.username)} cần tìm gì?`
@@ -283,7 +288,6 @@ export default function HeaderComponent() {
         <InputSearch
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
-          // onSearch={onSearch}
           placeholder="Tìm kiếm sản phẩm..."
           // width="100%"
           className="mobile-search-bar"

@@ -16,6 +16,20 @@ const ProductDetailPage = () => {
         queryKey: ['product-details', slug], 
         queryFn: () => ProductService.getDetailProductBySlug(slug),
         enabled: !!slug, // Chỉ chạy query khi có slug
+        // retry: 0 // Không thử lại nếu gặp lỗi
+        retry: (failureCount, error) => {
+            // 1. Nếu lỗi là 'NotFoundError' (do chúng ta tự ném ra)
+            if (error.name === 'NotFoundError') {
+                return false; // Không thử lại
+            }
+            // 2. Đối với tất cả các lỗi khác (lỗi mạng,...)
+            // Thử lại tối đa 2 lần (tổng cộng 3 lần chạy)
+            if (failureCount < 2) {
+                return true; // Thử lại
+            }
+            // 3. Nếu đã thử 2 lần mà vẫn lỗi, thì dừng lại
+            return false;
+        }
     });
 
     if (isLoading) {

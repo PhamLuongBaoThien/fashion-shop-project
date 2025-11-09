@@ -5,6 +5,7 @@ import { Button } from "antd"
 import { HomeOutlined } from "@ant-design/icons"
 import { Link } from "react-router-dom"
 import "./NotFoundPage.css"
+import ButtonComponent from "../../components/common/ButtonComponent/ButtonComponent"
 
 function NotFoundPage() {
   const containerVariants = {
@@ -86,9 +87,8 @@ function NotFoundPage() {
         {/* Button */}
         <motion.div className="not-found-button" variants={itemVariants}>
           <Link to="/">
-            <Button type="primary" size="large" icon={<HomeOutlined />} className="home-button">
-              Quay lại trang chủ
-            </Button>
+            <ButtonComponent type="primary" textButton={"Quay lại trang chủ"} size="large" icon={<HomeOutlined />} className="home-button" />
+              
           </Link>
         </motion.div>
       </motion.div>
