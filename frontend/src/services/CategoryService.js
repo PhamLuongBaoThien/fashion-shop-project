@@ -11,8 +11,8 @@ export const createCategory = async (data) => {
     return res.data;
 };
 
-export const updateCategory = async (categorySlug, data) => {
-    const res = await axiosJWT.put(`${process.env.REACT_APP_API_KEY}/category/update/${categorySlug}`, data);
+export const updateCategory = async (categoryId, data) => {
+    const res = await axiosJWT.put(`${process.env.REACT_APP_API_KEY}/category/update/${categoryId}`, data);
     return res.data;
 }
 

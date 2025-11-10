@@ -50,15 +50,27 @@ const updateProduct = (productId, productData) => {
       if (productData.description) {
         productData.description = DOMPurify.sanitize(productData.description);
       }
-      // Cập nhật sản phẩm với dữ liệu mới
-      const updatedProduct = await Product.findByIdAndUpdate(
-        productId,
-        { ...productData, updatedAt: Date.now() }, // Cập nhật updatedAt thủ công
-        { new: true, runValidators: true } // Trả về tài liệu mới và chạy validation
-      ).populate("category");
-      if (!updatedProduct) {
+
+      //1. Lấy product gốc từ DB
+      const product = await Product.findById(productId);
+      if (!product) {
         return resolve({ status: "ERR", message: "Product not found" });
       }
+
+      //2. Cập nhật các field (chỉ ghi đè những field được gửi lên)
+      Object.keys(productData).forEach((key) => {
+        product[key] = productData[key];
+      });
+
+      //3. Cập nhật updatedAt
+      product.updatedAt = Date.now();
+
+      //4. Gọi save() → middleware pre('save') sẽ tự chạy
+      const updatedProduct = await product.save();
+
+      //5. Populate lại category nếu cần
+      await updatedProduct.populate("category");
+
       resolve({
         status: "OK",
         message: "Product updated successfully",

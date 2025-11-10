@@ -101,13 +101,23 @@ const productSchema = new mongoose.Schema(
   }
 );
 
-// Middleware: Tự động tạo slug từ 'name' trước khi lưu
-productSchema.pre('save', function(next) {
-  // Chỉ tạo slug nếu trường 'name' được tạo mới hoặc bị thay đổi
-  if (this.isModified('name')) {
-    this.slug = slugify(this.name, { lower: true, strict: true, locale: 'vi' });
+// Middleware xử lý slug tự động từ 'name' + tránh trùng lặp
+productSchema.pre("save", async function (next) {
+  // Chỉ tạo lại slug nếu name thay đổi hoặc chưa có slug
+  if (this.isModified("name") || !this.slug) {
+    let baseSlug = slugify(this.name, { lower: true, strict: true, locale: "vi" });
+    let slug = baseSlug;
+    let count = 1;
+
+    // Kiểm tra xem slug đã tồn tại trong DB chưa
+    while (await this.constructor.exists({ slug, _id: { $ne: this._id } })) {
+      slug = `${baseSlug}-${count++}`; // thêm hậu tố nếu trùng
+    }
+
+    this.slug = slug;
   }
-  next(); // Tiếp tục quá trình lưu
+
+  next();
 });
 
 productSchema.plugin(mongoosePaginate);

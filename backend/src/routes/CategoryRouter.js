@@ -7,6 +7,6 @@ router.post("/create", authMiddleware, CategoryController.createCategory);
 
 router.get("/detail/:id", CategoryController.getDetailCategory);
 router.get("/get-all", CategoryController.getAllCategories);
-router.put("/update/:slug", authMiddleware, CategoryController.updateCategory);
+router.put("/update/:id", authMiddleware, CategoryController.updateCategory);
 
 module.exports = router;
