@@ -57,6 +57,13 @@ const updateProduct = (productId, productData) => {
         return resolve({ status: "ERR", message: "Product not found" });
       }
 
+      if (productData.sizes && Array.isArray(productData.sizes) && productData.sizes.length === 0) {
+        return resolve({ 
+          status: "ERR", 
+          message: "Sản phẩm phải có ít nhất một kích cỡ. Cập nhật thất bại." 
+        });
+      }
+
       //2. Cập nhật các field (chỉ ghi đè những field được gửi lên)
       Object.keys(productData).forEach((key) => {
         product[key] = productData[key];

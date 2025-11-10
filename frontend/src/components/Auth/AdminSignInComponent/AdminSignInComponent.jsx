@@ -9,14 +9,14 @@ import InputComponent from "../../common/InputComponent/InputComponent";
 import * as UserService from "../../../services/UserService";
 import { useNavigate } from "react-router-dom";
 import { useMutationHooks } from "../../../hooks/useMutationHook";
-import { useMessage } from "../../../hooks/useMessage";
+import { useMessageApi } from "../../../context/MessageContext";
 import { jwtDecode } from "jwt-decode";
 import { useDispatch } from "react-redux";
 import { updateUser } from "../../../redux/slides/userSlide";
 
 const AdminSignInComponent = () => {
   const navigate = useNavigate();
-  const { contextHolder, showSuccess, showError } = useMessage();
+const { showSuccess, showError } = useMessageApi();
   const dispatch = useDispatch();
   // Gọi API qua mutation hook
   const mutation = useMutationHooks((data) => UserService.loginAdmin(data));
@@ -91,7 +91,6 @@ const AdminSignInComponent = () => {
 
   return (
     <>
-      {contextHolder} {/* Bắt buộc để message render được */}
       <div className="auth-form-container">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

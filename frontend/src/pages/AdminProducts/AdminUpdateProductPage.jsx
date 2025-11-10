@@ -4,7 +4,6 @@ import {
   Form,
   Input,
   Button,
-  message,
   Row,
   Col,
   Select,
@@ -25,12 +24,15 @@ import {
   MinusCircleOutlined,
   UploadOutlined,
 } from "@ant-design/icons";
+import { useMessageApi } from "../../context/MessageContext";
 
 const AdminUpdateProductPage = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const { id: productId } = useParams();
   const queryClient = useQueryClient();
+
+  const { messageApi } = useMessageApi();
 
   // 1. DÙNG useQuery ĐỂ FETCH DỮ LIỆU SẢN PHẨM CẦN SỬA
   const { data: productDetails, isLoading: isLoadingDetails } = useQuery({
@@ -84,12 +86,14 @@ const AdminUpdateProductPage = () => {
     mutationFn: (data) =>
       ProductService.updateProduct(productId, data.formData),
     onSuccess: () => {
-      message.success("Cập nhật sản phẩm thành công!");
+      messageApi.success("Cập nhật sản phẩm thành công!");
       queryClient.invalidateQueries({ queryKey: ["admin-products"] }); // Làm mới danh sách sản phẩm
       navigate("/system/admin/products");
     },
     onError: (error) => {
-      message.error(`Cập nhật thất bại: ${error.message}`);
+      // "Mở thùng" error ra để đọc đúng message từ BE
+      const errorMessage = error.response?.data?.message || error.message;
+      messageApi.error(errorMessage); // Dùng hàm từ hook
     },
   });
 
@@ -229,70 +233,75 @@ const AdminUpdateProductPage = () => {
                         */}
             <RichTextEditor />
           </Form.Item>
-          <Form.Item label="Kích cỡ & Số lượng" required>
-            <Form.List
-              name="sizes"
-              rules={[
-                {
-                  validator: async (_, sizes) => {
-                    if (!sizes || sizes.length < 1) {
-                      return Promise.reject(
-                        new Error("Phải có ít nhất 1 size")
-                      );
-                    }
-                  },
+          <Form.List
+            label="Kích cỡ & Số lượng"
+            name="sizes"
+            rules={[
+              {
+                validator: async (_, sizes) => {
+                  if (!sizes || sizes.length < 1) {
+                    return Promise.reject(new Error("Phải có ít nhất 1 size"));
+                  }
                 },
-              ]}
-            >
-              {(fields, { add, remove }) => (
-                <>
-                  {fields.map(({ key, name, ...restField }) => (
-                    <Space
-                      key={key}
-                      align="baseline"
-                      style={{ display: "flex", marginBottom: 8 }}
+              },
+            ]}
+          >
+            {(fields, { add, remove }, { errors }) => (
+              <>
+                {fields.map(({ key, name, ...restField }) => (
+                  <Space
+                    key={key}
+                    align="baseline"
+                    style={{ display: "flex", marginBottom: 8 }}
+                  >
+                    <Form.Item
+                      {...restField}
+                      name={[name, "size"]}
+                      rules={[
+                        { required: true, message: "Vui lòng chọn size!" },
+                      ]}
                     >
-                      <Form.Item
-                        {...restField}
-                        name={[name, "size"]}
-                        rules={[{ required: true }]}
-                      >
-                        <Select
-                          placeholder="Size"
-                          style={{ width: 120 }}
-                          options={[
-                            { value: "XS" },
-                            { value: "S" },
-                            { value: "M" },
-                            { value: "L" },
-                            { value: "XL" },
-                          ]}
-                        />
-                      </Form.Item>
-                      <Form.Item
-                        {...restField}
-                        name={[name, "quantity"]}
-                        rules={[{ required: true }]}
-                      >
-                        <InputNumber placeholder="Số lượng" min={0} />
-                      </Form.Item>
-                      <MinusCircleOutlined onClick={() => remove(name)} />
-                    </Space>
-                  ))}
-                  <Form.Item>
-                    <Button
-                      type="dashed"
-                      onClick={() => add()}
-                      block
-                      icon={<PlusOutlined />}
+                      <Select
+                        placeholder="Size"
+                        style={{ width: 120 }}
+                        options={[
+                          { value: "XS" },
+                          { value: "S" },
+                          { value: "M" },
+                          { value: "L" },
+                          { value: "XL" },
+                        ]}
+                      />
+                    </Form.Item>
+                    <Form.Item
+                      {...restField}
+                      name={[name, "quantity"]}
+                      rules={[
+                        {
+                          required: true,
+                          message: "Vui lòng nhập số lượng!",
+                        },
+                      ]}
                     >
-                      Thêm Size
-                    </Button>
-                  </Form.Item>
-                </>
-              )}
-            </Form.List>
-          </Form.Item>
+                      <InputNumber placeholder="Số lượng" min={0} />
+                    </Form.Item>
+                    <MinusCircleOutlined onClick={() => remove(name)} />
+                  </Space>
+                ))}
+                <Form.Item>
+                  <Button
+                    type="dashed"
+                    onClick={() => add()}
+                    block
+                    icon={<PlusOutlined />}
+                  >
+                    Thêm Size
+                  </Button>
+                  <Form.ErrorList errors={errors} />
+                </Form.Item>
+              </>
+            )}
+          </Form.List>
           <Row gutter={24}>
             <Col xs={12} sm={8}>
               <Form.Item

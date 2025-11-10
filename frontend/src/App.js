@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { updateUser } from "./redux/slides/userSlide";
 import { store } from "./redux/store";
 import { Spin } from "antd";
+import { MessageProvider } from "./context/MessageContext";
 
 function App() {
   const dispatch = useDispatch();
@@ -98,6 +99,7 @@ function App() {
   );
 
   return (
+    <MessageProvider>
     <div>
       {/* 5. Hiển thị Spin hoặc Router dựa trên state isLoading */}
       {isLoading ? (
@@ -171,6 +173,7 @@ function App() {
         </Router>
       )}
     </div>
+    </MessageProvider>
   );
 }
 export default App;

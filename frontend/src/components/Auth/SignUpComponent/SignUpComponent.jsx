@@ -15,12 +15,12 @@ import InputComponent from "../../common/InputComponent/InputComponent";
 import * as UserService from "../../../services/UserService";
 import { useNavigate } from "react-router-dom";
 import { useMutationHooks } from "../../../hooks/useMutationHook";
-import { useMessage } from "../../../hooks/useMessage";
+import { useMessageApi } from "../../../context/MessageContext";
 import "./SignUpComponent.css";
 
 const SignUpComponent = () => {
   const navigate = useNavigate();
-  const { contextHolder, showSuccess, showError } = useMessage();
+  const { showSuccess, showError } = useMessageApi();
 
   // Gọi API qua mutation hook
   const mutation = useMutationHooks((data) => UserService.createUser(data));
@@ -78,8 +78,6 @@ const SignUpComponent = () => {
 
   return (
     <>
-      {" "}
-      {contextHolder}
       <div className="auth-form-container">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

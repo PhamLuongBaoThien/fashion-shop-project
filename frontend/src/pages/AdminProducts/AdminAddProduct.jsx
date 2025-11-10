@@ -5,7 +5,6 @@ import {
   Form,
   Input,
   Button,
-  message,
   Row,
   Col,
   Select,
@@ -18,6 +17,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
 import * as ProductService from "../../services/ProductService";
 import * as CategoryService from "../../services/CategoryService";
+import { useMessageApi } from "../../context/MessageContext";
 import {
   PlusOutlined,
   MinusCircleOutlined,
@@ -31,6 +31,8 @@ const AdminAddProductPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  const { messageApi } = useMessageApi();
+
   const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
     queryKey: ["categories"],
     queryFn: CategoryService.getAllCategories,
@@ -39,12 +41,12 @@ const AdminAddProductPage = () => {
   const createMutation = useMutation({
     mutationFn: (newProduct) => ProductService.createProduct(newProduct),
     onSuccess: () => {
-      message.success("Thêm sản phẩm thành công!");
+      messageApi.success("Thêm sản phẩm thành công!");
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
       navigate("/system/admin/products");
     },
     onError: (error) => {
-      message.error(`Thêm sản phẩm thất bại: ${error.message}`);
+      messageApi.error(`Thêm sản phẩm thất bại: ${error.response.data.message || error.message}`);
     },
   });
 
@@ -105,7 +107,7 @@ const AdminAddProductPage = () => {
           form={form}
           layout="vertical"
           onFinish={onFinish}
-          initialValues={{ sizes: [{}], isActive: true, isNewProduct: false }}
+          initialValues={{ isActive: true, isNewProduct: false }}
         >
           <Row gutter={24}>
             <Col xs={24} md={12}>
@@ -179,8 +181,8 @@ const AdminAddProductPage = () => {
             <RichTextEditor />
           </Form.Item>
 
-          <Form.Item label="Kích cỡ & Số lượng" required>
             <Form.List
+            label="Kích cỡ & Số lượng"
               name="sizes"
               rules={[
                 {
@@ -194,7 +196,7 @@ const AdminAddProductPage = () => {
                 },
               ]}
             >
-              {(fields, { add, remove }) => (
+              {(fields, { add, remove }, { errors }) => (
                 <>
                   {fields.map(({ key, name, ...restField }) => (
                     <Space
@@ -222,7 +224,11 @@ const AdminAddProductPage = () => {
                       >
                         <InputNumber placeholder="Số lượng" min={0} />
                       </Form.Item>
-                      <MinusCircleOutlined onClick={() => remove(name)} />
+                      <MinusCircleOutlined
+                        onClick={() => {
+                          remove(name);
+                        }}
+                      />
                     </Space>
                   ))}
                   <Form.Item>
@@ -234,11 +240,11 @@ const AdminAddProductPage = () => {
                     >
                       Thêm Size
                     </Button>
+                    <Form.ErrorList errors={errors} />
                   </Form.Item>
                 </>
               )}
             </Form.List>
-          </Form.Item>
 
           <Row gutter={24}>
             <Col xs={12} sm={8}>

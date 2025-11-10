@@ -10,7 +10,6 @@ import {
   Spin,
   Alert,
   Select,
-  message,
 } from "antd";
 import {
   PlusOutlined,
@@ -24,6 +23,7 @@ import * as ProductService from "../../services/ProductService"; // 2. Import Pr
 import * as CategoryService from "../../services/CategoryService";
 import { useSearchParams, Link } from "react-router-dom";
 import * as XLSX from "xlsx";
+import { useMessageApi } from "../../context/MessageContext";
 
 const { Search } = Input;
 
@@ -42,6 +42,8 @@ const AdminProducts = () => {
   const sortOption = searchParams.get("sortOption") || "default";
 
   const queryClient = useQueryClient();
+  
+  const { messageApi } = useMessageApi();
 
   const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
     queryKey: ["categories"],
@@ -72,8 +74,7 @@ const AdminProducts = () => {
   const exportMutation = useMutation({
     mutationFn: (params) => ProductService.getAllProducts(params),
     onSuccess: (data) => {
-      message.loading({ content: "Đang tạo file Excel...", key: "export" });
-
+      messageApi.loading({ content: "Đang tạo file Excel...", key: "export" }); // DÙNG messageApi
       // Lấy toàn bộ sản phẩm từ kết quả API
       const productsToExport = data?.data || [];
 
@@ -100,15 +101,15 @@ const AdminProducts = () => {
 
       // Tải file về máy
       XLSX.writeFile(workbook, "DanhSachSanPham.xlsx");
-      message.success({
+      messageApi.success({
         content: "Xuất file Excel thành công!",
         key: "export",
         duration: 2,
       });
     },
     onError: (error) => {
-      message.error({
-        content: `Xuất file thất bại: ${error.message}`,
+      messageApi.error({
+        content: `Xuất file thất bại: ${error.response.data.message || error.message}`,
         key: "export",
         duration: 2,
       });
@@ -120,12 +121,12 @@ const AdminProducts = () => {
       return ProductService.deleteProduct(id);
     },
     onSuccess: () => {
-      message.success("Xóa sản phẩm thành công!");
+      messageApi.success("Xóa sản phẩm thành công!");
       // Ra lệnh đi lấy lại danh sách sản phẩm mới nhất
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
     },
     onError: (error) => {
-      message.error(`Xóa thất bại: ${error.message}`);
+      messageApi.error(`Xóa thất bại: ${error.response.data.message || error.message}`);
     },
   });
 
@@ -153,11 +154,11 @@ const AdminProducts = () => {
   const deleteManyMutation = useMutation({
     mutationFn: (ids) => ProductService.deleteManyProducts(ids),
     onSuccess: () => {
-      message.success("Đã xóa các sản phẩm đã chọn!");
+      messageApi.success("Đã xóa các sản phẩm đã chọn!");
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
       setSelectedRowKeys([]); // Xóa các lựa chọn sau khi xóa thành công
     },
-    onError: (error) => message.error(error.message),
+    onError: (error) => messageApi.error(error.response.data.message || error.message),
   });
 
   const handleDeleteManyProducts = () => {
@@ -257,7 +258,7 @@ const AdminProducts = () => {
       title: "Người tạo",
       dataIndex: ["createdBy", "username"], // Lấy record.createdBy.username
       key: "createdBy",
-      render: (username) => username || 'Không rõ', // Hiển thị 'Không rõ' nếu thiếu
+      render: (username) => username || "Không rõ", // Hiển thị 'Không rõ' nếu thiếu
     },
     {
       title: "Hành động",
@@ -295,7 +296,7 @@ const AdminProducts = () => {
 
   // HÀM XỬ LÝ KHI NHẤN NÚT XUẤT FILE
   const handleExportExcel = () => {
-    message.loading({
+    messageApi.loading({
       content: "Đang tải dữ liệu...",
       key: "export",
       duration: 0,
@@ -328,7 +329,7 @@ const AdminProducts = () => {
   }
   if (isError) {
     return (
-      <Alert message="Lỗi" description={error.message} type="error" showIcon />
+      <Alert messageApi="Lỗi" description={error.response.data.message || error.messagee} type="error" showIcon />
     );
   }
 

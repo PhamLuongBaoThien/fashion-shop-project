@@ -9,12 +9,12 @@ import {
   Space,
   Spin,
   Alert,
-  message,
 } from "antd";
 import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import * as CategoryService from "../../services/CategoryService"; // 1. Import service của bạn
+import * as CategoryService from "../../services/CategoryService";
+import { useMessageApi } from "../../context/MessageContext";
 
 const AdminCategories = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -23,6 +23,8 @@ const AdminCategories = () => {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
+
+  const { showSuccess, showError } = useMessageApi();
 
   // 2. DÙNG useQuery ĐỂ LẤY DANH SÁCH DANH MỤC
   const {
@@ -40,27 +42,27 @@ const AdminCategories = () => {
   // 3. DÙNG useMutation ĐỂ TẠO DANH MỤC MỚI
   const createMutation = useMutation({
     mutationFn: (data) => CategoryService.createCategory(data),
-    onSuccess: () => {
-      message.success("Thêm danh mục thành công!");
+    onSuccess: (data) => {
+      showSuccess(data.message || "Thêm danh mục thành công!");
       setIsModalOpen(false);
       form.resetFields();
       // Ra lệnh cho React Query làm mới lại dữ liệu có key là 'categories'
       queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
     onError: (error) => {
-      message.error(`Thêm thất bại: ${error.message}`);
+      showError(error.response?.data?.message || error.message);
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: (data) => CategoryService.updateCategory(data.id, data.data),
-    onSuccess: () => {
-      message.success("Cập nhật danh mục thành công!");
+    onSuccess: (data) => {
+      showSuccess(data.message || "Cập nhật danh mục thành công!");
       setIsEditModalOpen(false);
       form.resetFields();
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
-    onError: (error) => message.error(error.message),
+    onError: (error) => {showError(error.response?.data?.message || error.message);},
   });
 
   // 4. KẾT NỐI MODAL VỚI FORM VÀ MUTATION
@@ -73,7 +75,8 @@ const AdminCategories = () => {
 
   const handleEdit = (record) => {
     setEditingCategory(record); // Lưu lại category đang sửa
-    form.setFieldsValue({ // Điền dữ liệu vào form
+    form.setFieldsValue({
+      // Điền dữ liệu vào form
       name: record.name,
       description: record.description,
     });
@@ -105,7 +108,12 @@ const AdminCategories = () => {
       key: "actions",
       render: (_, record) => (
         <Space>
-          <Button type="primary" size="small" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
+          <Button
+            type="primary"
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => handleEdit(record)}
+          />
           <Button danger size="small" icon={<DeleteOutlined />} />
         </Space>
       ),
@@ -124,7 +132,7 @@ const AdminCategories = () => {
   }
   if (isError) {
     return (
-      <Alert message="Lỗi" description={error.message} type="error" showIcon />
+      <Alert message="Lỗi" description={error.response.data.message || error.message} type="error" showIcon />
     );
   }
 
@@ -189,8 +197,16 @@ const AdminCategories = () => {
         //forceRender // Xóa state của form khi đóng
       >
         <Form form={form} layout="vertical" onFinish={onUpdateFinish}>
-          <Form.Item label="Tên Danh mục" name="name" rules={[{ required: true }]}><Input placeholder="Ví dụ: Áo Sơ Mi" /></Form.Item>
-          <Form.Item label="Mô tả" name="description"><Input.TextArea rows={3} placeholder="Nhập mô tả" /></Form.Item>
+          <Form.Item
+            label="Tên Danh mục"
+            name="name"
+            rules={[{ required: true }]}
+          >
+            <Input placeholder="Ví dụ: Áo Sơ Mi" />
+          </Form.Item>
+          <Form.Item label="Mô tả" name="description">
+            <Input.TextArea rows={3} placeholder="Nhập mô tả" />
+          </Form.Item>
         </Form>
       </Modal>
     </motion.div>
