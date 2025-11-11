@@ -223,7 +223,12 @@
   border-bottom: 1px solid #f0f0f0;
 }
 
-
+.form-actions-container {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px; /* Thêm khoảng cách giữa 2 nút */
+  margin-top: 24px; /* Thêm khoảng cách với trường bên trên */
+}
 
 /* Responsive Design */
 @media (max-width: 768px) {

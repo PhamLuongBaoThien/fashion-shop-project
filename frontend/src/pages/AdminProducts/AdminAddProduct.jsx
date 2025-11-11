@@ -25,6 +25,7 @@ import {
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import RichTextEditor from "../../components/common/RichTextEditor/RichTextEditor";
+import ButtonComponent from "../../components/common/ButtonComponent/ButtonComponent";
 
 const AdminAddProductPage = () => {
   const [form] = Form.useForm();
@@ -232,14 +233,14 @@ const AdminAddProductPage = () => {
                     </Space>
                   ))}
                   <Form.Item>
-                    <Button
+                    <ButtonComponent
                       type="dashed"
                       onClick={() => add()}
                       block
                       icon={<PlusOutlined />}
-                    >
-                      Thêm Size
-                    </Button>
+                      textButton={"Thêm Size"}
+                    />
+                      
                     <Form.ErrorList errors={errors} />
                   </Form.Item>
                 </>
@@ -275,7 +276,7 @@ const AdminAddProductPage = () => {
             rules={[{ required: true, message: "Vui lòng tải ảnh chính!" }]}
           >
             <Upload listType="picture" maxCount={1} beforeUpload={() => false}>
-              <Button icon={<UploadOutlined />}>Tải ảnh chính</Button>
+              <ButtonComponent icon={<UploadOutlined />} textButton={"Tải ảnh chính"} />
             </Upload>
           </Form.Item>
 
@@ -286,22 +287,22 @@ const AdminAddProductPage = () => {
             getValueFromEvent={normFile}
           >
             <Upload listType="picture" multiple beforeUpload={() => false}>
-              <Button icon={<UploadOutlined />}>Tải ảnh phụ (nhiều ảnh)</Button>
+              <ButtonComponent icon={<UploadOutlined />} textButton={"Tải ảnh phụ (nhiều ảnh)"} />
             </Upload>
           </Form.Item>
 
           <div className="form-actions-container">
             <Link to="/system/admin/products">
-              <Button size="large">Hủy</Button>
+              <ButtonComponent size="large" textButton={"Hủy"} />
             </Link>
-            <Button
+            <ButtonComponent
               type="primary"
               htmlType="submit"
               size="large"
               loading={createMutation.isPending}
-            >
-              Tạo sản phẩm
-            </Button>
+              textButton={"Tạo sản phẩm"}
+            />
+
           </div>
         </Form>
       </Card>

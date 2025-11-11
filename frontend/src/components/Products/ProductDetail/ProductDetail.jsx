@@ -9,6 +9,7 @@ import {
   Col,
   Empty,
   Spin,
+  Modal,
 } from "antd";
 import {
   ShoppingCartOutlined,
@@ -26,6 +27,8 @@ const ProductDetail = ({ product }) => {
   const [selectedSize, setSelectedSize] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
+
+  const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
 
   // useEffect để tự động chọn size đầu tiên còn hàng khi sản phẩm được tải
   useEffect(() => {
@@ -125,7 +128,8 @@ const ProductDetail = ({ product }) => {
               </div>
               <p className="review-date">15/03/2024</p>
               <p className="review-content">
-                Chất lượng áo rất tốt, vải mềm mại và thoáng mát. Form áo vừa vặn, đúng size. Sẽ ủng hộ shop lần sau.
+                Chất lượng áo rất tốt, vải mềm mại và thoáng mát. Form áo vừa
+                vặn, đúng size. Sẽ ủng hộ shop lần sau.
               </p>
             </div>
           </div>
@@ -181,51 +185,39 @@ const ProductDetail = ({ product }) => {
   };
 
   return (
-    <div className="product-detail-page">
-      <div className="product-detail-container">
-        <Row gutter={[32, 32]} className="product-main">
-          <Col xs={24} lg={12}>
-            <div className="product-gallery">
-              <ImageGallery images={galleryImages} />
-            </div>
-          </Col>
-
-          <Col xs={24} lg={12}>
-            <div className="product-info">
-              <div className="product-header">
-                <h1 className="product-name">{product.name}</h1>
-                <div className="product-actions-mobile">
-                  <ButtonComponent
-                    type="text"
-                    icon={<HeartOutlined />}
-                    className={isFavorite ? "favorite active" : "favorite"}
-                    onClick={() => setIsFavorite(!isFavorite)}
-                  />
-                  <ButtonComponent type="text" icon={<ShareAltOutlined />} />
-                </div>
-                
+    <>
+      <div className="product-detail-page">
+        <div className="product-detail-container">
+          <Row gutter={[32, 32]} className="product-main">
+            <Col xs={24} lg={12}>
+              <div className="product-gallery">
+                <ImageGallery images={galleryImages} />
               </div>
+            </Col>
 
-              {product.badge && (
-                <div className="product-badges">
-                  {isSoldOut && <Tag color="#bfbfbf">Hết hàng</Tag>}
-                  {product.discount > 0 && !isSoldOut && (
-                    <Tag color="red">Sale</Tag>
-                  )}
-                  {product.isNewProduct && !isSoldOut && (
-                    <Tag color="green">Mới</Tag>
-                  )}
+            <Col xs={24} lg={12}>
+              <div className="product-info">
+                <div className="product-header">
+                  <h1 className="product-name">{product.name}</h1>
+                  <div className="product-actions-mobile">
+                    <ButtonComponent
+                      type="text"
+                      icon={<HeartOutlined />}
+                      className={isFavorite ? "favorite active" : "favorite"}
+                      onClick={() => setIsFavorite(!isFavorite)}
+                    />
+                    <ButtonComponent type="text" icon={<ShareAltOutlined />} />
+                  </div>
                 </div>
-              )}
 
-              <div className="product-rating">
-                <Rate disabled defaultValue={product.rating} allowHalf />
-                <span className="rating-text">
-                  {product.rating} ({product.reviewCount} đánh giá)
-                </span>
-              </div>
+                <div className="product-rating">
+                  <Rate disabled defaultValue={product.rating} allowHalf />
+                  <span className="rating-text">
+                    {product.rating} ({product.reviewCount} đánh giá)
+                  </span>
+                </div>
 
-              <div className="product-actions-desktop">
+                <div className="product-actions-desktop">
                   <ButtonComponent
                     type="text"
                     icon={<HeartOutlined />}
@@ -240,155 +232,207 @@ const ProductDetail = ({ product }) => {
                   />
                 </div>
 
-              <div className="product-price">
-                <span className="current-price">
-                  {product.price.toLocaleString("vi-VN")}đ
-                </span>
-                {originalPrice && (
-                  <>
-                    <span className="original-price">
-                      {originalPrice.toLocaleString("vi-VN")}đ
-                    </span>
-                    <Tag color="red" className="discount-tag">
-                      -{product.discount}%
-                    </Tag>
-                  </>
-                )}
-              </div>
+                <div className="product-price">
+                  <span className="current-price">
+                    {product.price.toLocaleString("vi-VN")}đ
+                  </span>
+                  {isSoldOut && <Tag color="#bfbfbf">Hết hàng</Tag>}
 
-              <Divider />
-
-              <div className="product-options">
-                <div className="option-group">
-                  <label className="option-label">
-                    Kích thước: {selectedSize}
-                  </label>
-                  <div className="size-options">
-                    {product.sizes.map((sizeItem) => (
-                      <div
-                        key={sizeItem.size}
-                        className={`size-option ${
-                          selectedSize === sizeItem.size ? "active" : ""
-                        } ${sizeItem.quantity === 0 ? "disabled" : ""}`}
-                        onClick={() =>
-                          sizeItem.quantity > 0 &&
-                          setSelectedSize(sizeItem.size)
-                        }
-                        title={
-                          sizeItem.quantity === 0
-                            ? "Hết hàng"
-                            : `Còn ${sizeItem.quantity} sản phẩm`
-                        }
-                      >
-                        {sizeItem.size}
-                        {sizeItem.quantity === 0 && (
-                          <div className="size-sold-out">✕</div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  <a href="#" className="size-guide">
-                    Hướng dẫn chọn size
-                  </a>
+                  {originalPrice && (
+                    <>
+                      <span className="original-price">
+                        {originalPrice.toLocaleString("vi-VN")}đ
+                      </span>
+                      <Tag color="red" className="discount-tag">
+                        -{product.discount}%
+                      </Tag>
+                      
+                    </>
+                  )}
+                  {product.isNewProduct && !isSoldOut && (
+                        <Tag color="green" className="discount-tag">
+                          Mới
+                        </Tag>
+                      )}
                 </div>
 
-                <div className="option-group">
-                  <label className="option-label">Số lượng</label>
-                  <div className="quantity-row">
-                    <InputNumber
-                      min={1}
-                      max={maxQuantity}
-                      value={quantity}
-                      onChange={setQuantity}
-                      className="quantity-input"
-                      disabled={!isSizeAvailable}
-                    />
+                <Divider />
+
+                <div className="product-options">
+                  <div className="option-group">
+                    <label className="option-label">
+                      Kích thước: {selectedSize}
+                    </label>
+                    <div className="size-options">
+                      {product.sizes.map((sizeItem) => (
+                        <div
+                          key={sizeItem.size}
+                          className={`size-option ${
+                            selectedSize === sizeItem.size ? "active" : ""
+                          } ${sizeItem.quantity === 0 ? "disabled" : ""}`}
+                          onClick={() =>
+                            sizeItem.quantity > 0 &&
+                            setSelectedSize(sizeItem.size)
+                          }
+                          title={
+                            sizeItem.quantity === 0
+                              ? "Hết hàng"
+                              : `Còn ${sizeItem.quantity} sản phẩm`
+                          }
+                        >
+                          {sizeItem.size}
+                          {sizeItem.quantity === 0 && (
+                            <div className="size-sold-out">✕</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                     <span
-                      className={`stock-status ${
-                        isSizeAvailable ? "in-stock" : "out-of-stock"
-                      }`}
+                      className="size-guide"
+                      onClick={() => setIsSizeGuideOpen(true)}
                     >
-                      {isSizeAvailable
-                        ? `Còn ${maxQuantity} sản phẩm`
-                        : "Hết hàng"}
+                      Hướng dẫn chọn size
+                    </span>
+                  </div>
+
+                  <div className="option-group">
+                    <label className="option-label">Số lượng</label>
+                    <div className="quantity-row">
+                      <InputNumber
+                        min={1}
+                        max={maxQuantity}
+                        value={quantity}
+                        onChange={setQuantity}
+                        className="quantity-input"
+                        disabled={!isSizeAvailable}
+                      />
+                      <span
+                        className={`stock-status ${
+                          isSizeAvailable ? "in-stock" : "out-of-stock"
+                        }`}
+                      >
+                        {isSizeAvailable
+                          ? `Còn ${maxQuantity} sản phẩm`
+                          : "Hết hàng"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="product-actions">
+                  <ButtonComponent
+                    type="primary"
+                    size="large"
+                    icon={<ShoppingCartOutlined />}
+                    onClick={handleAddToCart}
+                    className="add-to-cart-btn"
+                    disabled={!isSizeAvailable}
+                    textButton="Thêm vào giỏ hàng"
+                    block
+                  />
+
+                  <ButtonComponent
+                    size="large"
+                    onClick={handleBuyNow}
+                    className="buy-now-btn"
+                    disabled={!isSizeAvailable}
+                    textButton="Mua ngay"
+                    block
+                  />
+                </div>
+
+                <div className="product-meta">
+                  <div className="meta-item">
+                    <span className="meta-label">Danh mục:</span>
+                    <span className="meta-value">{product.category?.name}</span>
+                  </div>
+                  <div className="meta-item">
+                    <span className="meta-label">Trạng thái:</span>
+                    <span className="meta-value">
+                      {product.inventoryStatus}
                     </span>
                   </div>
                 </div>
               </div>
-
-              <div className="product-actions">
-                <ButtonComponent
-                  type="primary"
-                  size="large"
-                  icon={<ShoppingCartOutlined />}
-                  onClick={handleAddToCart}
-                  className="add-to-cart-btn"
-                  disabled={!isSizeAvailable}
-                  textButton="Thêm vào giỏ hàng"
-                  block
-                />
-                  
-                <ButtonComponent
-                  size="large"
-                  onClick={handleBuyNow}
-                  className="buy-now-btn"
-                  disabled={!isSizeAvailable}
-                  textButton="Mua ngay"
-                  block
-                />
-              </div>
-
-              <div className="product-meta">
-                <div className="meta-item">
-                  <span className="meta-label">Danh mục:</span>
-                  <span className="meta-value">{product.category?.name}</span>
-                </div>
-                <div className="meta-item">
-                  <span className="meta-label">Trạng thái:</span>
-                  <span className="meta-value">{product.inventoryStatus}</span>
-                </div>
-              </div>
-            </div>
-          </Col>
-        </Row>
-
-        <div className="product-details">
-          <Tabs defaultActiveKey="description" items={tabItems} />
-        </div>
-
-        <div className="related-products">
-          <h2 className="section-title">Sản phẩm liên quan</h2>
-          <Row gutter={[16, 16]}>
-            {relatedProductsData?.pages.map((page, i) => (
-              <React.Fragment key={i}>
-                {page.data.map((relatedProd) => (
-                  <Col key={relatedProd._id} xs={12} sm={12} md={8} lg={6}>
-                    <CardProduct product={relatedProd} />
-                  </Col>
-                ))}
-              </React.Fragment>
-            ))}
+            </Col>
           </Row>
-          {isLoadingRelated ? (
-            <div style={{ textAlign: "center", marginTop: "20px" }}>
-              <Spin />
-            </div>
-          ) : (
-            hasNextPage && (
-              <div className="load-more-container">
-                <ButtonComponent
-                  type="primary"
-                  onClick={() => fetchNextPage()}
-                  disabled={isFetchingNextPage}
-                  className="load-more-button"
-                  textButton={isFetchingNextPage ? "Đang tải..." : "Xem thêm"}
-                />
+
+          <div className="product-details">
+            <Tabs defaultActiveKey="description" items={tabItems} />
+          </div>
+
+          <div className="related-products">
+            <h2 className="section-title">Sản phẩm liên quan</h2>
+            <Row gutter={[16, 16]}>
+              {relatedProductsData?.pages.map((page, i) => (
+                <React.Fragment key={i}>
+                  {page.data.map((relatedProd) => (
+                    <Col key={relatedProd._id} xs={12} sm={12} md={8} lg={6}>
+                      <CardProduct product={relatedProd} />
+                    </Col>
+                  ))}
+                </React.Fragment>
+              ))}
+            </Row>
+            {isLoadingRelated ? (
+              <div style={{ textAlign: "center", marginTop: "20px" }}>
+                <Spin />
               </div>
-            )
-          )}
+            ) : (
+              hasNextPage && (
+                <div className="load-more-container">
+                  <ButtonComponent
+                    type="primary"
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                    className="load-more-button"
+                    textButton={isFetchingNextPage ? "Đang tải..." : "Xem thêm"}
+                  />
+                </div>
+              )
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      <Modal
+        title="Hướng dẫn chọn size"
+        open={isSizeGuideOpen}
+        onCancel={() => setIsSizeGuideOpen(false)}
+        footer={[
+          <ButtonComponent
+            key="close"
+            type="primary"
+            onClick={() => setIsSizeGuideOpen(false)}
+            textButton={"Đã hiểu"}
+          />,
+        ]}
+        width={800} // Cho phép modal rộng hơn
+      >
+        <p>Bạn có thể thêm nội dung hướng dẫn chọn size ở đây.</p>
+        <p>Ví dụ:</p>
+        <ul>
+          <li>
+            <strong>Size S:</strong> Cân nặng 50-60kg, Cao 1m60 - 1m65
+          </li>
+          <li>
+            <strong>Size M:</strong> Cân nặng 60-70kg, Cao 1m65 - 1m70
+          </li>
+          <li>
+            <strong>Size L:</strong> Cân nặng 70-75kg, Cao 1m70 - 1m75
+          </li>
+          <li>
+            <strong>Size XL:</strong> Cân nặng 75-85kg, Cao 1m75 - 1m80
+          </li>
+        </ul>
+        <p>
+          Lưu ý: Bảng size chỉ mang tính chất tham khảo, tùy thuộc vào số đo cơ
+          thể và chất liệu vải.
+        </p>
+        {/* Hoặc bạn có thể chèn một ảnh bảng size tại đây */}
+        {/* <img src="/path/to/size-chart.png" alt="Bảng size" style={{ width: '100%' }} /> */}
+      </Modal>
+    </>
   );
 };
 

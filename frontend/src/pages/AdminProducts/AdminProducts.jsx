@@ -24,6 +24,7 @@ import * as CategoryService from "../../services/CategoryService";
 import { useSearchParams, Link } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { useMessageApi } from "../../context/MessageContext";
+import ButtonComponent from "../../components/common/ButtonComponent/ButtonComponent";
 
 const { Search } = Input;
 
@@ -266,9 +267,9 @@ const AdminProducts = () => {
       render: (_, record) => (
         <Space>
           <Link to={`/system/admin/products/update/${record._id}`}>
-            <Button type="primary" size="small" icon={<EditOutlined />} />
+            <ButtonComponent type="primary" size="small" icon={<EditOutlined />} />
           </Link>
-          <Button
+          <ButtonComponent
             danger
             type="primary"
             size="small"
@@ -377,7 +378,7 @@ const AdminProducts = () => {
         <Card>
           <div className="admin-page-header">
             <h1>Quản lý Sản phẩm</h1>
-            <Button
+            <ButtonComponent
               type="primary"
               icon={<DownloadOutlined />}
               onClick={handleExportExcel}
@@ -385,11 +386,10 @@ const AdminProducts = () => {
               style={{ backgroundColor: "#10893E", borderColor: "#10893E" }}
             >
               Xuất Excel
-            </Button>
+            </ButtonComponent>
             <Link to="/system/admin/products/add">
-              <Button type="primary" icon={<PlusOutlined />}>
-                Thêm Sản phẩm
-              </Button>
+              <ButtonComponent type="primary" icon={<PlusOutlined />} textButton={"Thêm Sản phẩm"} />
+
             </Link>
           </div>
 
@@ -444,15 +444,15 @@ const AdminProducts = () => {
               </Space>
               {/* NÚT XÓA NHIỀU */}
               {hasSelected && (
-                <Button
+                <ButtonComponent
                   danger
                   type="primary"
                   icon={<DeleteOutlined />}
                   onClick={handleDeleteManyProducts}
                   loading={deleteManyMutation.isPending}
-                >
-                  Xóa {selectedRowKeys.length} mục
-                </Button>
+                  textButton={`Xóa ${selectedRowKeys.length} mục`}
+                />
+
               )}
             </div>
           </Space>

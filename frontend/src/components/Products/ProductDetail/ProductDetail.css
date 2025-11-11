@@ -177,11 +177,13 @@
 .size-guide {
   font-size: 13px;
   color: #666;
+  cursor: pointer;
   text-decoration: underline;
 }
 
 .size-guide:hover {
   color: #000;
+  text-decoration: underline;
 }
 
 /* Added quantity-row wrapper for better layout */
