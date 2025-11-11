@@ -64,8 +64,8 @@ const FilterSidebar = ({
                   value={priceRange}
                   onChange={setPriceRange}
                   min={0}
-                  max={4000000}
-                  step={100000}
+                  max={1000000}
+                  step={50000}
                 />
                 {/* <p className="price-range">
                 {priceRange[0].toLocaleString()}đ -{" "}
@@ -117,9 +117,9 @@ const FilterSidebar = ({
       <ButtonComponent
         size="small"
         styleButton={{ marginTop: 10, padding: 0 }}
-        styleTextButton={{ color: "#1890ff" }}
         textButton="Xóa bộ lọc"
         onClick={onClearFilters}
+        className="clear-filters-button"
       />
     </div>
   );

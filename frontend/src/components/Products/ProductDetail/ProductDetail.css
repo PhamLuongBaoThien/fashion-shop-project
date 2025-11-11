@@ -50,6 +50,11 @@
   gap: 8px;
 }
 
+.product-actions-desktop {
+  display: flex;
+  flex-wrap: wrap;
+}
+
 .product-badges {
   display: flex;
   gap: 8px;
@@ -219,8 +224,8 @@
 }
 
 .add-to-cart-btn:hover {
-  background: #333;
-  border-color: #333;
+  background: #333 !important;
+  border-color: #333 !important;
 }
 
 .add-to-cart-btn:disabled,
@@ -237,7 +242,9 @@
 }
 
 .buy-now-btn:hover {
-  background: #f8f8f8;
+  background: #ecebeb !important;
+  border-color: #333 !important;
+  color: #333 !important;
 }
 
 .product-meta {
@@ -410,6 +417,10 @@
 
   .product-actions-mobile {
     display: flex;
+  }
+
+  .product-actions-desktop {
+    display: none;
   }
 
   .current-price {

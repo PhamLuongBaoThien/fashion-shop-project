@@ -7,6 +7,42 @@ const { JSDOM } = require("jsdom"); //  dùng để tạo mô hình DOM trong
 const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
 
+//xử lý kích cỡ: các size trùng, sắp xếp theo thứ tự cho API create và update
+const processAndSortSizes = (sizes) => {
+  if (!sizes || !Array.isArray(sizes) || sizes.length === 0) {
+    return []; // Trả về mảng rỗng nếu không có gì
+  }
+
+  // Định nghĩa thứ tự size chuẩn
+  const sizeOrder = ["XS", "S", "M", "L", "XL", "XXL"];
+
+  // 1. GOM (MERGE) CÁC SIZE TRÙNG LẶP
+  // Dùng Map để cộng dồn số lượng của các size trùng nhau
+  const sizeMap = new Map();
+  sizes.forEach((item) => {
+    // Chỉ xử lý nếu có size và quantity
+    if (item.size && item.quantity !== null && item.quantity !== undefined) {
+      const currentQuantity = sizeMap.get(item.size) || 0;
+      sizeMap.set(item.size, currentQuantity + Number(item.quantity));
+    }
+  });
+
+  // 2. Chuyển Map trở lại thành mảng
+  const mergedSizes = Array.from(sizeMap, ([size, quantity]) => ({
+    size,
+    quantity,
+  }));
+
+  // 3. SẮP XẾP (SORT) MẢNG ĐÃ GOM
+  const sortedSizes = mergedSizes.sort((a, b) => {
+    const indexA = sizeOrder.indexOf(a.size);
+    const indexB = sizeOrder.indexOf(b.size);
+    return indexA - indexB;
+  });
+
+  return sortedSizes;
+};
+
 const createProduct = (productData, userId) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -24,14 +60,18 @@ const createProduct = (productData, userId) => {
         productData.description = DOMPurify.sanitize(productData.description);
       }
 
+      if (productData.sizes) {
+        productData.sizes = processAndSortSizes(productData.sizes);
+      }
+
       const newProduct = await Product.create({
-          ...productData,
-          createdBy: userId // Gán "dấu vân tay"
+        ...productData,
+        createdBy: userId, // Gán "dấu vân tay"
       });
 
       const populatedProduct = await Product.findById(newProduct._id)
-      .populate("category")
-      .populate('createdBy', 'username email'); // Lấy username và email người tạo;
+        .populate("category")
+        .populate("createdBy", "username email"); // Lấy username và email người tạo;
 
       resolve({
         status: "OK",
@@ -57,11 +97,16 @@ const updateProduct = (productId, productData) => {
         return resolve({ status: "ERR", message: "Product not found" });
       }
 
-      if (productData.sizes && Array.isArray(productData.sizes) && productData.sizes.length === 0) {
-        return resolve({ 
-          status: "ERR", 
-          message: "Sản phẩm phải có ít nhất một kích cỡ. Cập nhật thất bại." 
-        });
+      // Kiểm tra và "dọn dẹp" mảng sizes trước khi cập nhật
+      if (productData.sizes) {
+        productData.sizes = processAndSortSizes(productData.sizes);
+        // Kiểm tra lại sau khi dọn dẹp, nếu admin xóa hết size
+        if (productData.sizes.length === 0) {
+          return resolve({
+            status: "ERR",
+            message: "Sản phẩm phải có ít nhất một kích cỡ. Cập nhật thất bại.",
+          });
+        }
       }
 
       //2. Cập nhật các field (chỉ ghi đè những field được gửi lên)
@@ -129,8 +174,11 @@ const getDetailProductBySlug = (slug) => {
       }
 
       // 3. Tính toán lại trạng thái tồn kho (Rất quan trọng cho trang chi tiết)
-      const totalStock = product.sizes.reduce((total, size) => total + size.quantity, 0);
-      const inventoryStatus = totalStock > 0 ? 'Còn hàng' : 'Hết hàng';
+      const totalStock = product.sizes.reduce(
+        (total, size) => total + size.quantity,
+        0
+      );
+      const inventoryStatus = totalStock > 0 ? "Còn hàng" : "Hết hàng";
 
       // 4. Gán trường 'ảo' inventoryStatus vào object
       const productObject = product.toObject();
@@ -146,7 +194,6 @@ const getDetailProductBySlug = (slug) => {
     }
   });
 };
-
 
 const deleteProduct = (productId) => {
   return new Promise(async (resolve, reject) => {
@@ -192,7 +239,7 @@ const getAllProducts = (
 
       // Nếu có tham số `isActive`, chỉ lọc các sản phẩm có trạng thái đó
       if (isActive !== undefined && isActive !== null) {
-        query.isActive = (isActive === 'true'); // Chuyển chuỗi "true" thành boolean
+        query.isActive = isActive === "true"; // Chuyển chuỗi "true" thành boolean
       }
 
       // XỬ LÝ DANH MỤC: MẢNG SLUG
@@ -265,9 +312,9 @@ const getAllProducts = (
         sort: {},
         collation: { locale: "vi" },
         populate: [
-            { path: 'category', select: 'name slug' },
-            { path: 'createdBy', select: 'username' } // Chỉ lấy trường 'username'
-        ]
+          { path: "category", select: "name slug" },
+          { path: "createdBy", select: "username" }, // Chỉ lấy trường 'username'
+        ],
       };
 
       // Xử lý sắp xếp
@@ -325,20 +372,20 @@ const getAllProducts = (
 };
 
 const deleteManyProducts = (ids) => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            // Dùng deleteMany và toán tử $in để xóa tất cả sản phẩm có _id nằm trong mảng ids
-            const result = await Product.deleteMany({ _id: { $in: ids } });
-            
-            resolve({
-                status: "OK",
-                message: "Products deleted successfully",
-                data: result, // Trả về kết quả (vd: { deletedCount: 3 })
-            });
-        } catch (error) {
-            reject(error);
-        }
-    });
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Dùng deleteMany và toán tử $in để xóa tất cả sản phẩm có _id nằm trong mảng ids
+      const result = await Product.deleteMany({ _id: { $in: ids } });
+
+      resolve({
+        status: "OK",
+        message: "Products deleted successfully",
+        data: result, // Trả về kết quả (vd: { deletedCount: 3 })
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
 };
 
 const getRelatedProducts = (slug, page, limit) => {
@@ -354,23 +401,26 @@ const getRelatedProducts = (slug, page, limit) => {
 
       // 2. Xây dựng query:
       const query = {
-        // category: categoryId, // Tìm sản phẩm cùng category
+        category: categoryId, // Tìm sản phẩm cùng category
         _id: { $ne: currentProduct._id }, // Loại trừ ($ne) chính sản phẩm đang xem
-        isActive: true // Chỉ lấy sản phẩm đang hoạt động
+        isActive: true, // Chỉ lấy sản phẩm đang hoạt động
       };
 
       const options = {
         page: parseInt(page, 10) || 1,
         limit: parseInt(limit, 10) || 4, // Mặc định 4 sản phẩm
-        populate: 'category',// Vẫn populate để CardComponent có thể đọc
-        sort: { createdAt: -1 } // Mới nhất trước
+        populate: "category", // Vẫn populate để CardComponent có thể đọc
+        sort: { createdAt: -1 }, // Mới nhất trước
       };
 
       const products = await Product.paginate(query, options);
 
       // 3. Tính toán inventoryStatus cho các sản phẩm liên quan
       const productsWithStatus = products.docs.map((product) => {
-        const totalStock = product.sizes.reduce((total, size) => total + size.quantity, 0);
+        const totalStock = product.sizes.reduce(
+          (total, size) => total + size.quantity,
+          0
+        );
         return {
           ...product.toObject(),
           inventoryStatus: totalStock > 0 ? "Còn hàng" : "Hết hàng",
@@ -388,7 +438,6 @@ const getRelatedProducts = (slug, page, limit) => {
           totalPages: products.totalPages,
         },
       });
-
     } catch (error) {
       reject(error);
     }
@@ -403,5 +452,5 @@ module.exports = {
   deleteProduct,
   getAllProducts,
   deleteManyProducts,
-  getRelatedProducts
+  getRelatedProducts,
 };

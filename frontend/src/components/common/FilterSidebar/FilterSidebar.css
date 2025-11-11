@@ -47,10 +47,32 @@
 }
 
 /* Nút xóa bộ lọc */
-.filter-sidebar .ant-btn {
+.clear-filters-button {
   width: 100%;
-  border: solid 1px #d9d9d9;
-  background: none;
-  box-shadow: none;
+
   transition: all 0.3s;
+    border: 2px solid #000;
+    height: 30px;
+  font-size: 15px;
+  font-weight: 600;
+
+}
+
+.clear-filters-button:hover {
+  background: #ecebeb !important;
+  border-color: #333 !important;
+  color: #333 !important;
+}
+
+.buy-now-btn {
+  height: 48px;
+  font-size: 15px;
+  font-weight: 600;
+  border: 2px solid #000;
+}
+
+.buy-now-btn:hover {
+  background: #ecebeb !important;
+  border-color: #333 !important;
+  color: #333 !important;
 }

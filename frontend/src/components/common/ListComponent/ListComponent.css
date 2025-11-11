@@ -45,3 +45,32 @@
     padding: 4px 8px;
   }
 }
+
+
+.product-list-link {
+  display: flex; /* Làm cho thẻ <Link> chiếm toàn bộ không gian của Meta */
+  flex-grow: 1; /* Cho phép nó co giãn */
+  text-decoration: none; /* Bỏ gạch chân */
+  color: inherit; /* Giữ màu chữ gốc */
+}
+
+.motion-list-item-wrapper {
+  position: relative; /* Bắt buộc để zIndex hoạt động */
+  cursor: pointer; /* Biến con trỏ thành hình bàn tay */
+}
+
+/* Thêm nền trắng cho List.Item
+  (Vì motion.div là cha, nếu List.Item không có nền,
+  bạn sẽ thấy bóng đổ bên trong cả item) 
+*/
+.product-list-item {
+  background-color: #fff;
+  border-radius: 8px; /* Thêm bo góc (tùy chọn) */
+  padding-left: 16px !important; /* Thêm padding (tùy chọn) */
+  padding-right: 16px !important;
+}
+
+/* Làm cho ảnh cũng được bo góc  */
+.product-list-item .ant-image-img {
+  border-radius: 4px;
+}

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   Rate,
   InputNumber,
-  Button,
   Tabs,
   Divider,
   Tag,
@@ -110,10 +109,25 @@ const ProductDetail = ({ product }) => {
         <div className="tab-content">
           <div className="review-summary">
             {/* ... (Code review của bạn) ... */}
+            <div className="rating-overview">
+              <div className="rating-score">{product.rating}</div>
+              <Rate disabled defaultValue={product.rating} allowHalf />
+              <div className="rating-count">{product.reviewCount} đánh giá</div>
+            </div>
           </div>
           <Divider />
           <div className="review-list">
             {/* ... (Code review của bạn) ... */}
+            <div className="review-item">
+              <div className="review-header">
+                <span className="reviewer-name">Nguyễn Văn A</span>
+                <Rate disabled defaultValue={5} />
+              </div>
+              <p className="review-date">15/03/2024</p>
+              <p className="review-content">
+                Chất lượng áo rất tốt, vải mềm mại và thoáng mát. Form áo vừa vặn, đúng size. Sẽ ủng hộ shop lần sau.
+              </p>
+            </div>
           </div>
         </div>
       ),
@@ -144,10 +158,10 @@ const ProductDetail = ({ product }) => {
 
   const handleAddToCart = () => {
     if (!isSizeAvailable) {
-      console.log("[v0] Size out of stock");
+      console.log("Size out of stock");
       return;
     }
-    console.log("[v0] Add to cart:", {
+    console.log("Add to cart:", {
       product: product.id,
       size: selectedSize,
       quantity,
@@ -156,10 +170,10 @@ const ProductDetail = ({ product }) => {
 
   const handleBuyNow = () => {
     if (!isSizeAvailable) {
-      console.log("[v0] Size out of stock");
+      console.log("ize out of stock");
       return;
     }
-    console.log("[v0] Buy now:", {
+    console.log("Buy now:", {
       product: product.id,
       size: selectedSize,
       quantity,
@@ -181,14 +195,15 @@ const ProductDetail = ({ product }) => {
               <div className="product-header">
                 <h1 className="product-name">{product.name}</h1>
                 <div className="product-actions-mobile">
-                  <Button
+                  <ButtonComponent
                     type="text"
                     icon={<HeartOutlined />}
                     className={isFavorite ? "favorite active" : "favorite"}
                     onClick={() => setIsFavorite(!isFavorite)}
                   />
-                  <Button type="text" icon={<ShareAltOutlined />} />
+                  <ButtonComponent type="text" icon={<ShareAltOutlined />} />
                 </div>
+                
               </div>
 
               {product.badge && (
@@ -209,6 +224,21 @@ const ProductDetail = ({ product }) => {
                   {product.rating} ({product.reviewCount} đánh giá)
                 </span>
               </div>
+
+              <div className="product-actions-desktop">
+                  <ButtonComponent
+                    type="text"
+                    icon={<HeartOutlined />}
+                    className={isFavorite ? "favorite active" : "favorite"}
+                    onClick={() => setIsFavorite(!isFavorite)}
+                    textButton="Yêu thích"
+                  />
+                  <ButtonComponent
+                    type="text"
+                    icon={<ShareAltOutlined />}
+                    textButton="Chia sẻ"
+                  />
+                </div>
 
               <div className="product-price">
                 <span className="current-price">
@@ -287,26 +317,25 @@ const ProductDetail = ({ product }) => {
               </div>
 
               <div className="product-actions">
-                <Button
+                <ButtonComponent
                   type="primary"
                   size="large"
                   icon={<ShoppingCartOutlined />}
                   onClick={handleAddToCart}
                   className="add-to-cart-btn"
                   disabled={!isSizeAvailable}
+                  textButton="Thêm vào giỏ hàng"
                   block
-                >
-                  Thêm vào giỏ hàng
-                </Button>
-                <Button
+                />
+                  
+                <ButtonComponent
                   size="large"
                   onClick={handleBuyNow}
                   className="buy-now-btn"
                   disabled={!isSizeAvailable}
+                  textButton="Mua ngay"
                   block
-                >
-                  Mua ngay
-                </Button>
+                />
               </div>
 
               <div className="product-meta">
