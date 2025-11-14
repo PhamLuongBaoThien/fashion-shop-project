@@ -79,19 +79,31 @@ const ProductDetail = ({ product }) => {
         <Empty description="Không tìm thấy thông tin sản phẩm." />
       </div>
     );
-  }
-
-  const originalPrice =
+  }  
+  
+  
+  const discount = Number(product.discount) || 0;
+  const discountedPrice =
     product.discount > 0
-      ? Math.round(product.price / (1 - product.discount / 100))
-      : null;
+      ? Math.round(product.price * (1 - product.discount / 100))
+      : product.price;
 
   const galleryImages = [product.image, ...product.subImage];
 
-  const selectedSizeData = product.sizes.find((s) => s.size === selectedSize);
-  const maxQuantity = selectedSizeData?.quantity || 0;
   const isSoldOut = product.inventoryStatus === "Hết hàng";
-  const isSizeAvailable = maxQuantity > 0;
+  let maxQuantity = 0;
+  let isSizeAvailable = false;
+
+  if (product.hasSizes) {
+    // Luồng 1: Có size
+    const selectedSizeData = product.sizes.find((s) => s.size === selectedSize);
+    maxQuantity = selectedSizeData?.quantity || 0;
+    isSizeAvailable = maxQuantity > 0;
+  } else {
+    // Luồng 2: Không size (Nón)
+    maxQuantity = product.stock;
+    isSizeAvailable = product.stock > 0;
+  }
 
   const tabItems = [
     {
@@ -234,67 +246,67 @@ const ProductDetail = ({ product }) => {
 
                 <div className="product-price">
                   <span className="current-price">
-                    {product.price.toLocaleString("vi-VN")}đ
+                    {discountedPrice.toLocaleString("vi-VN")}đ
                   </span>
                   {isSoldOut && <Tag color="#bfbfbf">Hết hàng</Tag>}
 
-                  {originalPrice && (
+                  {discount > 0 && (
                     <>
                       <span className="original-price">
-                        {originalPrice.toLocaleString("vi-VN")}đ
+                        {product.price.toLocaleString("vi-VN")}đ
                       </span>
                       <Tag color="red" className="discount-tag">
                         -{product.discount}%
                       </Tag>
-                      
                     </>
                   )}
                   {product.isNewProduct && !isSoldOut && (
-                        <Tag color="green" className="discount-tag">
-                          Mới
-                        </Tag>
-                      )}
+                    <Tag color="green" className="discount-tag">
+                      Mới
+                    </Tag>
+                  )}
                 </div>
 
                 <Divider />
 
                 <div className="product-options">
-                  <div className="option-group">
-                    <label className="option-label">
-                      Kích thước: {selectedSize}
-                    </label>
-                    <div className="size-options">
-                      {product.sizes.map((sizeItem) => (
-                        <div
-                          key={sizeItem.size}
-                          className={`size-option ${
-                            selectedSize === sizeItem.size ? "active" : ""
-                          } ${sizeItem.quantity === 0 ? "disabled" : ""}`}
-                          onClick={() =>
-                            sizeItem.quantity > 0 &&
-                            setSelectedSize(sizeItem.size)
-                          }
-                          title={
-                            sizeItem.quantity === 0
-                              ? "Hết hàng"
-                              : `Còn ${sizeItem.quantity} sản phẩm`
-                          }
-                        >
-                          {sizeItem.size}
-                          {sizeItem.quantity === 0 && (
-                            <div className="size-sold-out">✕</div>
-                          )}
-                        </div>
-                      ))}
+                  {product.hasSizes && (
+                    <div className="option-group">
+                      <label className="option-label">
+                        Kích thước: {selectedSize}
+                      </label>
+                      <div className="size-options">
+                        {product.sizes.map((sizeItem) => (
+                          <div
+                            key={sizeItem.size}
+                            className={`size-option ${
+                              selectedSize === sizeItem.size ? "active" : ""
+                            } ${sizeItem.quantity === 0 ? "disabled" : ""}`}
+                            onClick={() =>
+                              sizeItem.quantity > 0 &&
+                              setSelectedSize(sizeItem.size)
+                            }
+                            title={
+                              sizeItem.quantity === 0
+                                ? "Hết hàng"
+                                : `Còn ${sizeItem.quantity} sản phẩm`
+                            }
+                          >
+                            {sizeItem.size}
+                            {sizeItem.quantity === 0 && (
+                              <div className="size-sold-out">✕</div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <span
+                        className="size-guide"
+                        onClick={() => setIsSizeGuideOpen(true)}
+                      >
+                        Hướng dẫn chọn size
+                      </span>
                     </div>
-                    <span
-                      className="size-guide"
-                      onClick={() => setIsSizeGuideOpen(true)}
-                    >
-                      Hướng dẫn chọn size
-                    </span>
-                  </div>
-
+                  )}
                   <div className="option-group">
                     <label className="option-label">Số lượng</label>
                     <div className="quantity-row">
@@ -311,8 +323,14 @@ const ProductDetail = ({ product }) => {
                           isSizeAvailable ? "in-stock" : "out-of-stock"
                         }`}
                       >
-                        {isSizeAvailable
-                          ? `Còn ${maxQuantity} sản phẩm`
+                        {product.hasSizes
+                          ? isSizeAvailable
+                            ? `Còn ${maxQuantity} sản phẩm`
+                            : !selectedSize
+                            ? "Vui lòng chọn size"
+                            : "Hết hàng"
+                          : product.stock > 0
+                          ? `Còn ${product.stock} sản phẩm`
                           : "Hết hàng"}
                       </span>
                     </div>
@@ -326,7 +344,9 @@ const ProductDetail = ({ product }) => {
                     icon={<ShoppingCartOutlined />}
                     onClick={handleAddToCart}
                     className="add-to-cart-btn"
-                    disabled={!isSizeAvailable}
+                    disabled={
+                      product.hasSizes ? !isSizeAvailable : product.stock <= 0
+                    }
                     textButton="Thêm vào giỏ hàng"
                     block
                   />
@@ -335,7 +355,9 @@ const ProductDetail = ({ product }) => {
                     size="large"
                     onClick={handleBuyNow}
                     className="buy-now-btn"
-                    disabled={!isSizeAvailable}
+                    disabled={
+                      product.hasSizes ? !isSizeAvailable : product.stock <= 0
+                    }
                     textButton="Mua ngay"
                     block
                   />

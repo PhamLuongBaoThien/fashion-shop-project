@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   Form,
@@ -28,6 +28,8 @@ import { useMessageApi } from "../../context/MessageContext";
 
 const AdminUpdateProductPage = () => {
   const [form] = Form.useForm();
+  const [hasSizes, setHasSizes] = useState(true); // Mặc định là CÓ size
+
   const navigate = useNavigate();
   const { id: productId } = useParams();
   const queryClient = useQueryClient();
@@ -51,6 +53,8 @@ const AdminUpdateProductPage = () => {
   useEffect(() => {
     if (productDetails?.data) {
       const product = productDetails.data;
+      setHasSizes(product.hasSizes);
+
       form.setFieldsValue({
         name: product.name,
         category: product.category?._id,
@@ -58,8 +62,10 @@ const AdminUpdateProductPage = () => {
         discount: product.discount,
         description: product.description,
         sizes: product.sizes,
+        stock: product.stock,
         isActive: product.isActive,
         isNewProduct: product.isNewProduct,
+        hasSizes: product.hasSizes,
         // Chuyển đổi URL ảnh thành định dạng antd <Upload> cần
         image: product.image
           ? [
@@ -106,8 +112,20 @@ const AdminUpdateProductPage = () => {
 
   const onFinish = (values) => {
     const formData = new FormData();
+    const hasSizes = values.hasSizes;
 
-    // Xử lý ảnh cũ và mới
+    // --- Gửi các trường cơ bản (Tường minh) ---
+    formData.append("name", values.name);
+    formData.append("category", values.category);
+    formData.append("price", values.price);
+    formData.append("discount", values.discount);
+    formData.append("description", values.description || "");
+    formData.append("isActive", values.isActive);
+    formData.append("isNewProduct", values.isNewProduct);
+    formData.append("hasSizes", hasSizes); // Chỉ gửi 1 lần duy nhất //
+    
+    //  --- Xử lý ảnh ---
+
     const retainedSubImages = [];
     if (values.image && values.image[0]?.originFileObj) {
       formData.append("image", values.image[0].originFileObj);
@@ -123,26 +141,19 @@ const AdminUpdateProductPage = () => {
     }
     formData.append("retainedSubImages", JSON.stringify(retainedSubImages));
 
-    // Xử lý các trường dữ liệu còn lại
-    Object.keys(values).forEach((key) => {
-      // Bỏ qua các trường ảnh vì đã xử lý riêng
-      if (key !== "image" && key !== "subImage") {
-        if (key === "sizes" && values[key]) {
-          formData.append(key, JSON.stringify(values[key]));
-        }
-        // Các trường còn lại
-        else if (
-          key !== "sizes" &&
-          values[key] !== undefined &&
-          values[key] !== null
-        ) {
-          formData.append(key, values[key]);
-        }
-      }
-    });
+    // --- Gửi Size hoặc Stock (Logic điều kiện) ---
+    if (hasSizes) {
+      // 1. Luồng CÓ SIZE: Chỉ gửi `sizes`
+      formData.append("sizes", JSON.stringify(values.sizes || []));
+    } else {
+      // 2. Luồng KHÔNG SIZE: Chỉ gửi `stock`
+      formData.append("stock", values.stock || 0);
+    }
 
     updateMutation.mutate({ formData });
   };
+
+  // ... (phần còn lại của file)
 
   if (isLoadingDetails) {
     return (
@@ -169,12 +180,7 @@ const AdminUpdateProductPage = () => {
         <div className="admin-page-header">
           <h1>Chỉnh sửa Sản phẩm</h1>
         </div>
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={onFinish}
-          initialValues={{ sizes: [{ size: "", quantity: 0 }] }}
-        >
+        <Form form={form} layout="vertical" onFinish={onFinish}>
           <Row gutter={24}>
             <Col xs={24} md={12}>
               <Form.Item
@@ -233,75 +239,102 @@ const AdminUpdateProductPage = () => {
                         */}
             <RichTextEditor />
           </Form.Item>
-          <Form.List
-            label="Kích cỡ & Số lượng"
-            name="sizes"
-            rules={[
-              {
-                validator: async (_, sizes) => {
-                  if (!sizes || sizes.length < 1) {
-                    return Promise.reject(new Error("Phải có ít nhất 1 size"));
-                  }
+          <Form.Item name="hasSizes" label="Phân loại" valuePropName="checked">
+            <Switch
+              checkedChildren="Sản phẩm có nhiều Size (Áo, Quần)"
+              unCheckedChildren="Sản phẩm không có Size (Nón, Phụ kiện)"
+              onChange={setHasSizes} // Cập nhật state khi admin thay đổi
+            />
+          </Form.Item>
+          {hasSizes ? (
+            <Form.List
+              label="Kích cỡ & Số lượng"
+              name="sizes"
+              rules={[
+                {
+                  validator: async (_, sizes) => {
+                    if (!sizes || sizes.length < 1) {
+                      return Promise.reject(
+                        new Error("Phải có ít nhất 1 size")
+                      );
+                    }
+                  },
                 },
-              },
-            ]}
-          >
-            {(fields, { add, remove }, { errors }) => (
-              <>
-                {fields.map(({ key, name, ...restField }) => (
-                  <Space
-                    key={key}
-                    align="baseline"
-                    style={{ display: "flex", marginBottom: 8 }}
-                  >
-                    <Form.Item
-                      {...restField}
-                      name={[name, "size"]}
-                      rules={[
-                        { required: true, message: "Vui lòng chọn size!" },
-                      ]}
+              ]}
+            >
+              {(fields, { add, remove }, { errors }) => (
+                <>
+                  {fields.map(({ key, name, ...restField }) => (
+                    <Space
+                      key={key}
+                      align="baseline"
+                      style={{ display: "flex", marginBottom: 8 }}
                     >
-                      <Select
-                        placeholder="Size"
-                        style={{ width: 120 }}
-                        options={[
-                          { value: "XS" },
-                          { value: "S" },
-                          { value: "M" },
-                          { value: "L" },
-                          { value: "XL" },
+                      <Form.Item
+                        {...restField}
+                        name={[name, "size"]}
+                        rules={[
+                          { required: true, message: "Vui lòng chọn size!" },
                         ]}
-                      />
-                    </Form.Item>
-                    <Form.Item
-                      {...restField}
-                      name={[name, "quantity"]}
-                      rules={[
-                        {
-                          required: true,
-                          message: "Vui lòng nhập số lượng!",
-                        },
-                      ]}
+                      >
+                        <Select
+                          placeholder="Size"
+                          style={{ width: 120 }}
+                          options={[
+                            { value: "XS" },
+                            { value: "S" },
+                            { value: "M" },
+                            { value: "L" },
+                            { value: "XL" },
+                          ]}
+                        />
+                      </Form.Item>
+                      <Form.Item
+                        {...restField}
+                        name={[name, "quantity"]}
+                        rules={[
+                          {
+                            required: true,
+                            message: "Vui lòng nhập số lượng!",
+                          },
+                        ]}
+                      >
+                        <InputNumber placeholder="Số lượng" min={0} />
+                      </Form.Item>
+                      <MinusCircleOutlined onClick={() => remove(name)} />
+                    </Space>
+                  ))}
+                  <Form.Item>
+                    <Button
+                      type="dashed"
+                      onClick={() => add()}
+                      block
+                      icon={<PlusOutlined />}
                     >
-                      <InputNumber placeholder="Số lượng" min={0} />
-                    </Form.Item>
-                    <MinusCircleOutlined onClick={() => remove(name)} />
-                  </Space>
-                ))}
-                <Form.Item>
-                  <Button
-                    type="dashed"
-                    onClick={() => add()}
-                    block
-                    icon={<PlusOutlined />}
-                  >
-                    Thêm Size
-                  </Button>
-                  <Form.ErrorList errors={errors} />
-                </Form.Item>
-              </>
-            )}
-          </Form.List>
+                      Thêm Size
+                    </Button>
+                    <Form.ErrorList errors={errors} />
+                  </Form.Item>
+                </>
+              )}
+            </Form.List>
+          ) : (
+            // --- GIAO DIỆN CHO SẢN PHẨM KHÔNG SIZE ---
+            <Form.Item
+              label="Số lượng tổng"
+              name="stock"
+              rules={[
+                { required: true, message: "Vui lòng nhập số lượng tổng!" },
+              ]}
+            >
+              <InputNumber
+                size="large"
+                style={{ width: "100%" }}
+                min={0}
+                placeholder="Nhập tổng số lượng sản phẩm"
+              />
+            </Form.Item>
+          )}
           <Row gutter={24}>
             <Col xs={12} sm={8}>
               <Form.Item

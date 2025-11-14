@@ -7,7 +7,9 @@ const createProduct = async (req, res) => {
     const userId = req.user.id;
 
     if (!userId) {
-        return res.status(401).json({ status: "ERR", message: "Unauthorized: Missing user ID" });
+      return res
+        .status(401)
+        .json({ status: "ERR", message: "Unauthorized: Missing user ID" });
     }
 
     // Vì FormData gửi mọi thứ dưới dạng string, ta cần parse lại thanh object/array
@@ -63,16 +65,35 @@ const createProduct = async (req, res) => {
     }
 
     // Kiểm tra các trường bắt buộc
+    // Kiểm tra các trường bắt buộc tùy theo loại sản phẩm
     if (
       !productData.name ||
       !productData.category ||
       !productData.price ||
-      !productData.image ||
-      !productData.sizes
+      !productData.image
     ) {
-      return res
-        .status(400)
-        .json({ status: "ERR", message: "Missing required fields" });
+      return res.status(400).json({
+        status: "ERR",
+        message: "Thiếu trường bắt buộc (name/category/price/image)",
+      });
+    }
+
+    // Nếu sản phẩm có size -> phải có ít nhất 1 size
+    if (productData.hasSizes === "true" || productData.hasSizes === true) {
+      if (!productData.sizes || productData.sizes.length === 0) {
+        return res.status(400).json({
+          status: "ERR",
+          message: "Sản phẩm CÓ size phải có ít nhất 1 size",
+        });
+      }
+    } else {
+      // Nếu sản phẩm KHÔNG có size -> phải có stock tổng
+      if (productData.stock === undefined || productData.stock === null) {
+        return res.status(400).json({
+          status: "ERR",
+          message: "Sản phẩm KHÔNG size phải có số lượng tổng",
+        });
+      }
     }
 
     // Gọi service để tạo sản phẩm
@@ -116,6 +137,10 @@ const updateProduct = async (req, res) => {
     }
     if (productData.isActive) {
       productData.isActive = productData.isActive === "true";
+    }
+
+    if (productData.hasSizes) {
+      productData.hasSizes = productData.hasSizes === "true";
     }
 
     // BẮT ĐẦU LOGIC XỬ LÝ ẢNH MỚI
@@ -166,6 +191,20 @@ const updateProduct = async (req, res) => {
 
     // Xóa trường tạm đi để không lưu vào DB
     delete productData.retainedSubImages;
+
+    if (
+      !productData.name ||
+      !productData.category ||
+      !productData.price ||
+      productData.hasSizes === undefined
+    ) {
+      return res
+        .status(400)
+        .json({
+          status: "ERR",
+          message: "Thiếu các trường bắt buộc (tên, danh mục, giá, phân loại)",
+        });
+    }
 
     // Gọi service để cập nhật sản phẩm
     const response = await ProductService.updateProduct(productId, productData);
@@ -236,9 +275,8 @@ const getAllProducts = async (req, res) => {
       status,
       badges,
       sortOption,
-      isActive
+      isActive,
     } = req.query;
-    
 
     let categorySlugs = null;
     if (category) {
@@ -266,16 +304,19 @@ const getAllProducts = async (req, res) => {
 };
 
 const deleteManyProducts = async (req, res) => {
-    try {
-        const ids = req.body.ids; // Lấy mảng ids từ body
-        if (!ids || !Array.isArray(ids)) {
-            return res.status(400).json({ status: "ERR", message: "IDs is required and must be an array" });
-        }
-        const response = await ProductService.deleteManyProducts(ids);
-        return res.status(200).json(response);
-    } catch (error) {
-        return res.status(500).json({ status: "ERR", message: error.message });
+  try {
+    const ids = req.body.ids; // Lấy mảng ids từ body
+    if (!ids || !Array.isArray(ids)) {
+      return res.status(400).json({
+        status: "ERR",
+        message: "IDs is required and must be an array",
+      });
     }
+    const response = await ProductService.deleteManyProducts(ids);
+    return res.status(200).json(response);
+  } catch (error) {
+    return res.status(500).json({ status: "ERR", message: error.message });
+  }
 };
 
 const getRelatedProducts = async (req, res) => {
@@ -284,7 +325,9 @@ const getRelatedProducts = async (req, res) => {
     const { page, limit } = req.query; // Lấy page, limit từ query string
 
     if (!slug) {
-      return res.status(400).json({ status: "ERR", message: "Slug là bắt buộc" });
+      return res
+        .status(400)
+        .json({ status: "ERR", message: "Slug là bắt buộc" });
     }
     const response = await ProductService.getRelatedProducts(slug, page, limit);
     return res.status(200).json(response);
@@ -301,5 +344,5 @@ module.exports = {
   deleteProduct,
   getAllProducts,
   deleteManyProducts,
-  getRelatedProducts
+  getRelatedProducts,
 };

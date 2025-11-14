@@ -1,5 +1,5 @@
 // src/pages/Admin/AdminAddProductPage.jsx
-
+import React, { useState } from "react";
 import {
   Card,
   Form,
@@ -29,6 +29,7 @@ import ButtonComponent from "../../components/common/ButtonComponent/ButtonCompo
 
 const AdminAddProductPage = () => {
   const [form] = Form.useForm();
+  const [hasSizes, setHasSizes] = useState(true); // Mặc định là CÓ size
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -47,7 +48,11 @@ const AdminAddProductPage = () => {
       navigate("/system/admin/products");
     },
     onError: (error) => {
-      messageApi.error(`Thêm sản phẩm thất bại: ${error.response.data.message || error.message}`);
+      messageApi.error(
+        `Thêm sản phẩm thất bại: ${
+          error.response.data.message || error.message
+        }`
+      );
     },
   });
 
@@ -59,40 +64,43 @@ const AdminAddProductPage = () => {
     return e && e.fileList;
   };
 
-  const onFinish = (values) => {
-    const formData = new FormData();
+  const onFinish = (values) => {
+    const formData = new FormData(); //FormData cho phép bạn gửi dữ liệu dưới dạng multipart/form-data
 
-    // Thêm các trường dữ liệu text và boolean
-    Object.keys(values).forEach((key) => {
-      // Các trường là mảng hoặc object cần được chuỗi hóa
-      if (key === "sizes" && values[key]) {
-        formData.append(key, JSON.stringify(values[key]));
-      }
-      // Bỏ qua các trường file để xử lý riêng
-      else if (
-        key !== "image" &&
-        key !== "subImage" &&
-        values[key] !== undefined &&
-        values[key] !== null
-      ) {
-        formData.append(key, values[key]);
-      }
-    });
+    // Lấy giá trị `hasSizes` từ form
+    const hasSizes = values.hasSizes;
 
-    // Thêm file ảnh chính
-    if (values.image && values.image[0]) {
-      formData.append("image", values.image[0].originFileObj);
+    // --- Gửi các trường cơ bản (Tường minh) ---
+    formData.append("name", values.name);
+    formData.append("category", values.category);
+    formData.append("price", values.price);
+    formData.append("discount", values.discount);
+    formData.append("description", values.description || ""); // Gửi chuỗi rỗng nếu không có
+    formData.append("isActive", values.isActive);
+    formData.append("isNewProduct", values.isNewProduct);
+    formData.append("hasSizes", hasSizes); // Chỉ gửi 1 lần duy nhất
+
+    // --- Gửi ảnh (Logic cũ của bạn đã đúng) ---
+    if (values.image && values.image[0]) {
+      formData.append("image", values.image[0].originFileObj);
+    }
+    if (values.subImage && values.subImage.length > 0) {
+      values.subImage.forEach((file) => {
+        formData.append("subImage", file.originFileObj);
+      });
+    }
+
+    // --- Gửi Size hoặc Stock (Logic điều kiện) ---
+    if (hasSizes) {
+      // 1. Luồng CÓ SIZE: Chỉ gửi `sizes`
+      formData.append("sizes", JSON.stringify(values.sizes || [])); // Vì formData không hỗ trợ object/array
+    } else {
+      // 2. Luồng KHÔNG SIZE: Chỉ gửi `stock`
+      formData.append("stock", values.stock || 0);
     }
 
-    // Thêm các file ảnh phụ
-    if (values.subImage && values.subImage.length > 0) {
-      values.subImage.forEach((file) => {
-        formData.append("subImage", file.originFileObj);
-      });
-    }
-
-    createMutation.mutate(formData);
-  };
+    createMutation.mutate(formData);
+  };
 
   return (
     <motion.div
@@ -108,7 +116,12 @@ const AdminAddProductPage = () => {
           form={form}
           layout="vertical"
           onFinish={onFinish}
-          initialValues={{ isActive: true, isNewProduct: false }}
+          initialValues={{
+            isActive: true,
+            isNewProduct: false,
+            hasSizes: true,
+            stock: 0,
+          }}
         >
           <Row gutter={24}>
             <Col xs={24} md={12}>
@@ -182,8 +195,16 @@ const AdminAddProductPage = () => {
             <RichTextEditor />
           </Form.Item>
 
+          <Form.Item name="hasSizes" label="Phân loại" valuePropName="checked">
+            <Switch
+              checkedChildren="Sản phẩm có nhiều Size (Áo, Quần)"
+              unCheckedChildren="Sản phẩm không có Size (Nón, Phụ kiện)"
+              onChange={setHasSizes} // Cập nhật state khi admin thay đổi
+            />
+          </Form.Item>
+          {hasSizes ? (
             <Form.List
-            label="Kích cỡ & Số lượng"
+              label="Kích cỡ & Số lượng"
               name="sizes"
               rules={[
                 {
@@ -211,7 +232,6 @@ const AdminAddProductPage = () => {
                         rules={[{ required: true, message: "Chọn size" }]}
                       >
                         <Select placeholder="Size" style={{ width: 120 }}>
-                          <Select.Option value="XS">XS</Select.Option>
                           <Select.Option value="S">S</Select.Option>
                           <Select.Option value="M">M</Select.Option>
                           <Select.Option value="L">L</Select.Option>
@@ -240,13 +260,28 @@ const AdminAddProductPage = () => {
                       icon={<PlusOutlined />}
                       textButton={"Thêm Size"}
                     />
-                      
+
                     <Form.ErrorList errors={errors} />
                   </Form.Item>
                 </>
               )}
             </Form.List>
-
+          ) : (
+            <Form.Item
+              label="Số lượng tổng"
+              name="stock"
+              rules={[
+                { required: true, message: "Vui lòng nhập số lượng tổng!" },
+              ]}
+            >
+              <InputNumber
+                size="large"
+                style={{ width: "100%" }}
+                min={0}
+                placeholder="Nhập tổng số lượng sản phẩm"
+              />
+            </Form.Item>
+          )}
           <Row gutter={24}>
             <Col xs={12} sm={8}>
               <Form.Item
@@ -276,7 +311,10 @@ const AdminAddProductPage = () => {
             rules={[{ required: true, message: "Vui lòng tải ảnh chính!" }]}
           >
             <Upload listType="picture" maxCount={1} beforeUpload={() => false}>
-              <ButtonComponent icon={<UploadOutlined />} textButton={"Tải ảnh chính"} />
+              <ButtonComponent
+                icon={<UploadOutlined />}
+                textButton={"Tải ảnh chính"}
+              />
             </Upload>
           </Form.Item>
 
@@ -287,7 +325,10 @@ const AdminAddProductPage = () => {
             getValueFromEvent={normFile}
           >
             <Upload listType="picture" multiple beforeUpload={() => false}>
-              <ButtonComponent icon={<UploadOutlined />} textButton={"Tải ảnh phụ (nhiều ảnh)"} />
+              <ButtonComponent
+                icon={<UploadOutlined />}
+                textButton={"Tải ảnh phụ (nhiều ảnh)"}
+              />
             </Upload>
           </Form.Item>
 
@@ -302,7 +343,6 @@ const AdminAddProductPage = () => {
               loading={createMutation.isPending}
               textButton={"Tạo sản phẩm"}
             />
-
           </div>
         </Form>
       </Card>

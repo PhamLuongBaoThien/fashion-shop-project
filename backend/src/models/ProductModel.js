@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 const mongoosePaginate = require("mongoose-paginate-v2");
 const slugify = require("slugify");
 
+const sizeSchema = new mongoose.Schema({
+  size: { type: String, required: true },
+  quantity: { type: Number, required: true, min: 0 }
+});
+
 const productSchema = new mongoose.Schema(
   {
     name: {
@@ -44,23 +49,11 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    // status: {
-    //   type: String,
-    //   enum: ["Còn hàng", "Hết hàng"],
-    //   default: "Còn hàng",
-    // },
+    hasSizes: { type: Boolean, default: true }, // Mặc định là CÓ size
+    stock: { type: Number, required: true, default: 0, min: 0 }, // Số lượng TỔNG
     sizes: {
-      type: [
-        {
-          size: {
-            type: String,
-            enum: ["XS", "S", "M", "L", "XL"],
-            required: true,
-          },
-          quantity: { type: Number, min: 0, default: 0 },
-        },
-      ],
-      required: true,
+      type: [sizeSchema], // Dùng schema con đã định nghĩa
+      default: [] // Không bắt buộc (required) nữa
     },
     isActive: {
       type: Boolean,

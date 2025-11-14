@@ -14,7 +14,7 @@ const processAndSortSizes = (sizes) => {
   }
 
   // Định nghĩa thứ tự size chuẩn
-  const sizeOrder = ["XS", "S", "M", "L", "XL", "XXL"];
+  const sizeOrder = ["XS", "S", "M", "L", "XL"];
 
   // 1. GOM (MERGE) CÁC SIZE TRÙNG LẶP
   // Dùng Map để cộng dồn số lượng của các size trùng nhau
@@ -43,6 +43,25 @@ const processAndSortSizes = (sizes) => {
   return sortedSizes;
 };
 
+// * Tính toán trạng thái tồn kho (inventoryStatus)
+//  * dựa trên việc sản phẩm có size hay không.
+const getInventoryStatus = (product) => {
+  let totalStock = 0;
+  if (product.hasSizes) {
+    // Luồng 1: Sản phẩm có size (áo, quần)
+    // Tính tổng tồn kho từ mảng sizes
+    totalStock = product.sizes.reduce(
+      (total, size) => total + size.quantity,
+      0
+    );
+  } else {
+    // Luồng 2: Sản phẩm không size (nón)
+    // Lấy trực tiếp từ trường stock
+    totalStock = product.stock;
+  }
+  return totalStock > 0 ? "Còn hàng" : "Hết hàng";
+};
+
 const createProduct = (productData, userId) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -60,8 +79,29 @@ const createProduct = (productData, userId) => {
         productData.description = DOMPurify.sanitize(productData.description);
       }
 
-      if (productData.sizes) {
-        productData.sizes = processAndSortSizes(productData.sizes);
+      if (productData.hasSizes === "true" || productData.hasSizes === true) {
+        // --- LUỒNG 1: SẢN PHẨM CÓ SIZE (Áo, Quần) ---
+        if (!productData.sizes || productData.sizes.length === 0) {
+          return resolve({
+            status: "ERR",
+            message: "Sản phẩm CÓ size thì phải có ít nhất 1 size",
+          });
+        }
+        // Chỉ gọi processAndSortSizes MỘT LẦN ở đây
+        productData.sizes = processAndSortSizes(productData.sizes); // Tự động tính stock tổng từ các size
+        productData.stock = productData.sizes.reduce(
+          (acc, s) => acc + Number(s.quantity),
+          0
+        );
+      } else {
+        // --- LUỒNG 2: SẢN PHẨM KHÔNG SIZE (Nón) ---
+        productData.sizes = []; // Đảm bảo mảng sizes rỗng
+        if (productData.stock === undefined || Number(productData.stock) < 0) {
+          return resolve({
+            status: "ERR",
+            message: "Vui lòng nhập số lượng tổng cho sản phẩm không size",
+          });
+        }
       }
 
       const newProduct = await Product.create({
@@ -98,17 +138,32 @@ const updateProduct = (productId, productData) => {
       }
 
       // Kiểm tra và "dọn dẹp" mảng sizes trước khi cập nhật
-      if (productData.sizes) {
-        productData.sizes = processAndSortSizes(productData.sizes);
-        // Kiểm tra lại sau khi dọn dẹp, nếu admin xóa hết size
-        if (productData.sizes.length === 0) {
+      // XỬ LÝ STOCK VÀ SIZES
+      if (productData.hasSizes === "true" || productData.hasSizes === true) {
+        // --- LUỒNG 1: SẢN PHẨM CÓ SIZE (Áo, Quần) ---
+        if (!productData.sizes || productData.sizes.length === 0) {
           return resolve({
             status: "ERR",
-            message: "Sản phẩm phải có ít nhất một kích cỡ. Cập nhật thất bại.",
+            message: "Sản phẩm CÓ size thì phải có ít nhất 1 size",
+          });
+        }
+        productData.sizes = processAndSortSizes(productData.sizes); // Dọn dẹp
+        // Tự động tính stock tổng từ các size
+        productData.stock = productData.sizes.reduce(
+          (acc, s) => acc + Number(s.quantity),
+          0
+        );
+      } else {
+        // --- LUỒNG 2: SẢN PHẨM KHÔNG SIZE (Nón) ---
+        productData.sizes = []; // Đảm bảo mảng sizes rỗng
+        // `productData.stock` sẽ được lấy từ form
+        if (productData.stock === undefined || productData.stock < 0) {
+          return resolve({
+            status: "ERR",
+            message: "Sản phẩm KHÔNG size phải có số lượng tổng",
           });
         }
       }
-
       //2. Cập nhật các field (chỉ ghi đè những field được gửi lên)
       Object.keys(productData).forEach((key) => {
         product[key] = productData[key];
@@ -145,10 +200,15 @@ const getDetailProduct = (productId) => {
           message: "The product is not defined",
         });
       }
+
+      const inventoryStatus = getInventoryStatus(product);
+      const productObject = product.toObject();
+      productObject.inventoryStatus = inventoryStatus;
+
       resolve({
         status: "OK",
         message: "successfully",
-        data: product,
+        data: productObject,
       });
     } catch (error) {
       reject(error);
@@ -178,9 +238,7 @@ const getDetailProductBySlug = (slug) => {
         (total, size) => total + size.quantity,
         0
       );
-      const inventoryStatus = totalStock > 0 ? "Còn hàng" : "Hết hàng";
-
-      // 4. Gán trường 'ảo' inventoryStatus vào object
+      const inventoryStatus = getInventoryStatus(product);
       const productObject = product.toObject();
       productObject.inventoryStatus = inventoryStatus;
 
@@ -298,14 +356,6 @@ const getAllProducts = (
         }
       }
 
-      // Xử lý nhãn sản phẩm (giả định badges liên quan đến isNewProduct)
-      if (badges && Array.isArray(badges) && badges.length > 0) {
-        if (badges.includes("isNew")) {
-          query.isNewProduct = true;
-        }
-        // Có thể mở rộng cho các nhãn khác nếu cần
-      }
-
       const options = {
         page: parseInt(page, 10) || 1,
         limit: parseInt(limit, 10) || 10,
@@ -350,7 +400,7 @@ const getAllProducts = (
         );
         return {
           ...product,
-          inventoryStatus: totalStock > 0 ? "Còn hàng" : "Hết hàng",
+          inventoryStatus: getInventoryStatus(product),
         };
       });
 

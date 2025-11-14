@@ -11,7 +11,7 @@ const ProductDetailPage = () => {
   const { slug } = useParams();
 
   // Gọi API để lấy chi tiết sản phẩm bằng slug
-  const { data: productDetails, isLoading, isError, error } = useQuery({
+  const { data: productDetails, isLoading, isError } = useQuery({
         // queryKey phải bao gồm cả slug để nó fetch lại khi slug thay đổi
         queryKey: ['product-details', slug], 
         queryFn: () => ProductService.getDetailProductBySlug(slug),

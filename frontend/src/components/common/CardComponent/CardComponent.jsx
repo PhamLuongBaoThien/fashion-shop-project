@@ -8,10 +8,10 @@ const { Title, Text } = Typography;
 const { Meta } = Card;
 
 const CardComponent = ({ product }) => {
-  const originalPrice =
-    product.discount > 0
-      ? Math.round(product.price / (1 - product.discount / 100))
-      : null;
+  const discountedPrice =
+  product.discount > 0
+    ? Math.round(product.price * (1 - product.discount / 100))
+    : product.price;
 
   const isSoldOut = product.inventoryStatus === "Hết hàng";
 
@@ -87,12 +87,12 @@ const CardComponent = ({ product }) => {
         description={
           <Space>
             <Text className="product-price">
-              {product.price.toLocaleString()}đ
+              {discountedPrice.toLocaleString()}đ
             </Text>
-            {originalPrice && (
+            {product.discount > 0 && (
               <>
                 <Text delete className="product-old">
-                  {originalPrice.toLocaleString()}đ
+                  {product.price.toLocaleString()}đ
                 </Text>
                 {/* <Text style={{ color: "#52c41a", fontWeight: 600 }}>
                   -{product.discount}%
