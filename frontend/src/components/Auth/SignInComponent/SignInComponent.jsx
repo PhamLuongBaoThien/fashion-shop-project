@@ -11,61 +11,113 @@ import { useNavigate } from "react-router-dom";
 import { useMutationHooks } from "../../../hooks/useMutationHook";
 import { useMessageApi } from "../../../context/MessageContext";
 import { jwtDecode } from "jwt-decode";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { updateUser } from "../../../redux/slides/userSlide";
+import { clearCart, setCart } from "../../../redux/slides/cartSlide";
+import * as CartService from "../../../services/CartService";
+import { persistor } from "../../../redux/store";
 
 const SignInComponent = () => {
   const navigate = useNavigate();
-const { showSuccess, showError } = useMessageApi();
+  const { showSuccess, showError } = useMessageApi();
   const dispatch = useDispatch();
   // Gọi API qua mutation hook
   const mutation = useMutationHooks((data) => UserService.loginUser(data));
   const { data, isPending, isSuccess, isError, error } = mutation;
 
+  // 1. LẤY GIỎ HÀNG "KHÁCH" TỪ REDUX
+  const guestCart = useSelector((state) => state.cart);
+
   useEffect(() => {
     const handGetDetailUser = async (id, token) => {
-        const res = await UserService.getDetailUser(id);
-        // console.log('res', res);
-        dispatch(updateUser({...res?.data, access_token: token}));
-    }
-    // Khi mutation có phản hồi
-    if (isSuccess && data) {
-      // Trường hợp login thành công thật sự
-      if (data.status === "OK" && data?.data?.access_token) {
-        const newAccessToken = data.data.access_token;
-        showSuccess(data.message || "Đăng nhập thành công!");
-        // Lưu token
+      const res = await UserService.getDetailUser(id);
+      // console.log('res', res);
+      dispatch(updateUser({ ...res?.data, access_token: token }));
+      return res?.data;
+    };
+
+    // 2. Tạo một hàm async riêng để xử lý logic khi thành công
+    const handleLoginSuccess = async (loginData) => {
+      if (loginData.status === "OK" && loginData?.data?.access_token) {
+        // --- ĐĂNG NHẬP THÀNH CÔNG ---
+        const newAccessToken = loginData.data.access_token;
+        showSuccess(loginData.message || "Đăng nhập thành công!");
         localStorage.setItem("access_token", JSON.stringify(newAccessToken));
-        if (newAccessToken) {
-          const decoded = jwtDecode(newAccessToken);
-          // console.log("decoded", decoded);
-          if(decoded?.id){
-            handGetDetailUser(decoded?.id, newAccessToken);
+        const decoded = jwtDecode(newAccessToken);
+        if (decoded?.id) {
+          // A. Lấy thông tin user
+          const userDetails = await handGetDetailUser(
+            decoded.id,
+            newAccessToken
+          );
+
+          // KIỂM TRA VAI TRÒ (ROLE) TRƯỚC TIÊN
+          if (userDetails?.isAdmin) {
+            // --- LUỒNG 1: LÀ ADMIN ---
+            // 1. (Tùy chọn) Dọn dẹp giỏ hàng "khách" nếu admin lỡ tay thêm
+            if (guestCart.cartItems.length > 0) {
+              dispatch(clearCart());
+            }
+            // 2. Điều hướng
+            navigate("/system/admin"); // Admin vào trang Admin
+          } else {
+            await persistor.pause();
+            // --- LUỒNG 2: LÀ KHÁCH HÀNG (CUSTOMER) ---
+
+            // B. "PHÉP THUẬT" GỘP GIỎ HÀNG (PHẦN 3)
+            const localCartItems = guestCart.cartItems;
+            if (localCartItems.length > 0) {
+              try {
+                await CartService.mergeCart({ items: localCartItems });
+                dispatch(clearCart());
+                await persistor.purge();
+              } catch (mergeError) {
+                console.error("Lỗi gộp giỏ hàng:", mergeError);
+                showError("Đã xảy ra lỗi khi gộp giỏ hàng của bạn.");
+              }
+            } // C. Tải giỏ hàng "thật" (đã gộp) từ DB về Redux
+
+            try {
+              const cartFromDB = await CartService.getCart();
+              if (cartFromDB.status === "OK") {
+                dispatch(setCart(cartFromDB.data.items));
+              }
+            } catch (cartError) {
+              console.error("Lỗi tải giỏ hàng:", cartError);
+            }
+
+            // D. Điều hướng
+            navigate("/"); // User về trang chủ
           }
         }
-
-        // Redirect về trang chủ
-        navigate("/");
-      }
-      // Trường hợp lỗi đăng nhập (sai email hoặc password)
-      else if (data.status === "ERR") {
+      } else if (data.status === "ERR") {
+        // --- ĐĂNG NHẬP THẤT BẠI (Sai pass, v.v.) ---
         showError(data.message || "Email hoặc mật khẩu không đúng!");
       }
-    }
+    };
 
-    
-
-    // Lỗi hệ thống (server không phản hồi hoặc hỏng)
-    if (isError && error) {
-      //isError trả về true khi có lỗi xảy ra, error chứa thông tin lỗi
+    // Khi mutation có phản hồi
+    // 3. Xử lý logic chung của useEffect
+    if (isSuccess && data) {
+      handleLoginSuccess(data); // Gọi hàm async vừa tạo
+    } else if (isError && error) {
+      // Lỗi hệ thống (server không phản hồi hoặc hỏng)
       if (error.response && error.response.data) {
         showError(error.response.data.message || "Yêu cầu không hợp lệ!");
       } else {
         showError("Không thể kết nối đến server!");
       }
     }
-    
-  }, [isSuccess, isError, data, navigate, showSuccess, showError, error, dispatch]);
+  }, [
+    isSuccess,
+    isError,
+    data,
+    error,
+    dispatch,
+    navigate,
+    showSuccess,
+    showError,
+  ]);
 
   const onFinish = (values) => {
     mutation.mutate(values);

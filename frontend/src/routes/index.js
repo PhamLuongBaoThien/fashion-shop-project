@@ -1,6 +1,6 @@
 import HomePage from "../pages/HomePage/HomePage";
 import ProductsPage from "../pages/ProductsPage/ProductsPage";
-import OrderPage from "../pages/OrderPage/OrderPage";
+import CartPage from "../pages/CartPage/CartPage.jsx";
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage";
 import ProductDetailPage from "../pages/ProductDetailPage/ProductDetailPage";
 import SignUpPage from "../pages/SignUpPage/SignUpPage";
@@ -31,12 +31,12 @@ export const routes = [
     isShowHeader: true,
   },
   {
-    path: "/orders",
-    page: OrderPage,
+    path: "/cart",
+    page: CartPage,
     isShowHeader: true,
   },
   {
-    path: "/product/:slug", // Thay vì "/product-detail"
+    path: "/product/:slug", 
     page: ProductDetailPage,
     isShowHeader: true,
   },

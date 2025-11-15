@@ -36,13 +36,12 @@ const ListComponent = ({ products }) => {
               duration: 0.2,
               delay: index * 0.05, // hiệu ứng delay nhẹ giữa các item
             }}
-
-            whileHover={{ 
+            whileHover={{
               scale: 1.02, // Phóng to nhẹ
               y: -4, // Nhấc lên một chút
               zIndex: 1, // Đảm bảo nó nổi lên trên các item khác
               boxShadow: "0 4px 12px rgba(0,0,0,0.1)", // Thêm bóng đổ
-              transition: { duration: 0.15, ease: "easeInOut" }
+              transition: { duration: 0.15, ease: "easeInOut" },
             }}
             className="motion-list-item-wrapper" // Thêm class để set position
           >
@@ -112,10 +111,12 @@ const ListComponent = ({ products }) => {
                       )}
                       <Text>
                         Kích cỡ:{" "}
-                        {item.sizes
-                          .filter((s) => s.quantity > 0)
-                          .map((s) => s.size)
-                          .join(", ") || "Hết kích cỡ"}
+                        {!item.hasSizes
+                          ? "Free Size"
+                          : item.sizes
+                              .filter((s) => s.quantity > 0)
+                              .map((s) => s.size)
+                              .join(", ") || "Hết kích cỡ"}
                       </Text>
                     </Space>
                   }

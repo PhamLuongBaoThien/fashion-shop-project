@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { routes } from "./routes";
 import DefaultComponent from "./components/layout/DefaultComponent/DefaultComponent";
@@ -10,35 +10,58 @@ import { updateUser } from "./redux/slides/userSlide";
 import { store } from "./redux/store";
 import { Spin } from "antd";
 import { MessageProvider } from "./context/MessageContext";
+import { setCart } from "./redux/slides/cartSlide";
+import * as CartService from "./services/CartService";
+import { persistor } from "./redux/store";
 
 function App() {
   const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(true);
   const user = useSelector((state) => state.user); // state.user là slice bạn đã tạo
 
-  const handGetDetailUser = async (id) => {
-    try {
-      const res = await UserService.getDetailUser(id); // Gọi không cần token
-      if (res?.status === "OK") {
-        // Lấy token từ localStorage để đảm bảo luôn là token mới nhất
-        const token = localStorage.getItem("access_token");
-        dispatch(updateUser({ ...res?.data, access_token: JSON.parse(token) }));
+  const handGetDetailUser = useCallback(
+    async (id) => {
+      try {
+        const res = await UserService.getDetailUser(id);
+        if (res?.status === "OK") {
+          const token = localStorage.getItem("access_token");
+          dispatch(
+            updateUser({ ...res?.data, access_token: JSON.parse(token) })
+          ); // Tải giỏ hàng của User
+          await persistor.pause(); // Tạm dừng persist
+          const cartFromDB = await CartService.getCart();
+          if (cartFromDB.status === "OK") {
+            dispatch(setCart(cartFromDB.data.items));
+          }
+        }
+      } catch (error) {
+        console.error("handGetDetailUser error:", error);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
-    } catch (error) {
-      console.error("handGetDetailUser error:", error);
-      setIsLoading(false);
-    }
-  };
+    },
+    [dispatch]
+  ); // 4. Thêm `dispatch` vào dependency
 
   useEffect(() => {
     const { decoded } = handleDecoded();
     if (decoded?.id) {
       handGetDetailUser(decoded?.id);
     } else {
+      persistor.persist(); // 5. Bật lại persist nếu là khách
+      setIsLoading(false);
+    }
+  }, [handGetDetailUser]); //
+
+  useEffect(() => {
+    const { decoded } = handleDecoded();
+    if (decoded?.id) {
+      handGetDetailUser(decoded?.id);
+    } else {
+      persistor.persist();
       setIsLoading(false); // 4. Dừng loading nếu không có token (không có user)
     }
-  }, []);
+  }, [handGetDetailUser]);
 
   const handleDecoded = () => {
     let storageData = localStorage.getItem("access_token");
@@ -100,35 +123,63 @@ function App() {
 
   return (
     <MessageProvider>
-    <div>
-      {/* 5. Hiển thị Spin hoặc Router dựa trên state isLoading */}
-      {isLoading ? (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100vh",
-          }}
-        >
-          <Spin size="large" />
-        </div>
-      ) : (
-        <Router>
-          <Routes>
-            {routes.map((route) => {
-              const Page = route.page;
-              const Layout = route.isShowHeader
-                ? DefaultComponent
-                : React.Fragment;
+      <div>
+        {/* 5. Hiển thị Spin hoặc Router dựa trên state isLoading */}
+        {isLoading ? (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "100vh",
+            }}
+          >
+            <Spin size="large" />
+          </div>
+        ) : (
+          <Router>
+            <Routes>
+              {routes.map((route) => {
+                const Page = route.page;
+                const Layout = route.isShowHeader
+                  ? DefaultComponent
+                  : React.Fragment;
 
-              // Render route bình thường nếu không có children
-              if (route.isPrivate && !user.isAdmin) {
-                return null; // Trang cho admin, nhưng
-              }
+                // Render route bình thường nếu không có children
+                if (route.isPrivate && !user.isAdmin) {
+                  return null; // Trang cho admin, nhưng
+                }
 
-              // SỬA LẠI: Nếu route có children, tạo một Route cha lồng các con
-              if (route.children) {
+                // SỬA LẠI: Nếu route có children, tạo một Route cha lồng các con
+                if (route.children) {
+                  return (
+                    <Route
+                      key={route.path}
+                      path={route.path}
+                      element={
+                        <Layout>
+                          <Page />
+                        </Layout>
+                      }
+                    >
+                      {route.children.map((childRoute) => {
+                        if (childRoute.isPrivate && !user.isAdmin) {
+                          return null;
+                        }
+
+                        const ChildPage = childRoute.page;
+                        return (
+                          <Route
+                            key={childRoute.path}
+                            path={childRoute.path}
+                            element={<ChildPage />}
+                          />
+                        );
+                      })}
+                    </Route>
+                  );
+                }
+
                 return (
                   <Route
                     key={route.path}
@@ -138,41 +189,13 @@ function App() {
                         <Page />
                       </Layout>
                     }
-                  >
-                    {route.children.map((childRoute) => {
-                      if (childRoute.isPrivate && !user.isAdmin) {
-                        return null;
-                      }
-
-                      const ChildPage = childRoute.page;
-                      return (
-                        <Route
-                          key={childRoute.path}
-                          path={childRoute.path}
-                          element={<ChildPage />}
-                        />
-                      );
-                    })}
-                  </Route>
+                  />
                 );
-              }
-
-              return (
-                <Route
-                  key={route.path}
-                  path={route.path}
-                  element={
-                    <Layout>
-                      <Page />
-                    </Layout>
-                  }
-                />
-              );
-            })}
-          </Routes>
-        </Router>
-      )}
-    </div>
+              })}
+            </Routes>
+          </Router>
+        )}
+      </div>
     </MessageProvider>
   );
 }

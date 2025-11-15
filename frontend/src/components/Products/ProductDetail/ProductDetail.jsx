@@ -22,6 +22,10 @@ import ImageGallery from "../../sections/ImageGallery/ImageGallery";
 import CardProduct from "../../common/CardComponent/CardComponent";
 import "./ProductDetail.css";
 import ButtonComponent from "../../common/ButtonComponent/ButtonComponent";
+import { useDispatch, useSelector } from "react-redux";
+import { addToCart, setCart } from "../../../redux/slides/cartSlide";
+import * as CartService from "../../../services/CartService";
+import { useMessageApi } from "../../../context/MessageContext";
 
 const ProductDetail = ({ product }) => {
   const [selectedSize, setSelectedSize] = useState(null);
@@ -29,6 +33,11 @@ const ProductDetail = ({ product }) => {
   const [isFavorite, setIsFavorite] = useState(false);
 
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
+
+  const dispatch = useDispatch();
+  const { showSuccess, showError } = useMessageApi();
+  const user = useSelector((state) => state.user); // Lấy user để biết là "Khách" hay "User"
+  const guestCart = useSelector((state) => state.cart); // Lấy giỏ hàng của "Khách"
 
   // useEffect để tự động chọn size đầu tiên còn hàng khi sản phẩm được tải
   useEffect(() => {
@@ -79,9 +88,8 @@ const ProductDetail = ({ product }) => {
         <Empty description="Không tìm thấy thông tin sản phẩm." />
       </div>
     );
-  }  
-  
-  
+  }
+
   const discount = Number(product.discount) || 0;
   const discountedPrice =
     product.discount > 0
@@ -172,18 +180,70 @@ const ProductDetail = ({ product }) => {
     },
   ];
 
-  const handleAddToCart = () => {
-    if (!isSizeAvailable) {
-      console.log("Size out of stock");
+  const handleAddToCart = async () => {
+    if (product.hasSizes && !isSizeAvailable) {
+      showError("Vui lòng chọn một size còn hàng.");
       return;
     }
-    console.log("Add to cart:", {
-      product: product.id,
-      size: selectedSize,
-      quantity,
-    });
-  };
+    if (!product.hasSizes && isSoldOut) {
+      showError("Sản phẩm này đã hết hàng.");
+      return;
+    }
 
+    // Dữ liệu món hàng cần thêm
+    const itemToAdd = {
+      product: product._id, // Dùng _id từ API
+      name: product.name,
+      image: product.image,
+      // Tính giá sau giảm tại thời điểm thêm
+      price:
+        product.discount > 0
+          ? Math.round(product.price * (1 - product.discount / 100))
+          : product.price,
+      size: product.hasSizes ? selectedSize : "One Size", // Gửi "One Size" nếu là nón
+      quantity: quantity,
+    };
+
+    // 6. LOGIC PHÂN LUỒNG (Quan trọng nhất)
+    if (user?.id) {
+      // --- LUỒNG 1: USER ĐÃ ĐĂNG NHẬP (Gọi API - Phần 1) ---
+      try {
+        const res = await CartService.addToCart(itemToAdd);
+        if (res.status === "OK") {
+          showSuccess(res.message);
+          // Cập nhật lại Redux với toàn bộ giỏ hàng mới nhất từ DB
+          dispatch(setCart(res.data.items));
+        } else {
+          showError(res.message);
+        }
+      } catch (e) {
+        const errorMessage = e.response?.data?.message || e.message;
+        showError(errorMessage);
+      }
+    } else {
+      // --- LUỒNG 2: KHÁCH VÃNG LAI (Kiểm tra thủ công) ---
+
+      // Tìm món hàng (với đúng size) trong giỏ hàng "khách"
+      const existingItem = guestCart.cartItems.find(
+        (i) => i.product === itemToAdd.product && i.size === itemToAdd.size
+      );
+
+      const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
+      const newTotalQuantity = currentQuantityInCart + itemToAdd.quantity;
+
+      // maxQuantity đã được bạn tính ở trên (rất tốt!)
+      if (newTotalQuantity > maxQuantity) {
+        showError(
+          `Số lượng trong giỏ (${newTotalQuantity}) vượt quá tồn kho (Chỉ còn ${maxQuantity} sản phẩm).`
+        );
+        return; // Dừng lại
+      }
+
+      // Nếu tất cả kiểm tra đều qua
+      dispatch(addToCart(itemToAdd));
+      showSuccess("Đã thêm vào giỏ hàng!");
+    }
+  };
   const handleBuyNow = () => {
     if (!isSizeAvailable) {
       console.log("ize out of stock");

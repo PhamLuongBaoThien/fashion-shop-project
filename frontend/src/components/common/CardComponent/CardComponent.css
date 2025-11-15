@@ -189,3 +189,9 @@
     right: 12px;
   }
 }
+
+
+.product-link-wrapper {
+  text-decoration: none;
+  color: inherit; 
+}

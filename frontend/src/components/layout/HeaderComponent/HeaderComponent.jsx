@@ -18,7 +18,9 @@ import ButtonComponent from "../../common/ButtonComponent/ButtonComponent";
 import { useSelector, useDispatch } from "react-redux";
 import * as UserService from "../../../services/UserService";
 import { resetUser } from "../../../redux/slides/userSlide";
+import { clearCart } from "../../../redux/slides/cartSlide";
 import { useDebounce } from "../../../hooks/useDebounce";
+import { persistor } from "../../../redux/store";
 
 const { Header } = Layout;
 
@@ -33,6 +35,9 @@ export default function HeaderComponent() {
   const location = useLocation();
 
   const user = useSelector((state) => state.user); // state.user là slice bạn đã tạo
+  const cart = useSelector((state) => state.cart);
+
+  const totalCartQuantity = cart.cartItems.reduce((total, item) => total + item.quantity, 0);
 
   const debouncedSearchValue = useDebounce(searchValue, 500);
 
@@ -49,6 +54,12 @@ export default function HeaderComponent() {
     await UserService.logoutUser();
     localStorage.removeItem("access_token");
     dispatch(resetUser());
+    dispatch(clearCart());
+    await persistor.purge(); // Xóa toàn bộ dữ liệu đã lưu của redux-persist
+
+    // Bật lại (resume) bộ theo dõi cho khách vãng lai tiếp theo
+    persistor.persist();
+    
     navigate("/sign-in");
   };
 
@@ -71,7 +82,7 @@ export default function HeaderComponent() {
         navigate(`/products?${currentParams.toString()}`);
       }
     }
-  }, [debouncedSearchValue, navigate, location.pathname]); // Chạy lại mỗi khi giá trị trì hoãn thay đổi
+  }, [debouncedSearchValue, navigate, location.pathname, location.search]); // Chạy lại mỗi khi giá trị trì hoãn thay đổi
 
   const getLastName = (fullName) => {
     if (!fullName) return "Khách";
@@ -258,18 +269,20 @@ export default function HeaderComponent() {
 
           {/* Shopping Cart */}
           <Badge
-            count={1}
+            count={totalCartQuantity}
             size="medium"
             color="#fa8c16"
             overflowCount={99}
             className="cart-badge"
           >
+            <Link to="/cart" > 
             <ButtonComponent
               type="text"
               size="large"
               className="cart-btn"
               icon={<ShoppingCartOutlined />}
             />
+            </Link>
           </Badge>
 
           {/* Mobile Menu Toggle */}
