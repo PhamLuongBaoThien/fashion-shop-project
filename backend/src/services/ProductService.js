@@ -43,8 +43,8 @@ const processAndSortSizes = (sizes) => {
   return sortedSizes;
 };
 
-// * Tính toán trạng thái tồn kho (inventoryStatus)
-//  * dựa trên việc sản phẩm có size hay không.
+// Tính toán trạng thái tồn kho (inventoryStatus)
+//  dựa trên việc sản phẩm có size hay không.
 const getInventoryStatus = (product) => {
   let totalStock = 0;
   if (product.hasSizes) {
@@ -467,13 +467,9 @@ const getRelatedProducts = (slug, page, limit) => {
 
       // 3. Tính toán inventoryStatus cho các sản phẩm liên quan
       const productsWithStatus = products.docs.map((product) => {
-        const totalStock = product.sizes.reduce(
-          (total, size) => total + size.quantity,
-          0
-        );
         return {
           ...product.toObject(),
-          inventoryStatus: totalStock > 0 ? "Còn hàng" : "Hết hàng",
+          inventoryStatus: getInventoryStatus(product), // Dùng hàm trợ giúp
         };
       });
 

@@ -1,5 +1,8 @@
 import { Typography } from "antd";
+import { Link } from "react-router-dom";
+import "./Logo.css";
 const { Title } = Typography;
+
 
 const Logo = () => {
   const logoStyle = {
@@ -11,9 +14,11 @@ const Logo = () => {
     cursor: "pointer",
   };
   return (
-    <Title level={2} style={{ ...logoStyle, margin: 0 }}>
+    <Link to="/" className="logo-link-wrapper">
+    <Title level={2} style={{ ...logoStyle, margin: 0 }} className="logo-text">
       D.E
     </Title>
+    </Link>
   );
 };
 

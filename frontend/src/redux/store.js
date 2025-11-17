@@ -54,5 +54,5 @@ export const store = configureStore({
     }),
 })
 
-// ✅ 6. EXPORT `persistor`
+//  6. EXPORT `persistor`
 export const persistor = persistStore(store)

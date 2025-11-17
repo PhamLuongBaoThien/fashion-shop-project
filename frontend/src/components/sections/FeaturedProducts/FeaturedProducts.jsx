@@ -16,7 +16,7 @@ const { Title, Text } = Typography;
 export default function FeaturedProducts({ products, textButton }) {
   const settings = {
     dots: false,
-    infinite: true, // Vòng lặp sẽ tốt hơn nếu bạn có nhiều hơn 4 sản phẩm
+    infinite: false, // Vòng lặp sẽ tốt hơn nếu bạn có nhiều hơn 4 sản phẩm
     speed: 500,
     slidesToShow: 3,
     slidesToScroll: 1,
@@ -54,7 +54,7 @@ export default function FeaturedProducts({ products, textButton }) {
           </Text>
         </div>
 
-        {/* ✅ 3. SỬ DỤNG SLIDER */}
+        {/* 3. SỬ DỤNG SLIDER */}
         <Slider {...settings}>
           {products.map((p) => (
             // Sử dụng _id từ MongoDB làm key

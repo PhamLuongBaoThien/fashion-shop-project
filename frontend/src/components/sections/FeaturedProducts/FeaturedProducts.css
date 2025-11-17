@@ -52,6 +52,11 @@
   position: relative;
 }
 
+.slick-slide > div {
+  display: block;
+  width: 100%;
+}
+
 /* Tạo khoảng hở (gutter) giữa các slide */
 .featured-section .slick-slide > div {
   padding: 0 12px;
@@ -101,4 +106,9 @@
 .featured-section .slick-next:hover {
   background: white; /* Nền trắng đục khi hover */
   transform: translateY(-50%) scale(1.1); /* Phóng to nhẹ */
+}
+
+.slick-slide > div {
+  display: block;
+  width: 100%;
 }

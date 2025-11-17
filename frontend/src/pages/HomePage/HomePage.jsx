@@ -50,7 +50,7 @@ const HomePage = () => {
     );
   }
 
-  const featuredProducts = products?.slice(0, 5) || []; // Lấy 4 sản phẩm đầu tiên để truyền vào FeaturedProducts
+  const featuredProducts = products?.slice(0, 11) || []; // Lấy 10 sản phẩm đầu tiên để truyền vào FeaturedProducts
 
   const sectionVariants = {
     hidden: { opacity: 0, y: 50 },

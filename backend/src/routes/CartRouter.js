@@ -13,6 +13,13 @@ router.post("/add", authCustomerMiddleware, CartController.addItemToCart);
 // Gộp giỏ hàng (khi đăng nhập)
 router.post("/merge", authCustomerMiddleware, CartController.mergeLocalCart);
 
+// API ĐỂ CẬP NHẬT SỐ LƯỢNG
+router.post("/update-quantity", authCustomerMiddleware, CartController.updateItemQuantity);
+
+// API ĐỂ XÓA 1 SẢN PHẨM
+// (Dùng 'delete' hoặc 'post' đều được, 'post' dễ gửi body hơn)
+router.post("/remove-item", authCustomerMiddleware, CartController.removeItemFromCart);
+
 // (Bạn sẽ thêm các route cho REMOVE, UPDATE, CLEAR ở đây)
 
 module.exports = router;

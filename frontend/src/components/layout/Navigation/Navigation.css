@@ -9,10 +9,6 @@
   }
 }
 
-
-
-
-
 /* Drawer hidden on desktop */
 .mobile-drawer {
   display: block;
@@ -33,4 +29,14 @@
   font-size: 16px;
   border-bottom: 1px solid #f0f0f0;
   transition: color 0.2s ease;
+}
+
+.mobile-menu-link:hover {
+  color: #fa8c16 !important; /* Đổi màu khi hover */
+}
+
+/* Mobile menu links - Active state */
+.mobile-menu-link.active-link {
+  color: #fa8c16; /* Tô màu cho trang hiện tại */
+  font-weight: 600; /* Có thể làm nổi bật hơn */
 }

@@ -6,18 +6,21 @@ const createCategory = (categoryData) => {
       // Kiểm tra tên danh mục đã tồn tại chưa
       const checkCategory = await Category.findOne({ name: categoryData.name });
       if (checkCategory !== null) {
-        return resolve({ status: "ERR", message: "Category name already exists" });
-      }
-        const newCategory = await Category.create(categoryData);
-        resolve({
-          status: "OK",
-            message: "Category created successfully",
-            data: newCategory,
+        return resolve({
+          status: "ERR",
+          message: "Category name already exists",
         });
+      }
+      const newCategory = await Category.create(categoryData);
+      resolve({
+        status: "OK",
+        message: "Category created successfully",
+        data: newCategory,
+      });
     } catch (error) {
       reject(error);
     }
-    });
+  });
 };
 
 // src/services/CategoryService.js (Backend)
@@ -27,7 +30,7 @@ const updateCategory = (categoryId, data) => {
   return new Promise(async (resolve, reject) => {
     try {
       // 1. "Giải nén" name và description từ `data`
-      const { name, description } = data; 
+      const { name, description } = data;
 
       // 2. Tìm danh mục bằng ID TRƯỚC TIÊN
       const category = await Category.findById(categoryId);
@@ -36,14 +39,17 @@ const updateCategory = (categoryId, data) => {
       }
 
       // 3. Kiểm tra xem TÊN MỚI có bị trùng với một mục KHÁC không
-      if (name) { 
-        const checkName = await Category.findOne({ 
-          name: name, 
-          _id: { $ne: categoryId } // $ne = Not Equal (không bao gồm chính nó)
+      if (name) {
+        const checkName = await Category.findOne({
+          name: name,
+          _id: { $ne: categoryId }, // $ne = Not Equal (không bao gồm chính nó)
         });
-        
+
         if (checkName !== null) {
-          return resolve({ status: "ERR", message: "Tên danh mục này đã tồn tại" });
+          return resolve({
+            status: "ERR",
+            message: "Tên danh mục này đã tồn tại",
+          });
         }
       }
 
@@ -64,11 +70,13 @@ const updateCategory = (categoryId, data) => {
         message: "Cập nhật danh mục thành công",
         data: updatedCategory,
       });
-
     } catch (e) {
       // Bắt lỗi E11000 (trùng lặp) từ Mongoose
       if (e.code === 11000) {
-        return resolve({ status: "ERR", message: `Giá trị bị trùng lặp: ${Object.keys(e.keyValue)}` });
+        return resolve({
+          status: "ERR",
+          message: `Giá trị bị trùng lặp: ${Object.keys(e.keyValue)}`,
+        });
       }
       reject(e);
     }
@@ -79,38 +87,40 @@ const getDetailCategory = (categoryId) => {
   return new Promise(async (resolve, reject) => {
     try {
       const category = await Category.findById(categoryId);
-        if (category === null) {
-            return resolve({
-                status: "ERR",
-                message: "Category not found",
-            });
-        }
-        resolve({
-            status: "OK",
-            message: "Category retrieved successfully",
-            data: category,
+      if (category === null) {
+        return resolve({
+          status: "ERR",
+          message: "Category not found",
         });
+      }
+      resolve({
+        status: "OK",
+        message: "Category retrieved successfully",
+        data: category,
+      });
     } catch (error) {
       reject(error);
-    }   
-    });
+    }
+  });
 };
 
 const getAllCategories = () => {
   return new Promise(async (resolve, reject) => {
     try {
-        const categories = await Category.find().sort({ name: 1 });
+      const categories = await Category.find()
+        .collation({ locale: "vi", strength: 1 })
+        .sort({ name: 1 });
 
-        resolve({
-            status: "OK",
-            message: "Categories retrieved successfully",
-            data: categories,
-        });
+      resolve({
+        status: "OK",
+        message: "Categories retrieved successfully",
+        data: categories,
+      });
     } catch (error) {
       reject(error);
     }
-});
-}
+  });
+};
 
 module.exports = {
   createCategory,

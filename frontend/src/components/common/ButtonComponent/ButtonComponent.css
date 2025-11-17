@@ -1,0 +1,30 @@
+/* Base sử dụng cho tất cả nút */
+.btn-animated {
+  position: relative;
+  overflow: hidden;
+  transition: 0.25s ease;
+  font-weight: 600;
+}
+
+/* Hover: hơi nổi + shadow nhẹ */
+.btn-animated:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+}
+
+/* Sóng ánh sáng chạy ngang */
+.btn-animated::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 60%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.25);
+  transform: skewX(-20deg);
+  transition: 0.5s;
+}
+
+.btn-animated:hover::after {
+  left: 150%;
+}

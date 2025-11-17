@@ -1,0 +1,22 @@
+.cart-product-link {
+  text-decoration: none;
+  color: inherit; /* Giữ màu chữ gốc (thường là đen) */
+}
+
+/* Đảm bảo khi di chuột vào, nó cũng không bị gạch chân */
+.cart-product-link:hover {
+  text-decoration: none;
+  color: #fa8c16; /* (Tùy chọn) Đổi màu khi hover */
+}
+
+.btn-continue-shopping {
+    background-color: #f0f0f0;
+    border-color: #d9d9d9;
+    color: #000000;
+}
+
+.btn-continue-shopping:hover {
+    background-color: #e6e6e6 !important;
+    border-color: #bfbfbf !important;
+    color: #000000 !important;
+}

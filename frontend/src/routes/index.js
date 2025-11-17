@@ -18,6 +18,7 @@ import AdminRoles from "../pages/AdminRoles/AdminRoles.jsx";
 import AdminProfile from "../pages/AdminProfile/AdminProfile.jsx";
 import AdminAddProductPage from "../pages/AdminProducts/AdminAddProduct.jsx";
 import AdminUpdateProductPage from "../pages/AdminProducts/AdminUpdateProductPage.jsx";
+import CheckoutPage from "../pages/CheckoutPage/CheckoutPage.jsx";
 
 export const routes = [
   {
@@ -33,6 +34,11 @@ export const routes = [
   {
     path: "/cart",
     page: CartPage,
+    isShowHeader: true,
+  },
+  {
+    path: "/checkout",
+    page: CheckoutPage,
     isShowHeader: true,
   },
   {
@@ -106,7 +112,7 @@ export const routes = [
   {
     path: "/admin/sign-in",
     page: AdminSignInPage,
-    isShowHeader: false, // Trang login admin thường không có header/footer chung
+    isShowHeader: false,
   },
   {
     path: "*",

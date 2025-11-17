@@ -202,6 +202,8 @@ const ProductDetail = ({ product }) => {
           : product.price,
       size: product.hasSizes ? selectedSize : "One Size", // Gửi "One Size" nếu là nón
       quantity: quantity,
+      slug: product.slug,
+      maxQuantity: maxQuantity, // Gửi kèm để kiểm tra sau này
     };
 
     // 6. LOGIC PHÂN LUỒNG (Quan trọng nhất)
