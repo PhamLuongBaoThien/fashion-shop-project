@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Card, Layout, Typography, Space } from "antd";
+import { Card, Typography, Space } from "antd";
 
 const { Title, Text } = Typography;
 

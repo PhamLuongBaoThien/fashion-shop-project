@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { CheckCircleOutlined } from "@ant-design/icons";
-import { Button, Card, Layout, Typography, Space } from "antd";
+import { Card, Layout, Typography, Space } from "antd";
 import ButtonComponent from "../../components/common/ButtonComponent/ButtonComponent";
 
 const { Content } = Layout;
