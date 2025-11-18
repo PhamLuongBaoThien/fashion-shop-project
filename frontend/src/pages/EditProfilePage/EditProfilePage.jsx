@@ -109,6 +109,7 @@ const EditProfile = () => {
         handleProvinceChange(savedProvince.value); // Tải danh sách huyện
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.address?.province, provinces]);
 
   // 3. useEffect riêng để xử lý Huyện
@@ -122,6 +123,7 @@ const EditProfile = () => {
         handleDistrictChange(savedDistrict.value); // Tải danh sách xã
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.address?.district, districts]);
 
   // 4. useEffect riêng để xử lý Xã
@@ -132,6 +134,7 @@ const EditProfile = () => {
         form.setFieldsValue({ address: { ward: savedWard.value } });
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.address?.ward, wards]);
 
   const mutation = useMutationHooks((data) => {
