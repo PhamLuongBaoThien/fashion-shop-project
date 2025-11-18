@@ -33,7 +33,7 @@ const orderSchema = new mongoose.Schema(
     user: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: false, // QUAN TRỌNG: Cho phép null (để khách vãng lai mua được)
+      required: false, // Cho phép null (để khách vãng lai mua được)
     },
     
     // --- THÔNG TIN NGƯỜI MUA (BẮT BUỘC) ---

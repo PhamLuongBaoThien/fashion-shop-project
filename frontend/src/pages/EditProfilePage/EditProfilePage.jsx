@@ -48,7 +48,7 @@ const EditProfile = () => {
   useEffect(() => {
     const fetchProvinces = async () => {
       try {
-        // ✅ SỬA LẠI: Dùng trực tiếp dữ liệu đã được "dịch"
+        //  Dùng trực tiếp dữ liệu đã được "dịch"
         const provinceOptions = await ExternalApiService.getProvinces();
         setProvinces(provinceOptions);
       } catch (error) {
@@ -60,7 +60,7 @@ const EditProfile = () => {
 
   const handleProvinceChange = async (provinceCode) => {
     try {
-      // ✅ SỬA LẠI: Dùng trực tiếp dữ liệu đã được "dịch"
+      //  Dùng trực tiếp dữ liệu đã được "dịch"
       const districtOptions = await ExternalApiService.getDistricts(provinceCode);
       setDistricts(districtOptions);
       setWards([]);
@@ -72,7 +72,7 @@ const EditProfile = () => {
 
   const handleDistrictChange = async (districtCode) => {
     try {
-      // ✅ SỬA LẠI: Dùng trực tiếp dữ liệu đã được "dịch"
+      //  Dùng trực tiếp dữ liệu đã được "dịch"
       const wardOptions = await ExternalApiService.getWards(districtCode);
       setWards(wardOptions);
       form.setFieldsValue({ ward: null });

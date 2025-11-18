@@ -46,4 +46,8 @@ export const removeItemFromCart = async (itemData) => {
   const res = await axiosJWT.post(`${process.env.REACT_APP_API_KEY}/cart/remove-item`, itemData);
   return res.data;
 };
-// (Bạn sẽ thêm các hàm remove, update, clear API ở đây)
+
+export const clearCartAPI = async () => {
+  const res = await axiosJWT.delete(`${process.env.REACT_APP_API_KEY}/cart/clear`);
+  return res.data;
+};

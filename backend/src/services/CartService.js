@@ -369,6 +369,38 @@ const removeItemFromCart = (userId, itemData) => {
     }
   });
 };
+
+/**
+ * Xóa toàn bộ sản phẩm trong giỏ hàng của user
+ * @param {string} userId
+ */
+const clearCart = (userId) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Tìm giỏ hàng và set mảng items về rỗng
+      const cart = await Cart.findOneAndUpdate(
+        { user: userId },
+        { $set: { items: [] } },
+        { new: true } // Trả về data mới sau khi update
+      );
+
+      if (!cart) {
+        return resolve({
+          status: "ERR",
+          message: "Giỏ hàng không tồn tại",
+        });
+      }
+
+      resolve({
+        status: "OK",
+        message: "Đã xóa toàn bộ giỏ hàng",
+        data: cart,
+      });
+    } catch (e) {
+      reject(e);
+    }
+  });
+};
 // (Bạn sẽ tạo thêm các hàm `removeFromCart`, `updateItemQuantity`, `clearCart` ở đây)
 
 module.exports = {
@@ -377,4 +409,5 @@ module.exports = {
   mergeCart,
   updateItemQuantity,
   removeItemFromCart,
+  clearCart
 };

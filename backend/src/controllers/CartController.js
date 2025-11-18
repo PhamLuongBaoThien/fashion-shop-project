@@ -89,10 +89,33 @@ const removeItemFromCart = async (req, res) => {
   }
 };
 
+
+const clearCart = async (req, res) => {
+    try {
+        // Lấy userId từ token (đã qua middleware xác thực)
+        const userId = req.user.id || req.user._id;
+        
+        if (!userId) {
+             return res.status(200).json({
+                status: 'ERR',
+                message: 'The userId is required'
+            });
+        }
+
+        const response = await CartService.clearCart(userId);
+        return res.status(200).json(response);
+    } catch (e) {
+        return res.status(404).json({
+            message: e
+        });
+    }
+};
+
 module.exports = {
   getCartForUser,
   addItemToCart,
   mergeLocalCart,
   updateItemQuantity,
   removeItemFromCart,
+  clearCart
 };

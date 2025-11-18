@@ -20,6 +20,8 @@ router.post("/update-quantity", authCustomerMiddleware, CartController.updateIte
 // (Dùng 'delete' hoặc 'post' đều được, 'post' dễ gửi body hơn)
 router.post("/remove-item", authCustomerMiddleware, CartController.removeItemFromCart);
 
+router.delete('/clear', authCustomerMiddleware, CartController.clearCart);
+
 // (Bạn sẽ thêm các route cho REMOVE, UPDATE, CLEAR ở đây)
 
 module.exports = router;
