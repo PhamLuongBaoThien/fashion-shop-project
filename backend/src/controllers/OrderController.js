@@ -93,10 +93,23 @@ const getOrderDetails = async (req, res) => {
     }
 }
 
+const getAllOrders = async (req, res) => {
+    try {
+        const data = await OrderService.getAllOrders()
+        return res.status(200).json(data)
+    } catch (e) {
+        return res.status(404).json({
+            message: e
+        })
+    }
+}
+
+
 module.exports = {
     createOrder,
     getAllOrdersDetails,
-    getOrderDetails
+    getOrderDetails,
+    getAllOrders
 
     // (Thêm các controller khác ở đây)
 };

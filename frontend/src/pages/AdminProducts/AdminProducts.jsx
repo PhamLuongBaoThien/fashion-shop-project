@@ -209,11 +209,11 @@ const AdminProducts = () => {
 
   const columns = [
     { title: "Tên Sản phẩm", dataIndex: "name", key: "name" },
-    {
-      title: "Danh mục",
-      dataIndex: ["category", "name"], // Ra lệnh: vào 'category', rồi lấy 'name'
-      key: "category",
-    },
+    // {
+    //   title: "Danh mục",
+    //   dataIndex: ["category", "name"], // Ra lệnh: vào 'category', rồi lấy 'name'
+    //   key: "category",
+    // },
     {
       title: "Giá gốc",
       dataIndex: "price",
@@ -415,7 +415,7 @@ const AdminProducts = () => {
             >
               <Space wrap>
                 <Select
-                  defaultValue={category}
+                  value={category}
                   style={{ width: 200 }}
                   onChange={handleCategoryChange}
                   loading={isLoadingCategories}
@@ -428,7 +428,7 @@ const AdminProducts = () => {
                   ]}
                 />
                 <Select
-                  defaultValue={sortOption}
+                  value={sortOption}
                   style={{ width: 200 }}
                   onChange={handleSortChange}
                   options={[

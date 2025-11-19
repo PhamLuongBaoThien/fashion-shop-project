@@ -7,6 +7,11 @@
 .admin-sider {
   background-color: #001529 !important;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  position: fixed !important;
+  height: 100vh;
+  left: 0;
+  top: 0;
+  z-index: 1000;
 }
 
 .admin-logo {
@@ -47,10 +52,26 @@
 .admin-header {
   background-color: #ffffff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 0 24px;
+  /* padding: 0 24px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: space-between; */
+
+  position: fixed !important;
+  top: 0;
+  left: 250px; /* = width sider */
+  right: 0;
+  height: 64px;
+  padding: 0 20px;
+  background: #fff;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.admin-sider.ant-layout-sider-collapsed + .admin-main-layout .admin-header {
+  left: 80px; /* width collapsed sider */
 }
 
 .admin-header-content {
@@ -83,6 +104,14 @@
 /* Main Layout */
 .admin-main-layout {
   background-color: #f5f5f5;
+  margin-left: 250px; /* width sider */
+  margin-top: 64px;   /* height header */
+  min-height: 100vh;
+}
+
+/* Khi sider collapsed */
+.ant-layout-sider-collapsed ~ .admin-main-layout {
+  margin-left: 80px;
 }
 
 .admin-content {
@@ -264,6 +293,14 @@
 
   .dashboard-title {
     font-size: 20px;
+  }
+
+  .admin-header {
+    left: 0 !important; /* Không phụ thuộc sider */
+  }
+
+  .admin-main-layout {
+    margin-left: 0 !important;
   }
 }
 

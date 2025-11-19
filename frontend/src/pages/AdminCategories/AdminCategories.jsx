@@ -1,20 +1,11 @@
 import { useState } from "react";
-import {
-  Table,
-  Button,
-  Modal,
-  Form,
-  Input,
-  Card,
-  Space,
-  Spin,
-  Alert,
-} from "antd";
+import { Table, Modal, Form, Input, Card, Space, Spin, Alert } from "antd";
 import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as CategoryService from "../../services/CategoryService";
 import { useMessageApi } from "../../context/MessageContext";
+import ButtonComponent from "../../components/common/ButtonComponent/ButtonComponent";
 
 const AdminCategories = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -62,7 +53,9 @@ const AdminCategories = () => {
       form.resetFields();
       queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
-    onError: (error) => {showError(error.response?.data?.message || error.message);},
+    onError: (error) => {
+      showError(error.response?.data?.message || error.message);
+    },
   });
 
   // 4. KẾT NỐI MODAL VỚI FORM VÀ MUTATION
@@ -108,13 +101,18 @@ const AdminCategories = () => {
       key: "actions",
       render: (_, record) => (
         <Space>
-          <Button
+          <ButtonComponent
             type="primary"
             size="small"
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
           />
-          <Button danger size="small" icon={<DeleteOutlined />} />
+          <ButtonComponent
+            danger
+            type="primary"
+            size="small"
+            icon={<DeleteOutlined />}
+          />
         </Space>
       ),
     },
@@ -132,7 +130,12 @@ const AdminCategories = () => {
   }
   if (isError) {
     return (
-      <Alert message="Lỗi" description={error.response.data.message || error.message} type="error" showIcon />
+      <Alert
+        message="Lỗi"
+        description={error.response.data.message || error.message}
+        type="error"
+        showIcon
+      />
     );
   }
 
@@ -145,13 +148,12 @@ const AdminCategories = () => {
       <Card>
         <div className="admin-page-header">
           <h1>Quản lý Danh mục</h1>
-          <Button
+          <ButtonComponent
             type="primary"
             icon={<PlusOutlined />}
             onClick={() => setIsModalOpen(true)}
-          >
-            Thêm Danh mục
-          </Button>
+            textButton={"Thêm Danh mục"}
+          />
         </div>
 
         <Table

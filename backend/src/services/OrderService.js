@@ -176,9 +176,31 @@ const getOrderDetails = (id, userId, isAdmin) => {
     })
 }
 
+/**
+ * Lấy TẤT CẢ đơn hàng (Dành cho Admin)
+ */
+const getAllOrders = () => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            // Lấy tất cả, sắp xếp mới nhất lên đầu
+            const allOrders = await Order.find()
+                .sort({ createdAt: -1, updatedAt: -1 });
+
+            resolve({
+                status: 'OK',
+                message: 'Success',
+                data: allOrders
+            })
+        } catch (e) {
+            reject(e)
+        }
+    })
+}
+
 module.exports = {
     createOrder,
     getAllOrdersDetails,
-    getOrderDetails
+    getOrderDetails,
+    getAllOrders
     // (Thêm các service khác như getOrderDetails, getAllOrders... ở đây)
 };

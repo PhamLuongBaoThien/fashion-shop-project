@@ -11,9 +11,15 @@ import {
   MenuOutlined,
   CloseOutlined,
 } from "@ant-design/icons";
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import "./admin.css";
+
+import { useSelector, useDispatch } from "react-redux";
+import * as UserService from "../../../services/UserService";
+import { resetUser } from "../../../redux/slides/userSlide";
+import { clearCart } from "../../../redux/slides/cartSlide";
+import { persistor } from "../../../redux/store";
 
 const { Sider, Content, Header } = Layout;
 
@@ -21,6 +27,21 @@ function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const location = useLocation(); // LẤY VỊ TRÍ HIỆN TẠI
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await UserService.logoutUser();
+    localStorage.removeItem("access_token");
+    dispatch(resetUser());
+    dispatch(clearCart());
+    await persistor.purge(); // Xóa toàn bộ dữ liệu đã lưu của redux-persist
+
+    // Bật lại (resume) bộ theo dõi cho khách vãng lai tiếp theo
+    persistor.persist();
+
+    navigate("/sign-in");
+  };
 
   const menuItems = [
     {
@@ -63,12 +84,26 @@ function AdminLayout() {
   const userMenu = [
     {
       key: "profile",
-      label: <Link to="/system/admin/profile">Thông tin tài khoản</Link>,
+      label: (
+        <Link
+          to="/system/admin/profile"
+          style={{ fontWeight: 500, color: "#262626" }}
+        >
+          Thông tin tài khoản
+        </Link>
+      ),
     },
     {
       key: "logout",
-      label: "Đăng xuất",
-      icon: <LogoutOutlined />,
+      label: (
+        <span
+          style={{ fontWeight: 500, color: "red", cursor: "pointer" }}
+          onClick={handleLogout}
+        >
+          Đăng xuất
+        </span>
+      ),
+      // icon: <LogoutOutlined />,
     },
   ];
 
@@ -167,6 +202,5 @@ function AdminLayout() {
     </Layout>
   );
 }
-
 
 export default AdminLayout;
