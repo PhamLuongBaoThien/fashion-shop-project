@@ -44,7 +44,59 @@ const createOrder = async (req, res) => {
     }
 };
 
+const getAllOrdersDetails = async (req, res) => {
+    try {
+        // Lấy userId từ token (đã qua middleware)
+        // Nếu là Guest (không đăng nhập), req.user sẽ không có -> userId = undefined
+        const userId = req.user?.id || req.user?._id;
+        
+        if (!userId) {
+             return res.status(200).json({
+                status: 'ERR',
+                message: 'Yêu cầu đăng nhập để xem đơn hàng'
+            });
+        }
+
+        const response = await OrderService.getAllOrdersDetails(userId);
+        return res.status(200).json(response);
+    } catch (e) {
+        return res.status(404).json({
+            message: e
+        });
+    }
+};
+
+
+const getOrderDetails = async (req, res) => {
+    try {
+        const orderId = req.params.id;
+        
+        // Lấy thông tin người đang request từ token (được middleware giải mã)
+        // Nếu không có token (Guest) -> userId = null, isAdmin = false
+        const userId = req.user ? (req.user.id || req.user._id) : null;
+        const isAdmin = req.user ? req.user.isAdmin : false;
+
+        if (!orderId) {
+            return res.status(200).json({
+                status: 'ERR',
+                message: 'The orderId is required'
+            })
+        }
+
+        // Truyền thêm userId và isAdmin vào Service để kiểm tra quyền
+        const response = await OrderService.getOrderDetails(orderId, userId, isAdmin);
+        return res.status(200).json(response)
+    } catch (e) {
+        return res.status(404).json({
+            message: e
+        })
+    }
+}
+
 module.exports = {
     createOrder,
+    getAllOrdersDetails,
+    getOrderDetails
+
     // (Thêm các controller khác ở đây)
 };

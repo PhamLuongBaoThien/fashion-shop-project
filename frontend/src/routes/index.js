@@ -19,6 +19,7 @@ import AdminProfile from "../pages/AdminProfile/AdminProfile.jsx";
 import AdminAddProductPage from "../pages/AdminProducts/AdminAddProduct.jsx";
 import AdminUpdateProductPage from "../pages/AdminProducts/AdminUpdateProductPage.jsx";
 import CheckoutPage from "../pages/CheckoutPage/CheckoutPage.jsx";
+import MyOrderDetail from "../pages/MyOrderDetail/MyOrderDetail.jsx";
 
 export const routes = [
   {
@@ -42,7 +43,7 @@ export const routes = [
     isShowHeader: true,
   },
   {
-    path: "/product/:slug", 
+    path: "/product/:slug",
     page: ProductDetailPage,
     isShowHeader: true,
   },
@@ -62,6 +63,11 @@ export const routes = [
   {
     path: "/edit-profile",
     page: EditProfilePage,
+    isShowHeader: true,
+  },
+  {
+    path: "/my-order-details/:id",
+    page: MyOrderDetail,
     isShowHeader: true,
   },
   {

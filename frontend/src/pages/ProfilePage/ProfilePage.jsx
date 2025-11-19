@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Avatar, Divider, Tabs, Empty, Spin } from "antd";
+import { Avatar, Divider, Tabs, Empty, Spin, Tag, Button } from "antd";
 import {
   EditOutlined,
   ShoppingOutlined,
   HeartOutlined,
   StarOutlined,
+  EyeOutlined,
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -13,27 +14,42 @@ import { Link } from "react-router-dom";
 import "./ProfilePage.css";
 import { useSelector } from "react-redux";
 import ButtonComponent from "../../components/common/ButtonComponent/ButtonComponent";
+import { useMessageApi } from "../../context/MessageContext";
+import * as OrderService from "../../services/OrderService";
 
 const ProfilePage = () => {
   const user = useSelector((state) => state.user); // Lấy dữ liệu user từ Redux
   const navigate = useNavigate();
 
+  // Sử dụng optional chaining để tránh lỗi nếu context chưa sẵn sàng
+  const messageApi = useMessageApi();
+
+  // --- STATE CHO ĐƠN HÀNG ---
+  const [orders, setOrders] = useState([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+
   useEffect(() => {
-        // Nếu user.id đã tồn tại (nghĩa là đã đăng nhập)
-        if (!user.id) {
-          navigate("/sign-in"); // Chuyển hướng về trang chủ
-        }
-      }, [user.id, navigate]); // Chạy lại khi user.id hoặc navigate thay đổi
+    // Nếu user.id đã tồn tại (nghĩa là đã đăng nhập)
+    if (!user.id) {
+      navigate("/sign-in"); // Chuyển hướng về trang chủ
+    }
+  }, [user.id, navigate]); // Chạy lại khi user.id hoặc navigate thay đổi
 
   // Mock orders và reviews (sẽ thay bằng API sau)
-  const [orders] = useState([
-    { id: 1, date: "2024-10-20", total: 1290000, status: "Đã giao" },
-    { id: 2, date: "2024-10-15", total: 890000, status: "Đang giao" },
-  ]);
 
   const [reviews] = useState([
-    { id: 1, product: "Áo sơ mi linen cao cấp", rating: 5, comment: "Sản phẩm rất tốt, giao hàng nhanh" },
-    { id: 2, product: "Quần jean classic", rating: 4, comment: "Chất lượng tốt, fit vừa vặn" },
+    {
+      id: 1,
+      product: "Áo sơ mi linen cao cấp",
+      rating: 5,
+      comment: "Sản phẩm rất tốt, giao hàng nhanh",
+    },
+    {
+      id: 2,
+      product: "Quần jean classic",
+      rating: 4,
+      comment: "Chất lượng tốt, fit vừa vặn",
+    },
   ]);
 
   const containerVariants = {
@@ -57,48 +73,124 @@ const ProfilePage = () => {
   };
 
   // Lấy thông tin user khi tải trang
- 
 
-  if (!user.id) {
+  // 1. KIỂM TRA ĐĂNG NHẬP
+  useEffect(() => {
+    if (!user?.id) {
+      navigate("/sign-in");
+    }
+  }, [user?.id, navigate]);
+
+  // 2. GỌI API LẤY DANH SÁCH ĐƠN HÀNG
+  useEffect(() => {
+    if (user?.id) {
+      const fetchMyOrders = async () => {
+        setIsLoadingOrders(true);
+        try {
+          const res = await OrderService.getMyOrders();
+          if (res?.status === "OK") {
+            const sortedOrders = (res.data || []).sort((a, b) => {
+              // Lấy ngày tạo, nếu không có thì dùng ngày hiện tại để tránh lỗi
+              const dateA = new Date(a.createdAt || 0);
+              const dateB = new Date(b.createdAt || 0);
+              // Sắp xếp giảm dần (mới nhất - b - lên trước)
+              return dateB - dateA;
+            });
+            // Sắp xếp đơn mới nhất lên đầu
+            setOrders(sortedOrders);
+          } else {
+            setOrders([]);
+          }
+        } catch (error) {
+          console.error("Lỗi lấy đơn hàng:", error);
+          setOrders([]);
+        } finally {
+          setIsLoadingOrders(false);
+        }
+      };
+
+      fetchMyOrders();
+    }
+  }, [user?.id]);
+
+  const getGenderLabel = (gender) => {
+    switch (gender) {
+      case "male":
+        return "Nam";
+      case "female":
+        return "Nữ";
+      case "other":
+        return "Khác";
+      default:
+        return "Chưa cập nhật";
+    }
+  };
+
+  // Helper render trạng thái đơn hàng
+  const renderOrderStatus = (order) => {
+    if (order.isDelivered) {
+      return <Tag color="green">Đã giao hàng</Tag>;
+    } else if (order.isPaid) {
+      return <Tag color="blue">Đã thanh toán / Chờ giao</Tag>;
+    } else {
+      return <Tag color="orange">Đang xử lý</Tag>;
+    }
+  };
+
+  if (!user?.id) {
     return (
-      <div className="profile-page-loading" style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+      <div
+        className="profile-page-loading"
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
         <Spin size="large" />
       </div>
     );
   }
 
-  if (!user.email) {
-    return <div>Vui lòng đăng nhập để xem thông tin.</div>;
-  }
-
-  const getGenderLabel = (gender) => {
-  switch (gender) {
-    case "male":
-      return "Nam";
-    case "female":
-      return "Nữ";
-    case "other":
-      return "Khác";
-    default:
-      return "Chưa cập nhật";
-  }
-};
-
   return (
-    <motion.div className="profile-page" variants={containerVariants} initial="hidden" animate="visible">
+    <motion.div
+      className="profile-page"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {/* Profile Header */}
       <motion.div className="profile-header" variants={itemVariants}>
         <div className="profile-header-content">
-          <Avatar size={120} src={user.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} className="profile-avatar" />
+          <Avatar
+            size={120}
+            src={
+              user.avatar ||
+              "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+            }
+            className="profile-avatar"
+          />
           <div className="profile-info">
             <h1>{user.username || "Chưa cập nhật"}</h1>
             <p className="profile-email">{user.email || "Chưa cập nhật"}</p>
-            <p className="profile-meta">Thành viên từ {user.createdAt ? new Date(user.createdAt).toLocaleDateString("vi-VN") : "Chưa cập nhật"}</p>
+            <p className="profile-meta">
+              Thành viên từ{" "}
+              {user.createdAt
+                ? new Date(user.createdAt).toLocaleDateString("vi-VN")
+                : "Chưa cập nhật"}
+            </p>
           </div>
         </div>
         <Link to="/edit-profile">
-          <ButtonComponent type="primary" size="large" icon={<EditOutlined />} textButton={"Chỉnh sửa thông tin"} className="profile-edit-btn" disabled={!user.email} />
-            
+          <ButtonComponent
+            type="primary"
+            size="large"
+            icon={<EditOutlined />}
+            textButton={"Chỉnh sửa thông tin"}
+            className="profile-edit-btn"
+            disabled={!user.email}
+          />
         </Link>
       </motion.div>
 
@@ -110,16 +202,25 @@ const ProfilePage = () => {
         <div className="profile-details">
           <div className="detail-item">
             <span className="detail-label">Số điện thoại:</span>
-            <span className="detail-value">{user.phone || "Chưa cập nhật"}</span>
+            <span className="detail-value">
+              {user.phone || "Chưa cập nhật"}
+            </span>
           </div>
           <div className="detail-item">
             <span className="detail-label">Địa chỉ:</span>
-            <span className="detail-value">{
-            // Ghép các phần địa chỉ lại, lọc ra các phần rỗng và nối chúng bằng dấu phẩy
-            [user.address?.detailAddress, user.address?.ward, user.address?.district, user.address?.province]
-                .filter(Boolean) // Lọc bỏ các giá trị null, undefined hoặc chuỗi rỗng
-                .join(', ') || "Chưa cập nhật"
-        }</span>
+            <span className="detail-value">
+              {
+                // Ghép các phần địa chỉ lại, lọc ra các phần rỗng và nối chúng bằng dấu phẩy
+                [
+                  user.address?.detailAddress,
+                  user.address?.ward,
+                  user.address?.district,
+                  user.address?.province,
+                ]
+                  .filter(Boolean) // Lọc bỏ các giá trị null, undefined hoặc chuỗi rỗng
+                  .join(", ") || "Chưa cập nhật"
+              }
+            </span>
           </div>
           <div className="detail-item">
             <span className="detail-label">Giới tính:</span>
@@ -128,7 +229,9 @@ const ProfilePage = () => {
           <div className="detail-item">
             <span className="detail-label">Ngày sinh:</span>
             <span className="detail-value">
-              {user.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString("vi-VN") : "Chưa cập nhật"}
+              {user.dateOfBirth
+                ? new Date(user.dateOfBirth).toLocaleDateString("vi-VN")
+                : "Chưa cập nhật"}
             </span>
           </div>
         </div>
@@ -149,25 +252,73 @@ const ProfilePage = () => {
               ),
               children: (
                 <div className="tab-content">
-                  {orders.length > 0 ? (
+                  {isLoadingOrders ? (
+                    <div style={{ textAlign: "center", padding: "20px" }}>
+                      <Spin tip="Đang tải đơn hàng..." />
+                    </div>
+                  ) : orders.length > 0 ? (
                     <div className="orders-list">
                       {orders.map((order) => (
-                        <div key={order.id} className="order-item">
+                        <div key={order._id} className="order-item">
                           <div className="order-info">
-                            <p className="order-id">Đơn hàng #{order.id}</p>
-                            <p className="order-date">{new Date(order.date).toLocaleDateString("vi-VN")}</p>
+                            <p className="order-id">
+                              Đơn hàng #
+                              {order._id
+                                ? order._id.slice(-6).toUpperCase()
+                                : "NA"}
+                            </p>
+                            <p className="order-date">
+                              {order.createdAt
+                                ? new Date(order.createdAt).toLocaleDateString(
+                                    "vi-VN"
+                                  )
+                                : ""}
+                            </p>
+                            <p
+                              style={{
+                                fontSize: "13px",
+                                color: "#888",
+                                marginTop: "4px",
+                              }}
+                            >
+                              {order.orderItems && order.orderItems[0]?.name}
+                              {order.orderItems && order.orderItems.length > 1
+                                ? ` và ${
+                                    order.orderItems.length - 1
+                                  } sản phẩm khác`
+                                : ""}
+                            </p>
                           </div>
+
                           <div className="order-status">
-                            <span className={`status-badge status-${order.status.toLowerCase().replace(" ", "-")}`}>
-                              {order.status}
-                            </span>
+                            {renderOrderStatus(order)}
                           </div>
-                          <div className="order-total">{order.total.toLocaleString("vi-VN")}đ</div>
+
+                          <div
+                            className="order-total"
+                            style={{ textAlign: "right" }}
+                          >
+                            <div style={{ fontWeight: "bold" }}>
+                              {order.totalPrice
+                                ? order.totalPrice.toLocaleString("vi-VN")
+                                : 0}
+                              đ
+                            </div>
+                            <Link to={`/my-order-details/${order._id}`}>
+                              <Button
+                                type="link"
+                                size="small"
+                                icon={<EyeOutlined />}
+                              >
+                                Chi tiết
+                              </Button>
+                            </Link>
+                          </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <Empty description="Chưa có đơn hàng nào" />
+                    <Empty description="Bạn chưa có đơn hàng nào" />
                   )}
                 </div>
               ),
@@ -189,7 +340,9 @@ const ProfilePage = () => {
                             <p className="review-product">{review.product}</p>
                             <div className="review-rating">
                               {"⭐".repeat(review.rating)}
-                              <span className="rating-text">({review.rating}/5)</span>
+                              <span className="rating-text">
+                                ({review.rating}/5)
+                              </span>
                             </div>
                           </div>
                           <p className="review-comment">{review.comment}</p>

@@ -105,7 +105,80 @@ const createOrder = (orderData) => {
     });
 };
 
+const getAllOrdersDetails = (userId) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            // Tìm tất cả đơn hàng có user trùng khớp
+            // Sắp xếp: Mới nhất lên đầu (createdAt: -1)
+            const orders = await Order.find({
+                user: userId
+            }).sort({ createdAt: -1, updatedAt: -1 });
+
+            if (orders === null) {
+                resolve({
+                    status: 'OK',
+                    message: 'User has no orders',
+                    data: []
+                })
+            }
+
+            resolve({
+                status: 'OK',
+                message: 'Success',
+                data: orders
+            })
+        } catch (e) {
+            reject(e)
+        }
+    })
+}
+
+/**
+ * Lấy chi tiết đơn hàng (CÓ BẢO MẬT)
+ * @param {string} id - ID đơn hàng
+ * @param {string} userId - ID người đang request
+ * @param {boolean} isAdmin - Có phải admin không
+ */
+const getOrderDetails = (id, userId, isAdmin) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const order = await Order.findById(id);
+            
+            // 1. Kiểm tra đơn hàng có tồn tại không
+            if (order === null) {
+                return resolve({
+                    status: 'ERR',
+                    message: 'The order is not defined'
+                })
+            }
+
+            // 2. KIỂM TRA QUYỀN (SECURITY CHECK)
+            // Nếu không phải Admin...
+            if (!isAdmin) {
+                // ...và User ID của đơn hàng KHÁC User ID đang request
+                // (Lưu ý: order.user là ObjectId nên cần toString() để so sánh)
+                if (order.user?.toString() !== userId) {
+                    return resolve({
+                        status: 'ERR',
+                        message: 'Bạn không có quyền xem đơn hàng này (Unauthorized)'
+                    })
+                }
+            }
+
+            resolve({
+                status: 'OK',
+                message: 'SUCESS',
+                data: order
+            })
+        } catch (e) {
+            reject(e)
+        }
+    })
+}
+
 module.exports = {
     createOrder,
+    getAllOrdersDetails,
+    getOrderDetails
     // (Thêm các service khác như getOrderDetails, getAllOrders... ở đây)
 };

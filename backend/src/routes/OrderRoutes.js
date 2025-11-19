@@ -7,6 +7,8 @@ const { authOptionalMiddleware } = require("../middleware/authOptionalMiddleware
 
 
 router.post('/create', authOptionalMiddleware, OrderController.createOrder);
+router.get('/my-orders', authOptionalMiddleware, OrderController.getAllOrdersDetails);
+router.get('/detail/:id', authOptionalMiddleware, OrderController.getOrderDetails);
 
 // (Thêm các routes khác như GET /:id, GET /my-orders... ở đây)
 
