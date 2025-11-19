@@ -22,15 +22,12 @@ const getOrCreateCart = async (userId) => {
 const getCart = (userId) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const cart = await Cart.findOne({ user: userId })
-        // "populate" để lấy thông tin chi tiết của sản phẩm
-        .populate({
-          path: "items.product",
-          select: "name image price discount hasSizes slug", // Chỉ lấy các trường cần thiết
-        });
+      let cart = await Cart.findOne({ user: userId }).populate({
+        path: "items.product",
+        select: "name image price discount hasSizes sizes stock slug isActive",
+      });
 
       if (!cart) {
-        // Nếu user chưa có giỏ hàng (chưa thêm gì bao giờ), trả về giỏ rỗng
         return resolve({
           status: "OK",
           message: "Giỏ hàng trống",
@@ -38,56 +35,88 @@ const getCart = (userId) => {
         });
       }
 
-      // Tính toán lại tổng tiền và thông tin cho Frontend
       let totalAmount = 0;
-      const processedItems = cart.items
-        .map((item) => {
-          if (!item.product) {
-            // Xử lý trường hợp sản phẩm đã bị xóa khỏi DB
-            return null;
-          }
+      const processedItems = [];
 
-          // Tính giá sau giảm
-          const currentPrice =
-            item.product.discount > 0
-              ? Math.round(
-                  item.product.price * (1 - item.product.discount / 100)
-                )
-              : item.product.price;
+      // DUYỆT TỪNG ITEM TRONG GIỎ ĐỂ KIỂM TRA TỒN KHO
+      for (const item of cart.items) {
+        if (!item.product) {
+          // Sản phẩm bị xóa → bỏ qua
+          continue;
+        }
 
+        if (!item.product.isActive) {
+    // → BỎ QUA, KHÔNG thêm vào giỏ, sẽ bị xóa khỏi DB ở dưới
+    continue;
+  }
+
+        let currentStock = 0;
+        let isOutOfStock = false;
+
+        if (item.product.hasSizes) {
+          const sizeData = item.product.sizes.find((s) => s.size === item.size);
+          currentStock = sizeData ? sizeData.quantity : 0;
+        } else {
+          currentStock = item.product.stock || 0;
+        }
+
+        const currentPrice =
+          item.product.discount > 0
+            ? Math.round(item.product.price * (1 - item.product.discount / 100))
+            : item.product.price;
+
+        // NẾU HẾT HÀNG → ĐÁNH DẤU + GIỮ NGUYÊN QUANTITY = 0 ĐỂ HIỂN THỊ MỜ
+        if (currentStock === 0) {
+          continue; // ← QUAN TRỌNG: Không thêm vào validItems
+        }
+
+        // NẾU CÒN HÀNG NHƯNG SỐ LƯỢNG TRONG GIỎ NHIỀU HƠN → GIẢM XUỐNG
+        else if (item.quantity > currentStock) {
+          item.quantity = currentStock;
+        }
+
+        processedItems.push({
+          product: item.product._id,
+          name: item.product.name,
+          image: item.product.image,
+          size: item.size,
+          quantity: item.quantity,
+          price: currentPrice,
+          maxQuantity: currentStock,
+          isOutOfStock: isOutOfStock,
+          slug: item.product.slug,
+        });
+
+        if (!isOutOfStock) {
           totalAmount += currentPrice * item.quantity;
+        }
+      }
 
-          return {
-            product: item.product._id,
-            name: item.product.name,
-            image: item.product.image,
-            size: item.size,
-            quantity: item.quantity,
-            price: currentPrice, // Giá đã giảm
-            hasSizes: item.product.hasSizes,
-            slug: item.product.slug,
-          };
-        })
-        .filter((item) => item !== null); // Lọc bỏ các sản phẩm không còn tồn tại
+      // CẬP NHẬT LẠI GIỎ HÀNG TRONG DB (nếu có thay đổi số lượng)
+      cart.items = cart.items.filter(item => {
+        if (!item.product) return false;
+        let stock = item.product.hasSizes
+          ? item.product.sizes.find(s => s.size === item.size)?.quantity || 0
+          : item.product.stock || 0;
+        return stock > 0;
+      });
 
-      const responseData = {
-        _id: cart._id,
-        user: cart.user,
-        items: processedItems,
-        totalAmount: totalAmount,
-        totalQuantity: processedItems.reduce(
-          (acc, item) => acc + item.quantity,
-          0
-        ),
-      };
+      if (cart.isModified("items")) {
+        await cart.save();
+      }
 
       resolve({
         status: "OK",
         message: "Tải giỏ hàng thành công",
-        data: responseData,
+        data: {
+          items: processedItems,
+          totalAmount,
+          totalQuantity: processedItems.reduce((sum, i) => sum + i.quantity, 0),
+        },
       });
-    } catch (e) {
-      reject(e);
+    } catch (error) {
+      console.error("Lỗi getCart:", error);
+      reject(error);
     }
   });
 };

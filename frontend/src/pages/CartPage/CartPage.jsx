@@ -125,16 +125,18 @@ export default function CartPage() {
       // --- LUỒNG 2: KHÁCH VÃNG LAI (Gọi Redux) ---
       // Tìm item trong giỏ để lấy maxQuantity
       const itemToUpdate = cart.cartItems.find(
-        (i) => i.product === productId && i.size === size
-      );
+        (i) => i.product === productId && i.size === size
+      );
 
-      if (!itemToUpdate) return; // Không tìm thấy item
+      if (!itemToUpdate) return; // Không tìm thấy item
 
       // 2. Kiểm tra tồn kho (Lấy từ itemToUpdate.maxQuantity)
       if (newQuantity > itemToUpdate.maxQuantity) {
-        showError(`Số lượng vượt quá tồn kho (Chỉ còn ${itemToUpdate.maxQuantity} sản phẩm).`);
-        return; // Dừng lại, không cho phép dispatch
-      }
+        showError(
+          `Số lượng vượt quá tồn kho (Chỉ còn ${itemToUpdate.maxQuantity} sản phẩm).`
+        );
+        return; // Dừng lại, không cho phép dispatch
+      }
       dispatch(
         changeQuantity({ product: productId, size, quantity: newQuantity })
       );
@@ -210,12 +212,35 @@ export default function CartPage() {
               }}
             />
             <div>
-              <div style={{ fontWeight: "500", marginBottom: "4px" }}>
+              <div
+                style={{
+                  fontWeight: "500",
+                  marginBottom: "4px",
+                  opacity: record.isOutOfStock ? 0.5 : 1,
+                  textDecoration: record.isOutOfStock ? "line-through" : "none",
+                }}
+              >
                 {text}
               </div>
               <Text type="secondary" style={{ fontSize: "12px" }}>
                 Size: {record.size === "One Size" ? "Free Size" : record.size}
               </Text>
+              {record.maxQuantity <= 10 && record.maxQuantity > 0 && (
+              <div
+                style={{
+                  marginTop: "8px",
+                  padding: "4px 8px",
+                  backgroundColor: "#fff2e8",
+                  border: "1px solid #ffbb96",
+                  borderRadius: "4px",
+                  display: "inline-block",
+                }}
+              >
+                <Text strong type="danger" style={{ fontSize: "12px" }}>
+                  Chỉ còn {record.maxQuantity} sản phẩm!
+                </Text>
+              </div>
+            )}
             </div>
           </Space>
         </Link>
@@ -226,8 +251,14 @@ export default function CartPage() {
       dataIndex: "price",
       key: "price",
       width: "15%",
-      render: (price) => (
-        <Text strong>
+      render: (price, record) => (
+        <Text
+          strong
+          style={{
+            opacity: record.isOutOfStock ? 0.5 : 1,
+            textDecoration: record.isOutOfStock ? "line-through" : "none",
+          }}
+        >
           {new Intl.NumberFormat("vi-VN", {
             style: "currency",
             currency: "VND",
@@ -239,42 +270,60 @@ export default function CartPage() {
       title: "Số lượng",
       key: "quantity",
       width: "15%",
-      render: (_, record) => (
-        <Space>
-          <Button
-            type="text"
-            size="small"
-            icon={<MinusOutlined />}
-            onClick={() =>
-              handleQuantityChange(
-                record.product,
-                record.size,
-                record.quantity - 1
-              )
-            }
-          />
-          <InputNumber
-            min={1}
-            value={record.quantity}
-            onChange={(value) =>
-              handleQuantityChange(record.product, record.size, value)
-            }
-            style={{ width: "60px", textAlign: "center" }}
-          />
-          <Button
-            type="text"
-            size="small"
-            icon={<PlusOutlined />}
-            onClick={() =>
-              handleQuantityChange(
-                record.product,
-                record.size,
-                record.quantity + 1
-              )
-            }
-          />
-        </Space>
-      ),
+      render: (_, record) => {
+        const isDisabled =
+          record.isOutOfStock || record.quantity >= record.maxQuantity;
+
+        return (
+          <Space>
+            <Button
+              type="text"
+              size="small"
+              icon={<MinusOutlined />}
+              onClick={() =>
+                handleQuantityChange(
+                  record.product,
+                  record.size,
+                  record.quantity - 1
+                )
+              }
+              disabled={record.quantity <= 1 || record.isOutOfStock}
+            />
+            <InputNumber
+              min={1}
+              max={record.maxQuantity}
+              value={record.quantity}
+              onChange={(value) =>
+                handleQuantityChange(record.product, record.size, value)
+              }
+              style={{
+                width: "60px",
+                textAlign: "center",
+                opacity: record.isOutOfStock ? 0.5 : 1,
+              }}
+              disabled={record.isOutOfStock}
+            />
+            <Button
+              type="text"
+              size="small"
+              icon={<PlusOutlined />}
+              onClick={() =>
+                handleQuantityChange(
+                  record.product,
+                  record.size,
+                  record.quantity + 1
+                )
+              }
+              disabled={isDisabled}
+            />
+            {record.isOutOfStock && (
+              <Text type="danger" style={{ marginLeft: 8, fontSize: "12px" }}>
+                Hết hàng
+              </Text>
+            )}
+          </Space>
+        );
+      },
     },
     {
       title: "Tổng cộng",
