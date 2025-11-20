@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux"; // THÊM DÒNG NÀY
+import "./BannerComponent.css"
 const BannerComponent = ({ imgBanner1 }) => {
   const [index, setIndex] = useState(0);
   const [subIndex, setSubIndex] = useState(0);
@@ -76,29 +77,7 @@ const BannerComponent = ({ imgBanner1 }) => {
       />
 
       {/* Text Typing */}
-      <h1
-        style={{
-          position: "absolute",
-          top: "30%",
-          left: "20%",
-          transform: "translate(-50%, -50%)",
-          color: "white",
-          fontSize: "16px",
-          fontWeight: "bold",
-          letterSpacing: "2px",
-          // fontFamily: "'Playfair Display', serif",
-          textShadow: "0 4px 12px rgba(0,0,0,0.5)",
-          whiteSpace: "wrap",
-          userSelect: "none",
-          "@media (max-width: 768px)": {
-            left: "50%",
-            top: "50%",
-            whiteSpace: "normal",
-            textAlign: "center",
-            width: "90%",
-          },
-        }}
-      >
+      <h1 className="banner-text">
         {texts[index].substring(0, subIndex)}
         <span className="caret">|</span>
       </h1>

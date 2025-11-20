@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   ArrowLeftOutlined,
   EnvironmentOutlined,
@@ -54,6 +54,22 @@ export default function CheckoutPage() {
   const { showError, showSuccess } = useMessageApi();
   const dispatch = useDispatch();
 
+  const location = useLocation();
+
+    // --- LẤY DỮ LIỆU TỪ REDUX VÀ LOCATION ---
+  const user = useSelector((state) => state.user);
+  const cart = useSelector((state) => state.cart);
+  const buyNowItem = location.state?.buyNowItem;
+
+  const checkoutItems = useMemo(() => {
+    if (buyNowItem) {
+      // Nếu là Mua Ngay -> Mảng chỉ chứa 1 món đó
+      return [buyNowItem]; 
+    }
+    // Nếu không -> Lấy toàn bộ giỏ hàng từ Redux
+    return cart.cartItems; 
+  }, [cart.cartItems, buyNowItem]);
+
   // --- TOÀN BỘ STATE ĐƯỢC GIỮ NGUYÊN TẠI ĐÂY ---
   const [currentStep, setCurrentStep] = useState(0);
   const [shippingMethod, setShippingMethod] = useState("standard");
@@ -78,9 +94,7 @@ export default function CheckoutPage() {
   // Lấy trạng thái loading từ hook
   const { isPending: isProcessing } = mutation;
 
-  // --- LẤY DỮ LIỆU TỪ REDUX ---
-  const user = useSelector((state) => state.user);
-  const cart = useSelector((state) => state.cart);
+
 
   // --- LOGIC TÍNH TOÁN VẪN Ở ĐÂY ---
   const shippingCosts = {
@@ -90,11 +104,13 @@ export default function CheckoutPage() {
   };
 
   const itemsPrice = useMemo(() => {
-    return cart.cartItems.reduce(
+    return checkoutItems.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0
     );
-  }, [cart.cartItems]);
+  }, [checkoutItems]);
+
+  
 
   const finalTotal = itemsPrice + shippingCosts[shippingMethod];
 
@@ -103,6 +119,8 @@ export default function CheckoutPage() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [currentStep]);
+
+  
 
   // Tải Tỉnh
   useEffect(() => {
@@ -184,13 +202,13 @@ export default function CheckoutPage() {
     }
   }, [user?.address?.ward, wards, form]);
 
-  // Chuyển hướng nếu giỏ hàng trống
+  // Chỉ đuổi về nếu KHÔNG phải mua ngay VÀ giỏ hàng rỗng
   useEffect(() => {
-    if (cart.cartItems.length === 0 && !orderPlaced) {
+    if (!buyNowItem && cart.cartItems.length === 0 && !orderPlaced) {
       showError("Giỏ hàng của bạn đang trống!");
       navigate("/products");
     }
-  }, [cart.cartItems, orderPlaced, navigate, showError]);
+  }, [cart.cartItems, orderPlaced, navigate, showError, buyNowItem]);
 
   // Các hàm xử lý địa chỉ
   const handleProvinceChange = async (provinceCode) => {
@@ -273,8 +291,10 @@ export default function CheckoutPage() {
       };
     }
 
+ 
+
     const orderData = {
-      orderItems: cart.cartItems,
+      orderItems: checkoutItems.map(i => ({ ...i, product: i.product })),
       totalPrice: finalTotal,
       itemsPrice: itemsPrice,
       shippingPrice: shippingCosts[shippingMethod],
@@ -290,7 +310,7 @@ export default function CheckoutPage() {
         showSuccess(data.message || "Đặt hàng thành công!");
         setCurrentStep(2);
         setOrderPlaced(true);
-        dispatch(clearCart());
+        if (!buyNowItem) dispatch(clearCart());
       },
       onError: (error) => {
         // Lỗi từ backend (ví dụ "Hết hàng") sẽ hiển thị ở đây
@@ -403,7 +423,7 @@ export default function CheckoutPage() {
             {/* --- CỘT BÊN PHẢI (TÓM TẮT) --- */}
             <Col xs={24} lg={8}>
               <OrderSummary
-                cartItems={cart.cartItems}
+                cartItems={checkoutItems}
                 itemsPrice={itemsPrice}
                 shippingCost={shippingCosts[shippingMethod]}
                 finalTotal={finalTotal}

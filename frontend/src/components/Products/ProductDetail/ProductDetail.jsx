@@ -26,6 +26,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { addToCart, setCart } from "../../../redux/slides/cartSlide";
 import * as CartService from "../../../services/CartService";
 import { useMessageApi } from "../../../context/MessageContext";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const ProductDetail = ({ product }) => {
   const [selectedSize, setSelectedSize] = useState(null);
@@ -34,7 +35,9 @@ const ProductDetail = ({ product }) => {
 
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
 
+  const navigate = useNavigate();
   const dispatch = useDispatch();
+  const location = useLocation();
   const { showSuccess, showError } = useMessageApi();
   const user = useSelector((state) => state.user); // Lấy user để biết là "Khách" hay "User"
   const guestCart = useSelector((state) => state.cart); // Lấy giỏ hàng của "Khách"
@@ -247,15 +250,39 @@ const ProductDetail = ({ product }) => {
     }
   };
   const handleBuyNow = () => {
-    if (!isSizeAvailable) {
-      console.log("ize out of stock");
+    // 1. Kiểm tra đăng nhập (Nếu chưa thì đá về login)
+    // if (!user?.id) {
+    //   navigate("/sign-in", { state: location?.pathname });
+    //   return;
+    // }
+
+    // 2. Kiểm tra size & tồn kho
+    if (product.hasSizes && !isSizeAvailable) {
+      showError("Vui lòng chọn một size còn hàng.");
       return;
     }
-    console.log("Buy now:", {
-      product: product.id,
-      size: selectedSize,
-      quantity,
-    });
+    if (!product.hasSizes && isSoldOut) {
+      showError("Sản phẩm này đã hết hàng.");
+      return;
+    }
+
+    // 3. Tạo dữ liệu món hàng (Cấu trúc Y HỆT item trong giỏ hàng Redux)
+    const buyNowItem = {
+      product: product._id,
+      name: product.name,
+      image: product.image,
+      price: discountedPrice, // Dùng giá đã giảm
+      originPrice: product.price, // Giá gốc (để tham khảo nếu cần)
+      discount: product.discount,
+      size: product.hasSizes ? selectedSize : "One Size",
+      quantity: quantity, // Số lượng đang chọn ở input
+      slug: product.slug,
+      countInStock: maxQuantity, // Tồn kho hiện tại để validate bên checkout
+      hasSizes: product.hasSizes, // Để backend biết đường trừ kho
+    };
+
+    // 4. Điều hướng sang Checkout và GỬI KÈM dữ liệu qua 'state'
+    navigate("/checkout", { state: { buyNowItem: buyNowItem } });
   };
 
   return (

@@ -484,7 +484,7 @@ export default function CartPage() {
                       </Text>
                     </div>
 
-                    <div
+                    {/* <div
                       style={{
                         display: "flex",
                         justifyContent: "space-between",
@@ -497,7 +497,7 @@ export default function CartPage() {
                           currency: "VND",
                         }).format(0)}
                       </Text>
-                    </div>
+                    </div> */}
 
                     <div
                       style={{

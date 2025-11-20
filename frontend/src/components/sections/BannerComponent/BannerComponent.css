@@ -1,0 +1,25 @@
+.banner-text {
+  position: absolute;
+  top: 30%;
+  left: 20%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  user-select: none;
+  white-space: wrap;
+}
+
+/* MOBILE FIX */
+@media (max-width: 768px) {
+  .banner-text {
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 90%;
+    text-align: center;
+    white-space: normal;
+  }
+}
