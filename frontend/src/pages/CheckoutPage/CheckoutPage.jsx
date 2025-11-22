@@ -18,6 +18,7 @@ import {
   getWards,
 } from "../../services/ExternalApiService";
 import * as OrderService from "../../services/OrderService"; // (Frontend service)
+import * as PaymentService from "../../services/PaymentService"; //
 
 import { useMutationHooks } from "../../hooks/useMutationHook";
 
@@ -56,7 +57,7 @@ export default function CheckoutPage() {
 
   const location = useLocation();
 
-    // --- LẤY DỮ LIỆU TỪ REDUX VÀ LOCATION ---
+  // --- LẤY DỮ LIỆU TỪ REDUX VÀ LOCATION ---
   const user = useSelector((state) => state.user);
   const cart = useSelector((state) => state.cart);
   const buyNowItem = location.state?.buyNowItem;
@@ -64,10 +65,10 @@ export default function CheckoutPage() {
   const checkoutItems = useMemo(() => {
     if (buyNowItem) {
       // Nếu là Mua Ngay -> Mảng chỉ chứa 1 món đó
-      return [buyNowItem]; 
+      return [buyNowItem];
     }
     // Nếu không -> Lấy toàn bộ giỏ hàng từ Redux
-    return cart.cartItems; 
+    return cart.cartItems;
   }, [cart.cartItems, buyNowItem]);
 
   // --- TOÀN BỘ STATE ĐƯỢC GIỮ NGUYÊN TẠI ĐÂY ---
@@ -78,6 +79,7 @@ export default function CheckoutPage() {
 
   const [isDifferentAddress, setIsDifferentAddress] = useState(false);
   const [step0Values, setStep0Values] = useState(null);
+  const [createdOrder, setCreatedOrder] = useState(null); // Lưu đơn hàng mới tạo
 
   // State địa chỉ
   const [provinces, setProvinces] = useState([]);
@@ -94,8 +96,6 @@ export default function CheckoutPage() {
   // Lấy trạng thái loading từ hook
   const { isPending: isProcessing } = mutation;
 
-
-
   // --- LOGIC TÍNH TOÁN VẪN Ở ĐÂY ---
   const shippingCosts = {
     standard: 30000,
@@ -110,8 +110,6 @@ export default function CheckoutPage() {
     );
   }, [checkoutItems]);
 
-  
-
   const finalTotal = itemsPrice + shippingCosts[shippingMethod];
 
   // --- TOÀN BỘ LOGIC (useEffect, Handlers) VẪN Ở ĐÂY ---
@@ -119,8 +117,6 @@ export default function CheckoutPage() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [currentStep]);
-
-  
 
   // Tải Tỉnh
   useEffect(() => {
@@ -291,38 +287,87 @@ export default function CheckoutPage() {
       };
     }
 
- 
+   if (paymentMethod === "vnpay") {
+        try {
+          // 1. Tạo ID tạm duy nhất
+          const tempOrderId = Date.now().toString() + Math.floor(Math.random() * 1000);
+
+          // 2. Chuẩn bị data để lưu tạm
+          const tempOrderData = {
+            orderItems: checkoutItems.map(item => ({
+              product: item.product,
+              name: item.name,
+              image: item.image,
+              price: item.price,
+              quantity: item.quantity,
+              size: item.size
+            })),
+            itemsPrice,
+            shippingPrice: shippingCosts[shippingMethod],
+            totalPrice: finalTotal,
+            paymentMethod: "vnpay",
+            userId: user?.id || null,
+            customerInfo: customer,
+            shippingInfo: shippingInfo,
+            tempOrderId: tempOrderId,
+          };
+
+          // 3. Lưu vào LocalStorage
+          localStorage.setItem(`vnpay_temp_order_${tempOrderId}`, JSON.stringify(tempOrderData));
+          console.log("Đã lưu đơn hàng tạm:", tempOrderId);
+
+          // 4. Gọi API lấy link thanh toán
+          const res = await PaymentService.createPaymentUrl({
+            amount: finalTotal,
+            orderId: tempOrderId,
+            orderInfo: `Thanh toan don hang #${tempOrderId}`,
+            bankCode: "",
+            language: "vn",
+          });
+
+          if (res.status === "OK" && res.url) {
+            window.location.href = res.url;
+          } else {
+            showError("Không thể tạo link thanh toán VNPay!");
+          }
+        } catch (err) {
+          console.error("Lỗi VNPay:", err);
+          showError("Lỗi kết nối cổng thanh toán VNPay!");
+        }
+        
+        return; // Dừng hàm ở đây, không tạo đơn thật
+    }
 
     const orderData = {
-      orderItems: checkoutItems.map(i => ({ ...i, product: i.product })),
+      orderItems: checkoutItems.map((i) => ({ ...i, product: i.product })),
       totalPrice: finalTotal,
       itemsPrice: itemsPrice,
       shippingPrice: shippingCosts[shippingMethod],
       paymentMethod: paymentMethod,
       userId: user?.id || null,
       customerInfo: customer,
-      shippingInfo: shippingInfo,
+      shippingInfo: shippingInfo, 
     };
 
     console.log("Dữ liệu gửi đi (Phần 9):", orderData);
-    mutation.mutate(orderData, {
-      onSuccess: (data) => {
-        showSuccess(data.message || "Đặt hàng thành công!");
-        setCurrentStep(2);
-        setOrderPlaced(true);
-        if (!buyNowItem) dispatch(clearCart());
-      },
-      onError: (error) => {
-        // Lỗi từ backend (ví dụ "Hết hàng") sẽ hiển thị ở đây
-        showError(error.message || "Lỗi khi đặt hàng!");
-      },
-    });
+   mutation.mutate(orderData, {
+    onSuccess: (data) => {
+      setCreatedOrder(data.data);
+      showSuccess("Đặt hàng thành công!");
+      setCurrentStep(2);
+      setOrderPlaced(true);
+      if (!buyNowItem) dispatch(clearCart());
+    },
+    onError: (err) => {
+      showError(err.message || "Đặt hàng thất bại!");
+    },
+  });
   };
 
   // --- RENDER ---
 
   if (orderPlaced) {
-    return <OrderSuccess />;
+    return <OrderSuccess order={createdOrder} />;
   }
 
   return (

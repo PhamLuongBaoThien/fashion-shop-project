@@ -20,6 +20,7 @@ import AdminAddProductPage from "../pages/AdminProducts/AdminAddProduct.jsx";
 import AdminUpdateProductPage from "../pages/AdminProducts/AdminUpdateProductPage.jsx";
 import CheckoutPage from "../pages/CheckoutPage/CheckoutPage.jsx";
 import MyOrderDetail from "../pages/MyOrderDetail/MyOrderDetail.jsx";
+import OrderSuccess from "../pages/CheckoutPage/OrderSuccess.jsx";
 
 export const routes = [
   {
@@ -69,6 +70,11 @@ export const routes = [
     path: "/my-order-details/:id",
     page: MyOrderDetail,
     isShowHeader: true,
+  },
+  {
+    path: "/order-success",
+    page: OrderSuccess,
+    isShowHeader: true
   },
   {
     path: "/system/admin",

@@ -71,8 +71,7 @@ export default function MyOrderDetailsPage() {
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
-  const messageApi = useMessageApi();
-  const showError = messageApi?.showError || ((msg) => console.error(msg));
+  const { messageApi, showError } = useMessageApi();
 
   useEffect(() => {
     const fetchOrderDetails = async () => {

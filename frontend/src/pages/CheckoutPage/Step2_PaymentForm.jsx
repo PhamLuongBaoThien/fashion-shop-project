@@ -1,14 +1,5 @@
 import React from "react";
-import {
-  Form,
-  Input,
-  Row,
-  Col,
-  Typography,
-  Space,
-  Radio,
-  Divider,
-} from "antd";
+import { Form, Input, Row, Col, Typography, Space, Radio, Divider } from "antd";
 import { CreditCardOutlined } from "@ant-design/icons";
 import ButtonComponent from "../../components/common/ButtonComponent/ButtonComponent";
 
@@ -38,6 +29,13 @@ export default function Step2_PaymentForm({
         onChange={(e) => setPaymentMethod(e.target.value)}
       >
         <Space direction="vertical" style={{ width: "100%" }}>
+          {/* --- THÊM TÙY CHỌN VNPAY Ở ĐÂY --- */}
+          <Radio value="vnpay" style={{ alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+
+              <Text strong>Thanh toán qua Ví VNPay</Text>
+            </div>
+          </Radio>
           <Radio value="card">
             <Text strong>Thanh toán bằng thẻ tín dụng</Text>
           </Radio>
@@ -125,7 +123,9 @@ export default function Step2_PaymentForm({
             height: "48px",
             fontSize: "16px",
           }}
-          textButton={"Đặt hàng"}
+          textButton={
+            paymentMethod === "vnpay" ? "Thanh toán VNPay" : "Đặt hàng"
+          }
         />
       </Space>
     </Form>
