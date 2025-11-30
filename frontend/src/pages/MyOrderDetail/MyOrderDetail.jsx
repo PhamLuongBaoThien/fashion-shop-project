@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react"; // Thêm useRef
 import { motion } from "framer-motion";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import {
@@ -10,7 +10,9 @@ import {
   CloseCircleOutlined,
   EyeOutlined,
   UserOutlined,
-  EnvironmentOutlined
+  EnvironmentOutlined,
+  CarOutlined,
+  DollarOutlined
 } from "@ant-design/icons";
 import {
   Card,
@@ -26,6 +28,8 @@ import {
   Empty,
   Spin
 } from "antd";
+import html2canvas from "html2canvas"; // Import mới
+import jsPDF from "jspdf";             // Import mới
 
 import * as OrderService from "../../services/OrderService";
 import { useMessageApi } from "../../context/MessageContext";
@@ -54,24 +58,68 @@ const formatPrice = (price) => {
   }).format(price);
 };
 
-const getStatusBadge = (order) => {
+// --- HELPER: Render trạng thái chi tiết ---
+const renderOrderStatus = (order) => {
     if (!order) return null;
-    if (order.isDelivered) {
-        return <Tag icon={<CheckCircleOutlined />} color="green">Đã giao hàng</Tag>;
-    } else if (order.isPaid) {
-        return <Tag icon={<CheckCircleOutlined />} color="blue">Đã thanh toán</Tag>;
-    } else {
-        return <Tag icon={<SyncOutlined />} color="orange">Đang xử lý</Tag>;
+    const status = order.status || 'pending'; 
+    
+    let color = 'default';
+    let text = 'Chờ xử lý';
+    let icon = <SyncOutlined spin />;
+
+    switch (status) {
+        case 'pending':
+            color = 'orange';
+            text = 'Chờ xử lý';
+            break;
+        case 'confirmed':
+            color = 'geekblue';
+            text = 'Đã xác nhận';
+            icon = <CheckCircleOutlined />;
+            break;
+        case 'shipped':
+            color = 'blue';
+            text = 'Đang giao hàng';
+            icon = <CarOutlined />;
+            break;
+        case 'delivered':
+            color = 'green';
+            text = 'Giao thành công';
+            icon = <CheckCircleOutlined />;
+            break;
+        case 'cancelled':
+            color = 'red';
+            text = 'Đã hủy';
+            icon = <CloseCircleOutlined />;
+            break;
+        default:
+            color = 'default';
+            text = 'Chờ xử lý';
     }
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start' }}>
+            <Tag icon={icon} color={color}>{text}</Tag>
+            {order.isPaid ? (
+                <Tag icon={<CheckCircleOutlined />} color="success">Đã thanh toán</Tag>
+            ) : (
+                <Tag icon={<DollarOutlined />} color="warning">Chưa thanh toán</Tag>
+            )}
+        </div>
+    );
 };
 
 export default function MyOrderDetailsPage() {
   const { id } = useParams(); 
-  
-  const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { messageApi, showError } = useMessageApi();
+  
+  // Tạo Ref để tham chiếu đến phần tử muốn in
+  const invoiceRef = useRef(null); 
+
+  const messageApi = useMessageApi();
+  const showError = messageApi?.showError || ((msg) => console.error(msg));
+  const showSuccess = messageApi?.showSuccess || ((msg) => console.log(msg));
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -94,14 +142,48 @@ export default function MyOrderDetailsPage() {
     if (id) {
         fetchOrderDetails();
     }
-  }, [id, showError]);
+  }, [id]);
 
   const handlePrint = () => {
     window.print();
   };
 
+  // --- HÀM XUẤT PDF ---
   const handleDownload = () => {
-    alert("Tính năng download hóa đơn PDF sẽ sớm được cập nhật!");
+    const input = invoiceRef.current;
+    if (!input) return;
+
+    // Hiển thị loading nhẹ (nếu muốn)
+    // messageApi.loading("Đang tạo PDF...");
+
+    html2canvas(input, { scale: 2, useCORS: true }).then((canvas) => {
+      const imgData = canvas.toDataURL("image/png");
+      
+      // Khổ giấy A4: 210mm x 297mm
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      // Tính toán tỷ lệ ảnh để vừa khít chiều rộng A4
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 30; // Cách lề trên 30mm
+
+      // Thêm ảnh vào PDF
+      // Tính toán chiều cao thực tế sau khi scale theo chiều rộng trang A4
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfImgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfImgHeight);
+      pdf.save(`Order_${order._id}.pdf`);
+      
+      showSuccess("Tải hóa đơn thành công!");
+    }).catch((err) => {
+        console.error("Lỗi xuất PDF:", err);
+        showError("Không thể tạo file PDF");
+    });
   };
 
   if (loading) {
@@ -188,146 +270,138 @@ export default function MyOrderDetailsPage() {
         variants={containerVariants}
       >
         <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-          <Link
-            to="/profile"
-            style={{
-              color: "#fa8c16",
-              textDecoration: "none",
-              marginBottom: "24px",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-            }}
-          >
-            <ArrowLeftOutlined /> Quay lại danh sách đơn hàng
-          </Link>
 
           <Row gutter={[24, 24]} style={{ marginBottom: "24px" }}>
             <Col xs={24} lg={16}>
               <motion.div variants={itemVariants}>
-                <Card title={`Đơn hàng #${order._id ? order._id.slice(-6).toUpperCase() : 'NA'}`}>
-                  
-                  {/* --- PHẦN THÔNG TIN CHUNG --- */}
-                  <Row gutter={[24, 24]} style={{ marginBottom: "24px" }}>
-                    <Col xs={12} sm={6}>
-                      <div>
-                        <Text type="secondary" style={{ fontSize: "12px" }}>
-                          TRẠNG THÁI
-                        </Text>
-                        <div style={{ marginTop: "8px" }}>
-                          {getStatusBadge(order)}
-                        </div>
-                      </div>
-                    </Col>
-                    <Col xs={12} sm={6}>
-                      <div>
-                        <Text type="secondary" style={{ fontSize: "12px" }}>
-                          NGÀY ĐẶT
-                        </Text>
-                        <div style={{ marginTop: "8px", fontWeight: "500" }}>
-                          {order.createdAt ? new Date(order.createdAt).toLocaleDateString("vi-VN") : "N/A"}
-                        </div>
-                      </div>
-                    </Col>
-                    <Col xs={12} sm={6}>
-                      <div>
-                        <Text type="secondary" style={{ fontSize: "12px" }}>
-                          THANH TOÁN
-                        </Text>
-                        <div style={{ marginTop: "8px", fontWeight: "500" }}>
-                          {order.paymentMethod === "cod"
-                            ? "COD"
-                            : "Chuyển khoản"}
-                        </div>
-                      </div>
-                    </Col>
-                    <Col xs={12} sm={6}>
-                      <div>
-                        <Text type="secondary" style={{ fontSize: "12px" }}>
-                          PHÍ SHIP
-                        </Text>
-                        <div style={{ marginTop: "8px", fontWeight: "500" }}>
-                          {formatPrice(order.shippingPrice || 0)}
-                        </div>
-                      </div>
-                    </Col>
-                  </Row>
-
-                  <Divider />
-
-                  {/* --- DANH SÁCH SẢN PHẨM --- */}
-                  <Title level={5}>Danh sách sản phẩm</Title>
-                  <Table
-                    columns={columns}
-                    dataSource={order.orderItems || []}
-                    rowKey={(record) => record._id || record.product}
-                    pagination={false}
-                    scroll={{ x: true }}
-                    style={{ marginBottom: "24px" }}
-                  />
-
-                  <Divider />
-
-                  {/* --- THÔNG TIN NGƯỜI MUA & NGƯỜI NHẬN (Đã cập nhật) --- */}
-                  <Row gutter={24}>
-                    {/* Cột Trái: Người Mua */}
-                    <Col xs={24} md={12} style={{ marginBottom: '24px' }}>
-                        <Title level={5}>
-                            <UserOutlined style={{ marginRight: 8 }} /> 
-                            Thông tin người mua
-                        </Title>
-                        <div style={{ padding: '16px', backgroundColor: '#f9f9f9', borderRadius: '8px', height: '100%' }}>
-                            <div style={{ marginBottom: '12px' }}>
-                                <Text type="secondary">Họ và tên:</Text>
-                                <div style={{ fontWeight: "500", marginTop: "4px" }}>
-                                    {order.customerInfo?.fullName}
-                                </div>
-                            </div>
-                            <div style={{ marginBottom: '12px' }}>
-                                <Text type="secondary">Email:</Text>
-                                <div style={{ fontWeight: "500", marginTop: "4px" }}>
-                                    {order.customerInfo?.email}
-                                </div>
-                            </div>
-                            <div>
-                                <Text type="secondary">Số điện thoại:</Text>
-                                <div style={{ fontWeight: "500", marginTop: "4px" }}>
-                                    {order.customerInfo?.phone}
-                                </div>
+                
+                {/* GẮN REF VÀO ĐÂY ĐỂ CHỤP ẢNH PHẦN NÀY */}
+                <div ref={invoiceRef}> 
+                    <Card title={`Đơn hàng #${order._id ? order._id.slice(-6).toUpperCase() : 'NA'}`}>
+                    
+                    {/* --- PHẦN THÔNG TIN CHUNG --- */}
+                    <Row gutter={[24, 24]} style={{ marginBottom: "24px" }}>
+                        <Col xs={12} sm={6}>
+                        <div>
+                            <Text type="secondary" style={{ fontSize: "12px" }}>
+                            TRẠNG THÁI
+                            </Text>
+                            <div style={{ marginTop: "8px" }}>
+                            {renderOrderStatus(order)}
                             </div>
                         </div>
-                    </Col>
-
-                    {/* Cột Phải: Người Nhận */}
-                    <Col xs={24} md={12} style={{ marginBottom: '24px' }}>
-                        <Title level={5}>
-                             <EnvironmentOutlined style={{ marginRight: 8 }} />
-                             Thông tin giao hàng
-                        </Title>
-                        <div style={{ padding: '16px', backgroundColor: '#f9f9f9', borderRadius: '8px', height: '100%' }}>
-                            <div style={{ marginBottom: '12px' }}>
-                                <Text type="secondary">Người nhận:</Text>
-                                <div style={{ fontWeight: "500", marginTop: "4px" }}>
-                                    {order.shippingInfo?.fullName}
-                                </div>
+                        </Col>
+                        <Col xs={12} sm={6}>
+                        <div>
+                            <Text type="secondary" style={{ fontSize: "12px" }}>
+                            NGÀY ĐẶT
+                            </Text>
+                            <div style={{ marginTop: "8px", fontWeight: "500" }}>
+                            {order.createdAt ? new Date(order.createdAt).toLocaleDateString("vi-VN") : "N/A"}
+                            <div style={{fontSize: 12, color: '#888'}}>
+                                {order.createdAt ? new Date(order.createdAt).toLocaleTimeString("vi-VN") : ""}
                             </div>
-                            <div style={{ marginBottom: '12px' }}>
-                                <Text type="secondary">Số điện thoại:</Text>
-                                <div style={{ fontWeight: "500", marginTop: "4px" }}>
-                                    {order.shippingInfo?.phone}
-                                </div>
-                            </div>
-                            <div>
-                                <Text type="secondary">Địa chỉ:</Text>
-                                <div style={{ fontWeight: "500", marginTop: "4px" }}>
-                                    {order.shippingInfo?.detailAddress}, {order.shippingInfo?.ward}, {order.shippingInfo?.district}, {order.shippingInfo?.province}
-                                </div>
                             </div>
                         </div>
-                    </Col>
-                  </Row>
+                        </Col>
+                        <Col xs={12} sm={6}>
+                        <div>
+                            <Text type="secondary" style={{ fontSize: "12px" }}>
+                            THANH TOÁN
+                            </Text>
+                            <div style={{ marginTop: "8px", fontWeight: "500" }}>
+                            <Tag color={order.paymentMethod === "cod" ? "cyan" : "purple"}>
+                                    {order.paymentMethod === "cod" ? "COD" : order.paymentMethod?.toUpperCase()}
+                            </Tag>
+                            </div>
+                        </div>
+                        </Col>
+                        <Col xs={12} sm={6}>
+                        <div>
+                            <Text type="secondary" style={{ fontSize: "12px" }}>
+                            PHÍ VẬN CHUYỂN
+                            </Text>
+                            <div style={{ marginTop: "8px", fontWeight: "500" }}>
+                            {formatPrice(order.shippingPrice || 0)}
+                            </div>
+                        </div>
+                        </Col>
+                    </Row>
 
-                </Card>
+                    <Divider />
+
+                    {/* --- DANH SÁCH SẢN PHẨM --- */}
+                    <Title level={5}>Danh sách sản phẩm</Title>
+                    <Table
+                        columns={columns}
+                        dataSource={order.orderItems || []}
+                        rowKey={(record) => record._id || record.product}
+                        pagination={false}
+                        scroll={{ x: true }}
+                        style={{ marginBottom: "24px" }}
+                    />
+
+                    <Divider />
+
+                    {/* --- THÔNG TIN NGƯỜI MUA & NGƯỜI NHẬN --- */}
+                    <Row gutter={24}>
+                        <Col xs={24} md={12} style={{ marginBottom: '24px' }}>
+                            <Title level={5}>
+                                <UserOutlined style={{ marginRight: 8 }} /> 
+                                Thông tin người mua
+                            </Title>
+                            <div style={{ padding: '16px', backgroundColor: '#f9f9f9', borderRadius: '8px', height: '100%' }}>
+                                <div style={{ marginBottom: '12px' }}>
+                                    <Text type="secondary">Họ và tên:</Text>
+                                    <div style={{ fontWeight: "500", marginTop: "4px" }}>
+                                        {order.customerInfo?.fullName}
+                                    </div>
+                                </div>
+                                <div style={{ marginBottom: '12px' }}>
+                                    <Text type="secondary">Email:</Text>
+                                    <div style={{ fontWeight: "500", marginTop: "4px" }}>
+                                        {order.customerInfo?.email}
+                                    </div>
+                                </div>
+                                <div>
+                                    <Text type="secondary">Số điện thoại:</Text>
+                                    <div style={{ fontWeight: "500", marginTop: "4px" }}>
+                                        {order.customerInfo?.phone}
+                                    </div>
+                                </div>
+                            </div>
+                        </Col>
+
+                        <Col xs={24} md={12} style={{ marginBottom: '24px' }}>
+                            <Title level={5}>
+                                <EnvironmentOutlined style={{ marginRight: 8 }} />
+                                Thông tin giao hàng
+                            </Title>
+                            <div style={{ padding: '16px', backgroundColor: '#f9f9f9', borderRadius: '8px', height: '100%' }}>
+                                <div style={{ marginBottom: '12px' }}>
+                                    <Text type="secondary">Người nhận:</Text>
+                                    <div style={{ fontWeight: "500", marginTop: "4px" }}>
+                                        {order.shippingInfo?.fullName}
+                                    </div>
+                                </div>
+                                <div style={{ marginBottom: '12px' }}>
+                                    <Text type="secondary">Số điện thoại:</Text>
+                                    <div style={{ fontWeight: "500", marginTop: "4px" }}>
+                                        {order.shippingInfo?.phone}
+                                    </div>
+                                </div>
+                                <div>
+                                    <Text type="secondary">Địa chỉ:</Text>
+                                    <div style={{ fontWeight: "500", marginTop: "4px" }}>
+                                        {order.shippingInfo?.detailAddress}, {order.shippingInfo?.ward}, {order.shippingInfo?.district}, {order.shippingInfo?.province}
+                                    </div>
+                                </div>
+                            </div>
+                        </Col>
+                    </Row>
+
+                    </Card>
+                </div>
               </motion.div>
             </Col>
 

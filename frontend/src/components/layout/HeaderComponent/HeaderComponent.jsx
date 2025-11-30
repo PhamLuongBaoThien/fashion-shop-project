@@ -64,25 +64,37 @@ export default function HeaderComponent() {
   };
 
   useEffect(() => {
-    // Lấy các tham số (filters) hiện tại trên URL
-    const currentParams = new URLSearchParams(location.search);
+    // Nếu không có từ khóa search, không làm gì cả (tránh redirect về /products khi đang ở trang khác)
+    if (!debouncedSearchValue.trim()) {
+        return;
+    }
 
-    // Nếu có giá trị tìm kiếm mới
-    if (debouncedSearchValue.trim()) {
-      // Cập nhật tham số 'search' và reset về trang 1
-      currentParams.set("search", debouncedSearchValue.trim());
-      currentParams.set("page", "1");
-      navigate(`/products?${currentParams.toString()}`);
-    }
-    // Nếu giá trị tìm kiếm bị xóa (chuỗi rỗng)
-    else {
-      // Chỉ xóa tham số 'search' nếu chúng ta ĐANG Ở TRÊN TRANG /products
-      if (location.pathname === "/products") {
-        currentParams.delete("search");
-        navigate(`/products?${currentParams.toString()}`);
+    // Chỉ thực hiện logic search khi từ khóa thay đổi
+    const currentParams = new URLSearchParams(location.search);
+    currentParams.set("search", debouncedSearchValue.trim());
+    currentParams.set("page", "1");
+    
+    // Chỉ redirect nếu đang không ở trang search hoặc muốn cập nhật params
+    navigate(`/products?${currentParams.toString()}`);
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchValue]);
+
+  useEffect(() => {
+      // Nếu rời khỏi trang products, xóa ô tìm kiếm
+      if (!location.pathname.includes("/products")) {
+          setSearchValue("");
+      } else {
+          // Nếu quay lại trang products và có param search, điền lại vào ô input
+          const params = new URLSearchParams(location.search);
+          const searchParam = params.get("search");
+          if (searchParam) {
+              setSearchValue(searchParam);
+          } else {
+              setSearchValue("");
+          }
       }
-    }
-  }, [debouncedSearchValue, navigate, location.pathname, location.search]); // Chạy lại mỗi khi giá trị trì hoãn thay đổi
+  }, [location.pathname, location.search]);
 
   const getLastName = (fullName) => {
     if (!fullName) return "Khách";

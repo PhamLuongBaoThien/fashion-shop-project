@@ -73,7 +73,7 @@ function App() {
 
     return { decoded, storageData };
   };
-
+  //  Interceptor giống như một "người bảo vệ" đứng trước mọi request gửi đi: tự động kiểm tra token, tự động refresh khi hết hạn và tự động gắn vé (token) vào header. axiosJWT trong UserService và App.js là MỘT (cùng một object trong bộ nhớ), nên khi bạn cài đặt "người bảo vệ" ở App.js, mọi lệnh gọi API ở UserService đều được bảo vệ tự động.
   UserService.axiosJWT.interceptors.request.use(
     async function (config) {
       const currentTime = new Date();

@@ -14,4 +14,6 @@ router.get("/getAll", authMiddleware, userController.getAllUser);
 router.get("/get-detail/:id", authUserMiddleware, userController.getDetailUser); // chỉ có admin và chính người đó mới được phép xem
 router.post("/refresh-token", userController.refreshToken);
 router.post("/admin/sign-in", userController.loginAdmin);
+router.put("/change-password/:id", authUserMiddleware, userController.changePassword);
+
 module.exports = router;

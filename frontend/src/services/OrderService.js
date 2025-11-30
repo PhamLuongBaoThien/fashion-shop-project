@@ -46,9 +46,13 @@ export const getAllOrders = async (access_token) => {
     });
     return res.data;
 };
-/*
- * export const updateOrderStatus = async (orderId, statusData) => {
- * const res = await axiosJWT.put(`${API_BASE_URL}/orders/update-status/${orderId}`, statusData);
- * return res.data;
- * };
- */
+
+
+export const updateOrder = async (id, access_token, data) => {
+    const res = await axiosJWT.put(`${API_BASE_URL}/orders/update/${id}`, data, {
+        headers: {
+            token: `Bearer ${access_token}`,
+        }
+    });
+    return res.data;
+};

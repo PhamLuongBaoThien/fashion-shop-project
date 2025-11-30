@@ -231,9 +231,8 @@ const EditProfile = () => {
               showUploadList={false}
               className="avatar-upload"
             >
-              <Button icon={<CameraOutlined />} className="upload-btn">
-                Thay đổi ảnh
-              </Button>
+              <ButtonComponent icon={<CameraOutlined />} className="upload-btn" textButton={"Thay đổi ảnh"} />
+                
             </Upload>
           </div>
         </motion.div>

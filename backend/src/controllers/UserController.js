@@ -242,7 +242,25 @@ const loginAdmin = async (req, res) => {
     }
 };
 
+const changePassword = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const data = req.body;
+        
+        if (!userId) {
+            return res.status(200).json({ status: 'ERR', message: 'User ID is required' });
+        }
+        
+        if (!data.oldPassword || !data.newPassword || !data.confirmPassword) {
+            return res.status(200).json({ status: 'ERR', message: 'Vui lòng nhập đầy đủ thông tin' });
+        }
 
+        const response = await UserService.changePassword(userId, data);
+        return res.status(200).json(response);
+    } catch (e) {
+        return res.status(404).json({ message: e });
+    }
+}
 
 module.exports = {
   createUser,
@@ -254,4 +272,5 @@ module.exports = {
   refreshToken,
   logoutUser,
   loginAdmin,
+  changePassword
 };

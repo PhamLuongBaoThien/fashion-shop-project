@@ -7,6 +7,12 @@ import {
   HeartOutlined,
   StarOutlined,
   EyeOutlined,
+  SyncOutlined,
+  CheckCircleOutlined,
+  CarOutlined,
+  CloseCircleOutlined,
+  DollarOutlined,
+  LockOutlined,
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -128,13 +134,68 @@ const ProfilePage = () => {
 
   // Helper render trạng thái đơn hàng
   const renderOrderStatus = (order) => {
-    if (order.isDelivered) {
-      return <Tag color="green">Đã giao hàng</Tag>;
-    } else if (order.isPaid) {
-      return <Tag color="blue">Đã thanh toán / Chờ giao</Tag>;
-    } else {
-      return <Tag color="orange">Đang xử lý</Tag>;
+    const status = order.status || "pending";
+
+    let color = "default";
+    let text = "Chờ xử lý";
+    let icon = <SyncOutlined spin />;
+
+    switch (status) {
+      case "pending":
+        color = "orange";
+        text = "Chờ xử lý";
+        break;
+      case "confirmed":
+        color = "geekblue";
+        text = "Đã xác nhận";
+        icon = <CheckCircleOutlined />;
+        break;
+      case "shipped":
+        color = "blue";
+        text = "Đang giao hàng";
+        icon = <CarOutlined />;
+        break;
+      case "delivered":
+        color = "green";
+        text = "Giao thành công";
+        icon = <CheckCircleOutlined />;
+        break;
+      case "cancelled":
+        color = "red";
+        text = "Đã hủy";
+        icon = <CloseCircleOutlined />;
+        break;
+      default:
+        color = "default";
+        text = "Chờ xử lý";
     }
+
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 6,
+          alignItems: "flex-start",
+        }}
+      >
+        {/* Tag trạng thái giao vận */}
+        <Tag icon={icon} color={color}>
+          {text}
+        </Tag>
+
+        {/* Tag trạng thái thanh toán */}
+        {order.isPaid ? (
+          <Tag icon={<CheckCircleOutlined />} color="success">
+            Đã thanh toán
+          </Tag>
+        ) : (
+          <Tag icon={<DollarOutlined />} color="warning">
+            Chưa thanh toán
+          </Tag>
+        )}
+      </div>
+    );
   };
 
   if (!user?.id) {
@@ -189,6 +250,17 @@ const ProfilePage = () => {
             icon={<EditOutlined />}
             textButton={"Chỉnh sửa thông tin"}
             className="profile-edit-btn"
+            disabled={!user.email}
+          />
+        </Link>
+
+        <Link to="/change-password">
+          <ButtonComponent
+            size="large"
+            icon={<LockOutlined />}
+            textButton={"Đổi mật khẩu"}
+            style={{ width: "100%" }}
+            className="change-password-btn"
             disabled={!user.email}
           />
         </Link>

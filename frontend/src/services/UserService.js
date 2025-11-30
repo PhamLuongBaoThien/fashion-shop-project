@@ -58,3 +58,11 @@ export const loginAdmin = async (data) => {
   );
   return response.data;
 };
+
+export const changePassword = async (id, data) => {
+  const response = await axiosJWT.put(
+    `${process.env.REACT_APP_API_KEY}/user/change-password/${id}`,
+    data
+  );
+  return response.data;
+}

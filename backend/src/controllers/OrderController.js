@@ -1,4 +1,5 @@
 const OrderService = require('../services/OrderService');
+const EmailService = require('../services/EmailService'); 
 
 /**
  * Controller để nhận request tạo đơn hàng mới
@@ -32,6 +33,19 @@ const createOrder = async (req, res) => {
 
         // Gọi service để tạo đơn hàng
         const response = await OrderService.createOrder(orderData);
+
+        // Nếu tạo thành công -> Gửi mail xác nhận
+        // Không cần await để khách hàng không phải chờ mail gửi xong mới thấy thông báo
+        if (response.status === 'OK') {
+            const { email } = req.body.customerInfo;
+            const { orderItems, totalPrice, _id } = response.data;
+            
+            if (email) {
+                EmailService.sendOrderConfirmationEmail(email, _id, orderItems, totalPrice)
+                    .then(() => console.log(`Đã gửi mail xác nhận cho đơn ${_id}`))
+                    .catch((err) => console.error("Lỗi gửi mail:", err));
+            }
+        }
         
         // Trả về kết quả cho client
         return res.status(201).json(response);
@@ -104,12 +118,34 @@ const getAllOrders = async (req, res) => {
     }
 }
 
+const updateOrder = async (req, res) => {
+    try {
+        const orderId = req.params.id;
+        const data = req.body; // Dữ liệu gửi lên từ Client (ví dụ: { status: 'confirmed' })
+
+        if (!orderId) {
+            return res.status(200).json({
+                status: 'ERR',
+                message: 'Yêu cầu Order ID'
+            });
+        }
+
+        const response = await OrderService.updateOrder(orderId, data);
+        return res.status(200).json(response);
+    } catch (e) {
+        return res.status(404).json({
+            message: e
+        });
+    }
+};
+
 
 module.exports = {
     createOrder,
     getAllOrdersDetails,
     getOrderDetails,
-    getAllOrders
+    getAllOrders,
+    updateOrder
 
     // (Thêm các controller khác ở đây)
 };

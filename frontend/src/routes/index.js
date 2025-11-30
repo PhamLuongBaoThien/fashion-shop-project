@@ -21,6 +21,8 @@ import AdminUpdateProductPage from "../pages/AdminProducts/AdminUpdateProductPag
 import CheckoutPage from "../pages/CheckoutPage/CheckoutPage.jsx";
 import MyOrderDetail from "../pages/MyOrderDetail/MyOrderDetail.jsx";
 import OrderSuccess from "../pages/CheckoutPage/OrderSuccess.jsx";
+import AdminOrderDetails from "../pages/AdminOrders/AdminOrderDetails.jsx";
+import ChangePasswordPage from "../pages/ChangePasswordPage/ChangePasswordPage.jsx";
 
 export const routes = [
   {
@@ -67,6 +69,11 @@ export const routes = [
     isShowHeader: true,
   },
   {
+    path: "/change-password",
+    page: ChangePasswordPage,
+    isShowHeader: true
+  },
+  {
     path: "/my-order-details/:id",
     page: MyOrderDetail,
     isShowHeader: true,
@@ -110,6 +117,10 @@ export const routes = [
       {
         path: "orders", // URL: /system/admin/users
         page: AdminOrders,
+      },
+      {
+        path: "order/:id",
+        page: AdminOrderDetails
       },
       {
         path: "roles", // URL: /system/admin/users

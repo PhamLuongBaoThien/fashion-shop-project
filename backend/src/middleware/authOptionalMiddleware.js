@@ -24,7 +24,7 @@ const authOptionalMiddleware = (req, res, next) => {
     }
 
     // 3. Token hợp lệ VÀ là khách hàng (không phải Admin)
-    if (user && !user.isAdmin) {
+    if (user) {
       req.user = user; // Gắn thông tin user vào request
     }
     

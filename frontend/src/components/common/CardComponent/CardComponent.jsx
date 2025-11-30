@@ -115,6 +115,7 @@ const CardComponent = ({ product }) => {
     <>
       <Link
         to={`/product/${product.slug}`}
+        state={{ productName: product.name }}
         key={product._id}
         className="product-link-wrapper"
       >

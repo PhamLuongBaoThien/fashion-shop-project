@@ -223,10 +223,36 @@ const getAllOrders = () => {
   });
 };
 
+const updateOrder = (id, data) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const checkOrder = await Order.findById(id);
+            if (checkOrder === null) {
+                return resolve({
+                    status: 'ERR',
+                    message: 'Đơn hàng không tồn tại'
+                });
+            }
+
+            // Cập nhật và trả về dữ liệu mới nhất ({ new: true })
+            const updatedOrder = await Order.findByIdAndUpdate(id, data, { new: true });
+            
+            resolve({
+                status: 'OK',
+                message: 'Cập nhật thành công',
+                data: updatedOrder
+            });
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
 module.exports = {
   createOrder,
   getAllOrdersDetails,
   getOrderDetails,
   getAllOrders,
+  updateOrder
   // (Thêm các service khác như getOrderDetails, getAllOrders... ở đây)
 };

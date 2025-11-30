@@ -256,6 +256,11 @@ const ProductDetail = ({ product }) => {
     //   return;
     // }
 
+    if (user?.isAdmin) {
+        showError("Tài khoản Admin không được phép mua hàng!");
+        return;
+    }
+
     // 2. Kiểm tra size & tồn kho
     if (product.hasSizes && !isSizeAvailable) {
       showError("Vui lòng chọn một size còn hàng.");

@@ -162,8 +162,10 @@ const ListComponent = ({ products }) => {
                   ),
                 ]}
               >
+                {/* dùng location.state để cập nhật tên lên BreadcrumbComponent */}
                 <Link
                   to={`/product/${item.slug}`}
+                  state={{ productName: item.name }}
                   className="product-list-link"
                 >
                   <List.Item.Meta

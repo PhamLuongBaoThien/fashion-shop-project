@@ -187,6 +187,42 @@ const loginAdmin = (userLogin) => {
     });
 };
 
+const changePassword = (id, data) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const { oldPassword, newPassword, confirmPassword } = data;
+            
+            // 1. Check user tồn tại
+            const user = await User.findById(id);
+            if (user === null) {
+                resolve({ status: 'ERR', message: 'User not found' });
+            }
+
+            // 2. Check mật khẩu cũ
+            const comparePassword = bcrypt.compareSync(oldPassword, user.password);
+            if (!comparePassword) {
+                resolve({ status: 'ERR', message: 'Mật khẩu cũ không chính xác' });
+                return;
+            }
+
+            // 3. Check confirm password (Backend cũng nên check lại)
+            if (newPassword !== confirmPassword) {
+                resolve({ status: 'ERR', message: 'Mật khẩu xác nhận không khớp' });
+                return;
+            }
+
+            // 4. Hash mật khẩu mới và lưu
+            const hashPassword = bcrypt.hashSync(newPassword, 10);
+            user.password = hashPassword;
+            await user.save();
+
+            resolve({ status: 'OK', message: 'Đổi mật khẩu thành công' });
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
 module.exports = {
   createUser,
   loginUser,
@@ -194,5 +230,6 @@ module.exports = {
   deleteUser,
   getAllUser,
   getDetailUser,
-  loginAdmin
+  loginAdmin,
+  changePassword
 };
