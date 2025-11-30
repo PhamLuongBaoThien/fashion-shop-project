@@ -1,5 +1,5 @@
 import React from "react";
-import { Form, Input, Card, Typography, Row, Col } from "antd";
+import { Form, Input, Card, Typography } from "antd";
 import { LockOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";

@@ -5,7 +5,7 @@ import * as ProductService from '../../services/ProductService';
 import ProductDetail from '../../components/Products/ProductDetail/ProductDetail';
 import BottomMarquee from "../../components/sections/BottomMarquee/BottomMarquee";
 import NotFoundPage from '../NotFoundPage/NotFoundPage';
-import { Spin, Alert } from 'antd'; // Import Spin và Alert
+import { Spin } from 'antd'; // Import Spin và Alert
 const ProductDetailPage = () => {
 
   const { slug } = useParams();

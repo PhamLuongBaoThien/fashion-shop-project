@@ -26,7 +26,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { addToCart, setCart } from "../../../redux/slides/cartSlide";
 import * as CartService from "../../../services/CartService";
 import { useMessageApi } from "../../../context/MessageContext";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const ProductDetail = ({ product }) => {
   const [selectedSize, setSelectedSize] = useState(null);
@@ -37,7 +37,6 @@ const ProductDetail = ({ product }) => {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const location = useLocation();
   const { showSuccess, showError } = useMessageApi();
   const user = useSelector((state) => state.user); // Lấy user để biết là "Khách" hay "User"
   const guestCart = useSelector((state) => state.cart); // Lấy giỏ hàng của "Khách"
