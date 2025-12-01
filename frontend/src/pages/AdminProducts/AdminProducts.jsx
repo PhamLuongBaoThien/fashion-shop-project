@@ -42,7 +42,7 @@ const AdminProducts = () => {
   const sortOption = searchParams.get("sortOption") || "default";
 
   const queryClient = useQueryClient();
-  
+
   const { messageApi } = useMessageApi();
 
   const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
@@ -109,7 +109,9 @@ const AdminProducts = () => {
     },
     onError: (error) => {
       messageApi.error({
-        content: `Xuất file thất bại: ${error.response.data.message || error.message}`,
+        content: `Xuất file thất bại: ${
+          error.response.data.message || error.message
+        }`,
         key: "export",
         duration: 2,
       });
@@ -126,7 +128,9 @@ const AdminProducts = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
     },
     onError: (error) => {
-      messageApi.error(`Xóa thất bại: ${error.response.data.message || error.message}`);
+      messageApi.error(
+        `Xóa thất bại: ${error.response.data.message || error.message}`
+      );
     },
   });
 
@@ -158,7 +162,8 @@ const AdminProducts = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
       setSelectedRowKeys([]); // Xóa các lựa chọn sau khi xóa thành công
     },
-    onError: (error) => messageApi.error(error.response.data.message || error.message),
+    onError: (error) =>
+      messageApi.error(error.response.data.message || error.message),
   });
 
   const handleDeleteManyProducts = () => {
@@ -266,7 +271,11 @@ const AdminProducts = () => {
       render: (_, record) => (
         <Space>
           <Link to={`/system/admin/products/update/${record._id}`}>
-            <ButtonComponent type="primary" size="small" icon={<EditOutlined />} />
+            <ButtonComponent
+              type="primary"
+              size="small"
+              icon={<EditOutlined />}
+            />
           </Link>
           <ButtonComponent
             danger
@@ -329,7 +338,12 @@ const AdminProducts = () => {
   }
   if (isError) {
     return (
-      <Alert messageApi="Lỗi" description={error.response.data.message || error.messagee} type="error" showIcon />
+      <Alert
+        messageApi="Lỗi"
+        description={error.response.data.message || error.messagee}
+        type="error"
+        showIcon
+      />
     );
   }
 
@@ -387,8 +401,11 @@ const AdminProducts = () => {
               Xuất Excel
             </ButtonComponent>
             <Link to="/system/admin/products/add">
-              <ButtonComponent type="primary" icon={<PlusOutlined />} textButton={"Thêm Sản phẩm"} />
-
+              <ButtonComponent
+                type="primary"
+                icon={<PlusOutlined />}
+                textButton={"Thêm Sản phẩm"}
+              />
             </Link>
           </div>
 
@@ -451,7 +468,6 @@ const AdminProducts = () => {
                   loading={deleteManyMutation.isPending}
                   textButton={`Xóa ${selectedRowKeys.length} mục`}
                 />
-
               )}
             </div>
           </Space>
@@ -466,6 +482,8 @@ const AdminProducts = () => {
               current: page,
               pageSize: limit,
               total: totalProducts,
+              showSizeChanger: true,
+              position: ["bottomCenter"],
             }}
             onChange={handleTableChange}
             className="admin-table"

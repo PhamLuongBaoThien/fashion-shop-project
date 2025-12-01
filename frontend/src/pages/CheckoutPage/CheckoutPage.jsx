@@ -373,7 +373,7 @@ export default function CheckoutPage() {
   return (
     <Content
       style={{
-        padding: "100px 24px 40px",
+        padding: "10px 24px 40px",
         minHeight: "100vh",
         backgroundColor: "#fafafa",
       }}

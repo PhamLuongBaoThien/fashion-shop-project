@@ -115,19 +115,19 @@ const deleteUser = (id, data) => {
 };
 
 const getAllUser = () => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const allUsers = await User.find();
-      resolve({
-        status: "OK",
-        message: "successfully",
-        data: allUsers,
-      });
-    } catch (error) {
-      reject(error);
-    }
-  });
-};
+    return new Promise(async (resolve, reject) => {
+        try {
+            const allUser = await User.find().sort({createdAt: -1, updatedAt: -1});
+            resolve({
+                status: 'OK',
+                message: 'Success',
+                data: allUser
+            })
+        } catch (e) {
+            reject(e)
+        }
+    })
+}
 
 const getDetailUser = (id) => {
   return new Promise(async (resolve, reject) => {

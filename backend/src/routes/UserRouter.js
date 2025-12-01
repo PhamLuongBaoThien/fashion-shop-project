@@ -15,5 +15,6 @@ router.get("/get-detail/:id", authUserMiddleware, userController.getDetailUser);
 router.post("/refresh-token", userController.refreshToken);
 router.post("/admin/sign-in", userController.loginAdmin);
 router.put("/change-password/:id", authUserMiddleware, userController.changePassword);
+router.get("/get-all", authMiddleware, userController.getAllUser);
 
 module.exports = router;

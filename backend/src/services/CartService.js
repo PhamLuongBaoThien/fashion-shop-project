@@ -46,12 +46,11 @@ const getCart = (userId) => {
         }
 
         if (!item.product.isActive) {
-    // → BỎ QUA, KHÔNG thêm vào giỏ, sẽ bị xóa khỏi DB ở dưới
-    continue;
-  }
+          // BỎ QUA, KHÔNG thêm vào giỏ, sẽ bị xóa khỏi DB ở dưới
+          continue;
+        }
 
         let currentStock = 0;
-        let isOutOfStock = false;
 
         if (item.product.hasSizes) {
           const sizeData = item.product.sizes.find((s) => s.size === item.size);
@@ -82,21 +81,18 @@ const getCart = (userId) => {
           size: item.size,
           quantity: item.quantity,
           price: currentPrice,
+          originalPrice: item.product.price, // Giá gốc
+          discount: item.product.discount,   // % Giảm giá
           maxQuantity: currentStock,
-          isOutOfStock: isOutOfStock,
           slug: item.product.slug,
         });
-
-        if (!isOutOfStock) {
-          totalAmount += currentPrice * item.quantity;
-        }
       }
 
       // CẬP NHẬT LẠI GIỎ HÀNG TRONG DB (nếu có thay đổi số lượng)
-      cart.items = cart.items.filter(item => {
+      cart.items = cart.items.filter((item) => {
         if (!item.product) return false;
         let stock = item.product.hasSizes
-          ? item.product.sizes.find(s => s.size === item.size)?.quantity || 0
+          ? item.product.sizes.find((s) => s.size === item.size)?.quantity || 0
           : item.product.stock || 0;
         return stock > 0;
       });
@@ -438,5 +434,5 @@ module.exports = {
   mergeCart,
   updateItemQuantity,
   removeItemFromCart,
-  clearCart
+  clearCart,
 };

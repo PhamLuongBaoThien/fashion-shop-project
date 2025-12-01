@@ -22,8 +22,7 @@ export const createUser = async (data) => {
 
 export const getDetailUser = async (id) => {
   const response = await axiosJWT.get(
-    `${process.env.REACT_APP_API_KEY}/user/get-detail/${id}`,
-
+    `${process.env.REACT_APP_API_KEY}/user/get-detail/${id}`
   );
   return response.data;
 };
@@ -39,7 +38,8 @@ export const refreshToken = async () => {
 
 export const logoutUser = async (data) => {
   const response = await axios.post(
-    `${process.env.REACT_APP_API_KEY}/user/log-out`);
+    `${process.env.REACT_APP_API_KEY}/user/log-out`
+  );
   return response.data;
 };
 
@@ -65,4 +65,11 @@ export const changePassword = async (id, data) => {
     data
   );
   return response.data;
-}
+};
+
+export const getAllUser = async () => {
+  const res = await axiosJWT.get(
+    `${process.env.REACT_APP_API_KEY}/user/get-all`
+  );
+  return res.data;
+};

@@ -161,7 +161,10 @@ const AdminCategories = () => {
           dataSource={categoriesData?.data} // Lấy mảng data từ response
           rowKey="_id" // Dùng _id từ MongoDB
           loading={isLoading}
-          pagination={{ pageSize: 10 }}
+          pagination={{
+            pageSize: 10,
+            position: ["bottomCenter"],
+          }}
           className="admin-table"
         />
       </Card>

@@ -216,8 +216,6 @@ export default function CartPage() {
                 style={{
                   fontWeight: "500",
                   marginBottom: "4px",
-                  opacity: record.isOutOfStock ? 0.5 : 1,
-                  textDecoration: record.isOutOfStock ? "line-through" : "none",
                 }}
               >
                 {text}
@@ -226,21 +224,21 @@ export default function CartPage() {
                 Size: {record.size === "One Size" ? "Free Size" : record.size}
               </Text>
               {record.maxQuantity <= 10 && record.maxQuantity > 0 && (
-              <div
-                style={{
-                  marginTop: "8px",
-                  padding: "4px 8px",
-                  backgroundColor: "#fff2e8",
-                  border: "1px solid #ffbb96",
-                  borderRadius: "4px",
-                  display: "inline-block",
-                }}
-              >
-                <Text strong type="danger" style={{ fontSize: "12px" }}>
-                  Chỉ còn {record.maxQuantity} sản phẩm!
-                </Text>
-              </div>
-            )}
+                <div
+                  style={{
+                    marginTop: "8px",
+                    padding: "4px 8px",
+                    backgroundColor: "#fff2e8",
+                    border: "1px solid #ffbb96",
+                    borderRadius: "4px",
+                    display: "inline-block",
+                  }}
+                >
+                  <Text strong type="danger" style={{ fontSize: "12px" }}>
+                    Chỉ còn {record.maxQuantity} sản phẩm!
+                  </Text>
+                </div>
+              )}
             </div>
           </Space>
         </Link>
@@ -251,29 +249,49 @@ export default function CartPage() {
       dataIndex: "price",
       key: "price",
       width: "15%",
-      render: (price, record) => (
-        <Text
-          strong
-          style={{
-            opacity: record.isOutOfStock ? 0.5 : 1,
-            textDecoration: record.isOutOfStock ? "line-through" : "none",
-          }}
-        >
-          {new Intl.NumberFormat("vi-VN", {
-            style: "currency",
-            currency: "VND",
-          }).format(price)}
-        </Text>
-      ),
+      render: (price, record) => {
+        // Kiểm tra nếu có giảm giá (discount > 0)
+        if (record.discount > 0) {
+          return (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              {/* Giá gốc gạch ngang */}
+              <Text delete style={{ color: "#999", fontSize: "12px" }}>
+                {new Intl.NumberFormat("vi-VN", {
+                  style: "currency",
+                  currency: "VND",
+                }).format(record.originalPrice)}
+              </Text>
+              {/* Giá bán màu đỏ */}
+              <Text strong style={{ color: "#ff4d4f" }}>
+                {new Intl.NumberFormat("vi-VN", {
+                  style: "currency",
+                  currency: "VND",
+                }).format(price)}
+              </Text>
+            </div>
+          );
+        }
+        // Nếu không giảm giá -> Hiện bình thường
+        return (
+          <Text strong >
+            {new Intl.NumberFormat("vi-VN", {
+              style: "currency",
+              currency: "VND",
+            }).format(price)}
+          </Text>
+        );
+      },
     },
     {
       title: "Số lượng",
       key: "quantity",
       width: "15%",
       render: (_, record) => {
-        const isDisabled =
-          record.isOutOfStock || record.quantity >= record.maxQuantity;
-
         return (
           <Space>
             <Button
@@ -287,7 +305,6 @@ export default function CartPage() {
                   record.quantity - 1
                 )
               }
-              disabled={record.quantity <= 1 || record.isOutOfStock}
             />
             <InputNumber
               min={1}
@@ -299,9 +316,7 @@ export default function CartPage() {
               style={{
                 width: "60px",
                 textAlign: "center",
-                opacity: record.isOutOfStock ? 0.5 : 1,
               }}
-              disabled={record.isOutOfStock}
             />
             <Button
               type="text"
@@ -314,13 +329,8 @@ export default function CartPage() {
                   record.quantity + 1
                 )
               }
-              disabled={isDisabled}
             />
-            {record.isOutOfStock && (
-              <Text type="danger" style={{ marginLeft: 8, fontSize: "12px" }}>
-                Hết hàng
-              </Text>
-            )}
+            
           </Space>
         );
       },
@@ -357,7 +367,7 @@ export default function CartPage() {
   return (
     <Content
       style={{
-        padding: "100px 24px 40px",
+        padding: "10px 24px 40px",
         minHeight: "100vh",
         backgroundColor: "#fafafa",
       }}
@@ -368,20 +378,6 @@ export default function CartPage() {
         variants={containerVariants}
       >
         <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-          {/* <Link
-            to="/"
-            style={{
-              color: "#fa8c16",
-              textDecoration: "none",
-              marginBottom: "24px",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-            }}
-          >
-            <ArrowLeftOutlined /> Quay lại trang chủ
-          </Link> */}
-
           <div style={{ marginBottom: "32px" }}>
             <Title level={2} style={{ color: "#262626", marginBottom: "8px" }}>
               <ShoppingOutlined /> Giỏ hàng của bạn
