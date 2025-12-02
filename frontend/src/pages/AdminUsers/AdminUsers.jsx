@@ -86,7 +86,6 @@ const AdminUsers = () => {
     enabled: !!user?.access_token,
   });
 
-
   const mutationCreate = useMutation({
     mutationFn: (data) =>
       UserService.createUserByAdmin(data, user?.access_token),
@@ -405,41 +404,6 @@ const AdminUsers = () => {
     },
   ];
 
-  const orderColumns = [
-    {
-      title: "Mã đơn",
-      dataIndex: "_id",
-      render: (id) => <b>#{id.slice(-6).toUpperCase()}</b>,
-    },
-    {
-      title: "Ngày đặt",
-      dataIndex: "createdAt",
-      render: (date) => new Date(date).toLocaleDateString("vi-VN"),
-    },
-    {
-      title: "Tổng tiền",
-      dataIndex: "totalPrice",
-      render: (price) => price?.toLocaleString("vi-VN") + "đ",
-    },
-    {
-      title: "Thanh toán",
-      dataIndex: "isPaid",
-      render: (paid) =>
-        paid ? (
-          <Tag color="green">Đã TT</Tag>
-        ) : (
-          <Tag color="orange">Chưa TT</Tag>
-        ),
-    },
-    {
-      title: "Trạng thái",
-      dataIndex: "status",
-      render: (status) => <Tag>{status}</Tag>,
-    },
-  ];
-
-
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -510,13 +474,13 @@ const AdminUsers = () => {
         />
 
         {/* --- DRAWER LỊCH SỬ ĐƠN HÀNG --- */}
-        <UserHistoryDrawer 
-            isOpen={isOpenHistoryDrawer} 
-            onClose={() => {
-                setIsOpenHistoryDrawer(false);
-                setUserSelectedHistory(null);
-            }} 
-            userId={userSelectedHistory} 
+        <UserHistoryDrawer
+          isOpen={isOpenHistoryDrawer}
+          onClose={() => {
+            setIsOpenHistoryDrawer(false);
+            setUserSelectedHistory(null);
+          }}
+          userId={userSelectedHistory}
         />
 
         {/* DRAWER EDIT */}
