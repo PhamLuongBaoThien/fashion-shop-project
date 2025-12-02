@@ -50,8 +50,9 @@ const AdminOrderDetails = () => {
       queryClient.invalidateQueries(["admin-order-details", id]);
       queryClient.invalidateQueries(["admin-orders"]);
     },
-    onError: () => {
-      messageApi.error("Cập nhật thất bại!");
+    onError: (error) => {
+      const errorMessage = error.response?.data?.message || error.message;
+      messageApi.error(errorMessage);
     }
   });
 

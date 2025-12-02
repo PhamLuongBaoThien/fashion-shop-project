@@ -231,6 +231,45 @@ const changePassword = (id, data) => {
     });
 };
 
+const createUserByAdmin = (newUser) => {
+    return new Promise(async (resolve, reject) => {
+        const { username, email, password, phone, isAdmin, role, isBlocked } = newUser;
+        try {
+            // 1. Check trùng email
+            const checkUser = await User.findOne({ email: email });
+            if (checkUser !== null) {
+                resolve({ status: 'ERR', message: 'Email đã tồn tại' });
+                return;
+            }
+
+            // 2. Hash password
+            const hashPassword = bcrypt.hashSync(password, 10);
+
+            // 3. Tạo user với đầy đủ quyền lực (Admin/Role/Block)
+            const createdUser = await User.create({
+                username,
+                email,
+                password: hashPassword,
+                phone,
+                isAdmin: isAdmin || false,
+                role: role || null,
+                isBlocked: isBlocked || false
+            });
+
+            if (createdUser) {
+                resolve({
+                    status: 'OK',
+                    message: 'Tạo người dùng thành công',
+                    data: createdUser
+                });
+            }
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
+
 module.exports = {
   createUser,
   loginUser,
@@ -239,5 +278,6 @@ module.exports = {
   getAllUser,
   getDetailUser,
   loginAdmin,
-  changePassword
+  changePassword,
+  createUserByAdmin
 };

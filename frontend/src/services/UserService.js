@@ -74,7 +74,15 @@ export const getAllUser = async () => {
   return res.data;
 };
 
-export const deleteUser = async (id, access_token) => {
+export const deleteUser = async (id) => {
     const res = await axiosJWT.delete(`${process.env.REACT_APP_API_KEY}/user/delete-user/${id}`);
     return res.data;
 }
+
+export const createUserByAdmin = async (data) => {
+    const res = await axiosJWT.post(
+        `${process.env.REACT_APP_API_KEY}/user/create-user-admin`, 
+        data
+    );
+    return res.data;
+};

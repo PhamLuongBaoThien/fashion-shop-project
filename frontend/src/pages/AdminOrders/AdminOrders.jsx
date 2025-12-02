@@ -394,7 +394,7 @@ const AdminOrders = () => {
     return (
       <Alert
         message="Lỗi"
-        description={error?.message || "Không thể tải danh sách đơn hàng"}
+        description={error.response?.data?.message + ". Bạn không thể tải danh sách Đơn hàng" || "Có lỗi xảy ra khi tải dữ liệu."}
         type="error"
         showIcon
       />

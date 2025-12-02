@@ -262,6 +262,28 @@ const changePassword = async (req, res) => {
     }
 }
 
+const createUserByAdmin = async (req, res) => {
+    try {
+        const { username, email, password, phone } = req.body;
+        
+        // Validate cơ bản
+        if (!username || !email || !password || !phone) {
+            return res.status(200).json({ status: 'ERR', message: 'Vui lòng nhập đầy đủ thông tin bắt buộc' });
+        }
+        
+        // Validate email
+        const reg = /^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;
+        if (!reg.test(email)) {
+            return res.status(200).json({ status: 'ERR', message: 'Email không hợp lệ' });
+        }
+
+        const response = await UserService.createUserByAdmin(req.body);
+        return res.status(200).json(response);
+    } catch (e) {
+        return res.status(404).json({ message: e });
+    }
+};
+
 module.exports = {
   createUser,
   loginUser,
@@ -272,5 +294,6 @@ module.exports = {
   refreshToken,
   logoutUser,
   loginAdmin,
-  changePassword
+  changePassword,
+  createUserByAdmin
 };

@@ -27,6 +27,7 @@ import {
   HistoryOutlined,
   DownloadOutlined,
   UserOutlined,
+  UserAddOutlined,
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { useSelector } from "react-redux";
@@ -36,9 +37,10 @@ import * as XLSX from "xlsx";
 import { useSearchParams } from "react-router-dom"; // Import hook này
 
 import * as UserService from "../../services/UserService";
-import * as OrderService from "../../services/OrderService";
+import * as RoleService from "../../services/RoleService";
 import { useMessageApi } from "../../context/MessageContext";
 import ButtonComponent from "../../components/common/ButtonComponent/ButtonComponent";
+import UserHistoryDrawer from "./UserHistoryDrawer";
 
 const { Search } = Input;
 
@@ -47,6 +49,7 @@ const AdminUsers = () => {
   const { messageApi } = useMessageApi();
   const queryClient = useQueryClient();
   const [form] = Form.useForm();
+  const [formCreate] = Form.useForm();
 
   // 1. SỬ DỤNG useSearchParams
   const [searchParams, setSearchParams] = useSearchParams();
@@ -65,6 +68,11 @@ const AdminUsers = () => {
   const [isModalOpenDelete, setIsModalOpenDelete] = useState(false);
   const [rowSelected, setRowSelected] = useState("");
 
+  const [isModalOpenCreate, setIsModalOpenCreate] = useState(false);
+
+  const isAdminWatchingEdit = Form.useWatch("isAdmin", form);
+  const isAdminWatchingCreate = Form.useWatch("isAdmin", formCreate);
+
   // --- 1. FETCH DATA ---
   const { data: usersData, isLoading } = useQuery({
     queryKey: ["admin-users"],
@@ -72,14 +80,60 @@ const AdminUsers = () => {
     enabled: !!user?.access_token,
   });
 
-  const { data: userOrders, isLoading: isLoadingOrders } = useQuery({
-    queryKey: ["admin-user-orders", userSelectedHistory],
-    queryFn: () =>
-      OrderService.getOrdersByUserId(userSelectedHistory, user?.access_token),
-    enabled: !!userSelectedHistory && !!user?.access_token,
+  const { data: rolesData } = useQuery({
+    queryKey: ["admin-roles-list"],
+    queryFn: () => RoleService.getAllRoles(),
+    enabled: !!user?.access_token,
   });
 
-  // --- 2. MUTATIONS ---
+
+  const mutationCreate = useMutation({
+    mutationFn: (data) =>
+      UserService.createUserByAdmin(data, user?.access_token),
+    onSuccess: (data) => {
+      if (data?.status === "OK") {
+        messageApi.success("Tạo tài khoản thành công!");
+        setIsModalOpenCreate(false);
+        formCreate.resetFields();
+        queryClient.invalidateQueries(["admin-users"]);
+      } else {
+        messageApi.error(data?.message || "Tạo thất bại!");
+      }
+    },
+    onError: (err) =>
+      messageApi.error(err.response?.data?.message || "Lỗi tạo tài khoản!"),
+  });
+
+  // Tìm xem Role của người đang đăng nhập là Role nào trong danh sách rolesData
+  console.log("--- DEBUG ROLE ---");
+  console.log("User Role trong Redux:", user?.role);
+  console.log("Danh sách Roles API:", rolesData?.data);
+
+  const currentUserRole = rolesData?.data?.find(
+    (r) => r._id === user?.role || r._id === user?.role?._id
+  );
+  console.log("Tìm thấy Role:", currentUserRole);
+  // 1. Xác định TRÙM CUỐI (Chỉ Owner hoặc người giữ chức Super Admin)
+  const isSuperAdmin =
+    user?.email === "plbthien2004@gmail.com" || // Email cứng
+    currentUserRole?.name === "Super Admin";
+  // 2. Xác định ai được PHÉP QUẢN LÝ (Để hiện khung UI)
+  // Bao gồm Trùm cuối HOẶC Admin thường có quyền 'system'
+  const canManageRoles =
+    isSuperAdmin ||
+    (user?.isAdmin &&
+      (currentUserRole?.permissions?.includes("system") ||
+        currentUserRole?.permissions?.includes("user"))); // Cho phép người có quyền 'user' được sửa role
+
+  // 3. LỌC DANH SÁCH ROLE (Quan trọng nhất)
+  const availableRolesOptions = rolesData?.data
+    ?.filter((r) => {
+      if (canManageRoles && user?.email === "plbthien1@gmail.com") return true; // Chủ sở hữu thấy hết
+      return r.name !== "Super Admin"; // Các Admin khác ko thấy Super Admin
+    })
+    .map((r) => ({ label: r.name, value: r._id }));
+
+  // --- MUTATIONS ---
   const mutationUpdate = useMutation({
     mutationFn: (data) => {
       const { id, ...rests } = data;
@@ -90,7 +144,8 @@ const AdminUsers = () => {
       queryClient.invalidateQueries(["admin-users"]);
       setIsOpenEditDrawer(false);
     },
-    onError: (err) => messageApi.error(err.message || "Cập nhật thất bại!"),
+    onError: (err) =>
+      messageApi.error(err.response?.data?.message || "Cập nhật thất bại!"),
   });
 
   const mutationDelete = useMutation({
@@ -100,7 +155,8 @@ const AdminUsers = () => {
       queryClient.invalidateQueries(["admin-users"]);
       setIsModalOpenDelete(false);
     },
-    onError: (err) => messageApi.error(err.message || "Xóa thất bại!"),
+    onError: (err) =>
+      messageApi.error(err.response?.data?.message || "Xóa thất bại!"),
   });
 
   // --- 3. HANDLERS ---
@@ -139,17 +195,46 @@ const AdminUsers = () => {
       email: record.email,
       phone: record.phone,
       isAdmin: record.isAdmin,
+      // Map role object sang ID hoặc giữ nguyên string ID
+      role: record.role?._id || record.role || undefined,
       gender: record.gender,
       dateOfBirth: record.dateOfBirth ? dayjs(record.dateOfBirth) : null,
     });
     setIsOpenEditDrawer(true);
   };
 
+  const onFinishCreate = (values) => {
+    const createData = { ...values };
+
+    // Nếu người tạo không có quyền quản lý role, hoặc chọn không phải Admin
+    // Thì xóa trường role đi để đảm bảo an toàn
+    if (!canManageRoles) {
+      delete createData.isAdmin;
+      delete createData.role;
+    } else if (!createData.isAdmin) {
+      delete createData.role;
+    }
+
+    mutationCreate.mutate(createData);
+  };
+
   const onFinishUpdate = (values) => {
-    mutationUpdate.mutate({
-      id: stateUserDetails._id,
-      ...values,
-    });
+    const updateData = { ...values };
+
+    // Nếu không có quyền quản lý user -> Xóa field role & isAdmin để không ghi đè
+    if (!canManageRoles) {
+      delete updateData.isAdmin;
+      delete updateData.role;
+    } else {
+      // Nếu có quyền, nhưng lại cố tình hack để gửi role "Super Admin" (mà mình không phải Super Admin)
+      // Thì logic availableRolesOptions ở trên đã chặn hiển thị rồi.
+      // Backend cũng sẽ chặn nếu bạn cấu hình middleware checkPermission('system') cho việc gán role cao cấp.
+
+      if (!updateData.isAdmin) {
+        updateData.role = null;
+      }
+    }
+    mutationUpdate.mutate({ id: stateUserDetails._id, ...updateData });
   };
 
   const handleDeleteUser = () => {
@@ -235,21 +320,17 @@ const AdminUsers = () => {
       render: (phone) => phone || "---",
     },
     {
-      title: "Địa chỉ",
-      key: "address",
-      render: (_, record) => {
-        const addr = record.address || {};
-        return addr.province || "Chưa cập nhật";
-      },
-    },
-    {
       title: "Vai trò",
-      dataIndex: "isAdmin",
-      render: (isAdmin) => (
-        <Tag color={isAdmin ? "volcano" : "green"}>
-          {isAdmin ? "ADMIN" : "CUSTOMER"}
-        </Tag>
-      ),
+      dataIndex: "role",
+      render: (role, record) => {
+        if (!record.isAdmin) return <Tag color="green">Customer</Tag>;
+        // Hiển thị tên Role (nếu có) hoặc 'Admin'
+        const roleName =
+          role?.name ||
+          rolesData?.data?.find((r) => r._id === role)?.name ||
+          "Admin";
+        return <Tag color="geekblue">{roleName}</Tag>;
+      },
     },
     {
       title: "Trạng thái",
@@ -357,6 +438,8 @@ const AdminUsers = () => {
     },
   ];
 
+
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -376,6 +459,15 @@ const AdminUsers = () => {
           <h1 style={{ fontSize: "24px", fontWeight: "bold", margin: 0 }}>
             Quản lý Người dùng
           </h1>
+          {canManageRoles && (
+            <ButtonComponent
+              type="primary"
+              icon={<UserAddOutlined />}
+              textButton="Thêm Người dùng"
+              onClick={() => setIsModalOpenCreate(true)}
+            />
+          )}
+
           <ButtonComponent
             type="primary"
             style={{ backgroundColor: "#10893E", borderColor: "#10893E" }}
@@ -418,26 +510,16 @@ const AdminUsers = () => {
         />
 
         {/* --- DRAWER LỊCH SỬ ĐƠN HÀNG --- */}
-        <Drawer
-          title="Lịch sử mua hàng"
-          placement="right"
-          onClose={() => {
-            setIsOpenHistoryDrawer(false);
-            setUserSelectedHistory(null);
-          }}
-          open={isOpenHistoryDrawer}
-          width={700}
-        >
-          <Table
-            columns={orderColumns}
-            dataSource={userOrders?.data || []}
-            rowKey="_id"
-            loading={isLoadingOrders}
-            pagination={{ pageSize: 5 }}
-          />
-        </Drawer>
+        <UserHistoryDrawer 
+            isOpen={isOpenHistoryDrawer} 
+            onClose={() => {
+                setIsOpenHistoryDrawer(false);
+                setUserSelectedHistory(null);
+            }} 
+            userId={userSelectedHistory} 
+        />
 
-        {/* --- DRAWER CHỈNH SỬA THÔNG TIN --- */}
+        {/* DRAWER EDIT */}
         <Drawer
           title="Chỉnh sửa thông tin người dùng"
           placement="right"
@@ -459,7 +541,6 @@ const AdminUsers = () => {
             <Form.Item label="Số điện thoại" name="phone">
               <Input />
             </Form.Item>
-
             <Row gutter={12}>
               <Col span={12}>
                 <Form.Item label="Giới tính" name="gender">
@@ -479,32 +560,67 @@ const AdminUsers = () => {
               </Col>
             </Row>
 
-            <div
-              style={{
-                marginTop: 20,
-                padding: "15px",
-                background: "#fffbe6",
-                border: "1px solid #ffe58f",
-                borderRadius: 4,
-              }}
-            >
+            {/* PHÂN QUYỀN: CHỈ HIỆN NẾU CÓ QUYỀN QUẢN LÝ ROLE */}
+            {canManageRoles ? (
               <div
                 style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+                  marginTop: 20,
+                  padding: "15px",
+                  background: "#f0f5ff",
+                  border: "1px solid #adc6ff",
+                  borderRadius: 4,
                 }}
               >
-                <span style={{ fontWeight: 500 }}>Quyền Quản trị (Admin)</span>
-                <Form.Item name="isAdmin" valuePropName="checked" noStyle>
-                  <Switch checkedChildren="ON" unCheckedChildren="OFF" />
-                </Form.Item>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 12,
+                  }}
+                >
+                  <span style={{ fontWeight: 600, color: "#1d39c4" }}>
+                    Cấp quyền Quản trị viên?
+                  </span>
+                  <Form.Item name="isAdmin" valuePropName="checked" noStyle>
+                    <Switch checkedChildren="Có" unCheckedChildren="Không" />
+                  </Form.Item>
+                </div>
+                {isAdminWatchingEdit && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                  >
+                    <Form.Item
+                      label="Vai trò cụ thể"
+                      name="role"
+                      rules={[
+                        { required: true, message: "Vui lòng chọn vai trò" },
+                      ]}
+                    >
+                      <Select
+                        placeholder="Chọn vai trò"
+                        options={availableRolesOptions}
+                      />
+                    </Form.Item>
+                  </motion.div>
+                )}
               </div>
-              <div style={{ fontSize: 12, color: "#faad14", marginTop: 8 }}>
-                ⚠️ Cảnh báo: User này sẽ có toàn quyền truy cập vào trang quản
-                trị hệ thống.
+            ) : (
+              <div
+                style={{
+                  marginTop: 20,
+                  padding: "10px",
+                  background: "#fff1f0",
+                  border: "1px solid #ffccc7",
+                  borderRadius: 4,
+                  color: "#cf1322",
+                  fontSize: 13,
+                }}
+              >
+                <LockOutlined /> Bạn không có quyền thay đổi vai trò.
               </div>
-            </div>
+            )}
 
             <Form.Item style={{ marginTop: 30 }}>
               <ButtonComponent
@@ -517,6 +633,124 @@ const AdminUsers = () => {
             </Form.Item>
           </Form>
         </Drawer>
+
+        {/* MODAL CREATE */}
+        <Modal
+          title="Thêm Người dùng mới"
+          open={isModalOpenCreate}
+          onOk={formCreate.submit}
+          onCancel={() => setIsModalOpenCreate(false)}
+          width={600}
+          confirmLoading={mutationCreate.isPending}
+        >
+          <Form form={formCreate} layout="vertical" onFinish={onFinishCreate}>
+            <Form.Item
+              label="Họ và tên"
+              name="username"
+              rules={[{ required: true, message: "Vui lòng nhập tên!" }]}
+            >
+              <Input placeholder="Ví dụ: Nguyễn Văn A" />
+            </Form.Item>
+            <Form.Item
+              label="Email"
+              name="email"
+              rules={[
+                {
+                  required: true,
+                  type: "email",
+                  message: "Email không hợp lệ!",
+                },
+              ]}
+            >
+              <Input placeholder="example@mail.com" />
+            </Form.Item>
+            <Form.Item
+              label="Mật khẩu"
+              name="password"
+              rules={[
+                {
+                  required: true,
+                  min: 6,
+                  message: "Mật khẩu ít nhất 6 ký tự!",
+                },
+              ]}
+            >
+              <Input.Password placeholder="Nhập mật khẩu" />
+            </Form.Item>
+            <Form.Item
+              label="Xác nhận mật khẩu"
+              name="confirmPassword"
+              dependencies={["password"]}
+              rules={[
+                { required: true, message: "Vui lòng xác nhận mật khẩu!" },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    if (!value || getFieldValue("password") === value) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(new Error("Mật khẩu không khớp!"));
+                  },
+                }),
+              ]}
+            >
+              <Input.Password placeholder="Nhập lại mật khẩu" />
+            </Form.Item>
+            <Form.Item
+              label="Số điện thoại"
+              name="phone"
+              rules={[{ required: true }]}
+            >
+              <Input placeholder="098..." />
+            </Form.Item>
+
+            {/* PHẦN PHÂN QUYỀN CREATE */}
+            {canManageRoles && (
+              <div
+                style={{
+                  marginTop: 10,
+                  padding: "15px",
+                  background: "#f0f5ff",
+                  borderRadius: 4,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <span style={{ fontWeight: 600 }}>
+                    Tạo tài khoản Quản trị (Admin)?
+                  </span>
+                  <Form.Item name="isAdmin" valuePropName="checked" noStyle>
+                    <Switch checkedChildren="Có" unCheckedChildren="Không" />
+                  </Form.Item>
+                </div>
+                {isAdminWatchingCreate && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    style={{ marginTop: 12 }}
+                  >
+                    <Form.Item
+                      label="Vai trò cụ thể"
+                      name="role"
+                      rules={[
+                        { required: true, message: "Vui lòng chọn vai trò" },
+                      ]}
+                    >
+                      <Select
+                        placeholder="Chọn vai trò"
+                        options={availableRolesOptions}
+                      />
+                    </Form.Item>
+                  </motion.div>
+                )}
+              </div>
+            )}
+          </Form>
+        </Modal>
 
         {/* MODAL XÓA USER */}
         <Modal
