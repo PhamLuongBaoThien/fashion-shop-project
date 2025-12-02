@@ -40,11 +40,19 @@ const loginUser = (userLogin) => {
     try {
       const checkUser = await User.findOne({ email: email });
       if (checkUser === null) {
-        resolve({ status: "ERR", message: "The user is not defined" });
+        resolve({ status: "ERR", message: "Tài khoản không tồn tại." });
       }
+
+      if (checkUser.isBlocked) {
+                return resolve({ 
+                    status: 'ERR', 
+                    message: 'Tài khoản của bạn đã bị khóa.' 
+                });
+            }
+
       const comparePassword = bcrypt.compareSync(password, checkUser.password);
       if (!comparePassword) {
-        resolve({ status: "ERR", message: "The password is incorrect" });
+        resolve({ status: "ERR", message: "Mật khẩu không chính xác." });
       }
 
       const access_token = await generalAccessToken({

@@ -15,6 +15,7 @@ const userSchema = new mongoose.Schema(
     },
     gender: { type: String, default: "" },
     dateOfBirth: { type: Date, default: null },
+    isBlocked: { type: Boolean, default: false } 
 
   },
   {

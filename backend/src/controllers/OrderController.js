@@ -139,13 +139,26 @@ const updateOrder = async (req, res) => {
     }
 };
 
+const getOrdersByUserId = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        if (!userId) {
+            return res.status(200).json({ status: 'ERR', message: 'The userId is required' });
+        }
+        const response = await OrderService.getOrdersByUserId(userId);
+        return res.status(200).json(response);
+    } catch (e) {
+        return res.status(404).json({ message: e });
+    }
+}
+
 
 module.exports = {
     createOrder,
     getAllOrdersDetails,
     getOrderDetails,
     getAllOrders,
-    updateOrder
+    updateOrder,
+    getOrdersByUserId
 
-    // (Thêm các controller khác ở đây)
 };

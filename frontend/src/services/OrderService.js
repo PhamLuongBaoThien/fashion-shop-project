@@ -56,3 +56,9 @@ export const updateOrder = async (id, access_token, data) => {
     });
     return res.data;
 };
+
+// Lấy danh sách đơn hàng của 1 user cụ thể (Admin dùng)
+export const getOrdersByUserId = async (id, access_token) => {
+    const res = await axiosJWT.get(`${process.env.REACT_APP_API_KEY}/orders/get-all-order/${id}`);
+    return res.data;
+}

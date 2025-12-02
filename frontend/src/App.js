@@ -8,17 +8,42 @@ import * as UserService from "./services/UserService";
 import { useDispatch, useSelector } from "react-redux";
 import { updateUser } from "./redux/slides/userSlide";
 import { store } from "./redux/store";
-import { Spin } from "antd";
+import { Spin, Modal } from "antd";
 import { MessageProvider } from "./context/MessageContext";
 import { setCart } from "./redux/slides/cartSlide";
 import * as CartService from "./services/CartService";
 import { persistor } from "./redux/store";
+import { resetUser } from "./redux/slides/userSlide";
+import { clearCart } from "./redux/slides/cartSlide";
 
 function App() {
   const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(true);
+  const [isBlockedModalOpen, setIsBlockedModalOpen] = useState(false); // 1. Thêm state quản lý Modal
+
   const user = useSelector((state) => state.user); // state.user là slice bạn đã tạo
 
+  // Cài đặt interceptor để bắt lỗi USER_BLOCKED
+  useEffect(() => {
+    const interceptor = UserService.axiosJWT.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (
+          error.response &&
+          error.response.status === 403 &&
+          error.response.data.message === "USER_BLOCKED"
+        ) {
+          setIsBlockedModalOpen(true);
+          return Promise.reject(error);
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      UserService.axiosJWT.interceptors.response.eject(interceptor);
+    };
+  }, []);
   const handGetDetailUser = useCallback(
     async (id) => {
       try {
@@ -73,6 +98,7 @@ function App() {
 
     return { decoded, storageData };
   };
+
   //  Interceptor giống như một "người bảo vệ" đứng trước mọi request gửi đi: tự động kiểm tra token, tự động refresh khi hết hạn và tự động gắn vé (token) vào header. axiosJWT trong UserService và App.js là MỘT (cùng một object trong bộ nhớ), nên khi bạn cài đặt "người bảo vệ" ở App.js, mọi lệnh gọi API ở UserService đều được bảo vệ tự động.
   UserService.axiosJWT.interceptors.request.use(
     async function (config) {
@@ -120,6 +146,20 @@ function App() {
       return Promise.reject(error);
     }
   );
+
+  const handleLogout = async () => {
+    try {
+      await UserService.logoutUser();
+    } catch (e) {
+      console.log(e);
+    }
+    localStorage.removeItem("access_token");
+    dispatch(resetUser());
+    dispatch(clearCart());
+    await persistor.purge();
+    persistor.persist();
+    window.location.href = "/sign-in";
+  };
 
   return (
     <MessageProvider>
@@ -195,6 +235,22 @@ function App() {
             </Routes>
           </Router>
         )}
+        {/* 6. Modal thông báo bị khóa tài khoản */}
+        <Modal
+          title="Tài khoản bị khóa"
+          open={isBlockedModalOpen}
+          onOk={handleLogout}
+          closable={false}
+          maskClosable={false}
+          keyboard={false}
+          okText="Đồng ý"
+          cancelButtonProps={{ style: { display: "none" } }} // Ẩn nút Hủy vì bắt buộc đăng xuất
+        >
+          <p>
+            Tài khoản của bạn đã bị quản trị viên khóa. Bạn sẽ bị đăng xuất ngay
+            bây giờ.
+          </p>
+        </Modal>
       </div>
     </MessageProvider>
   );

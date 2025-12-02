@@ -248,11 +248,33 @@ const updateOrder = (id, data) => {
     });
 };
 
+const getOrdersByUserId = (userId) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const order = await Order.find({ user: userId }).sort({ createdAt: -1, updatedAt: -1 });
+            if (order === null) {
+                resolve({
+                    status: 'ERR',
+                    message: 'The order is not defined'
+                })
+            }
+
+            resolve({
+                status: 'OK',
+                message: 'SUCESS',
+                data: order
+            })
+        } catch (e) {
+            reject(e)
+        }
+    })
+}
+
 module.exports = {
   createOrder,
   getAllOrdersDetails,
   getOrderDetails,
   getAllOrders,
-  updateOrder
-  // (Thêm các service khác như getOrderDetails, getAllOrders... ở đây)
+  updateOrder,
+  getOrdersByUserId
 };
