@@ -31,7 +31,9 @@ import {
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { useSelector } from "react-redux";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutationHooks } from "../../hooks/useMutationHook";
+
 import dayjs from "dayjs";
 import * as XLSX from "xlsx";
 import { useSearchParams } from "react-router-dom"; // Import hook này
@@ -86,23 +88,6 @@ const AdminUsers = () => {
     enabled: !!user?.access_token,
   });
 
-  const mutationCreate = useMutation({
-    mutationFn: (data) =>
-      UserService.createUserByAdmin(data, user?.access_token),
-    onSuccess: (data) => {
-      if (data?.status === "OK") {
-        messageApi.success("Tạo tài khoản thành công!");
-        setIsModalOpenCreate(false);
-        formCreate.resetFields();
-        queryClient.invalidateQueries(["admin-users"]);
-      } else {
-        messageApi.error(data?.message || "Tạo thất bại!");
-      }
-    },
-    onError: (err) =>
-      messageApi.error(err.response?.data?.message || "Lỗi tạo tài khoản!"),
-  });
-
   // Tìm xem Role của người đang đăng nhập là Role nào trong danh sách rolesData
   console.log("--- DEBUG ROLE ---");
   console.log("User Role trong Redux:", user?.role);
@@ -132,31 +117,195 @@ const AdminUsers = () => {
     })
     .map((r) => ({ label: r.name, value: r._id }));
 
-  // --- MUTATIONS ---
-  const mutationUpdate = useMutation({
-    mutationFn: (data) => {
-      const { id, ...rests } = data;
-      return UserService.updateUser(id, rests, user?.access_token);
-    },
-    onSuccess: () => {
-      messageApi.success("Cập nhật thành công!");
-      queryClient.invalidateQueries(["admin-users"]);
-      setIsOpenEditDrawer(false);
-    },
-    onError: (err) =>
-      messageApi.error(err.response?.data?.message || "Cập nhật thất bại!"),
-  });
+  // A. Mutation Tạo mới
+  const mutationCreate = useMutationHooks((data) =>
+    UserService.createUserByAdmin(data, user?.access_token)
+  );
+  const {
+    isPending: isPendingCreate,
+    isSuccess: isSuccessCreate,
+    isError: isErrorCreate,
+    data: dataCreate,
+    error: errorCreate,
+  } = mutationCreate;
 
-  const mutationDelete = useMutation({
-    mutationFn: (id) => UserService.deleteUser(id, user?.access_token),
-    onSuccess: () => {
-      messageApi.success("Xóa người dùng thành công!");
-      queryClient.invalidateQueries(["admin-users"]);
-      setIsModalOpenDelete(false);
-    },
-    onError: (err) =>
-      messageApi.error(err.response?.data?.message || "Xóa thất bại!"),
+  // B. Mutation Cập nhật
+  const mutationUpdate = useMutationHooks((data) => {
+    const { id, ...rests } = data;
+    return UserService.updateUser(id, rests, user?.access_token);
   });
+  const {
+    isPending: isPendingUpdate,
+    isSuccess: isSuccessUpdate,
+    isError: isErrorUpdate,
+    data: dataUpdate,
+    error: errorUpdate,
+  } = mutationUpdate;
+
+  // C. Mutation Xóa
+  const mutationDelete = useMutationHooks((id) =>
+    UserService.deleteUser(id, user?.access_token)
+  );
+  const {
+    isPending: isPendingDelete,
+    isSuccess: isSuccessDelete,
+    isError: isErrorDelete,
+    data: dataDelete,
+    error: errorDelete,
+  } = mutationDelete;
+
+  // Gọi lại hàm getAllUser để lấy dữ liệu mới nhất (hoặc tạo API export riêng nếu backend hỗ trợ)
+  const mutationExport = useMutationHooks(() =>
+    UserService.getAllUser(user?.access_token)
+  );
+  const {
+    isPending: isPendingExport,
+    isSuccess: isSuccessExport,
+    isError: isErrorExport,
+    data: dataExport,
+    error: errorExport,
+  } = mutationExport;
+
+  // Xử lý Tạo mới
+  useEffect(() => {
+    if (isSuccessCreate && dataCreate) {
+      if (dataCreate.status === "OK") {
+        messageApi.success("Tạo tài khoản thành công!");
+        setIsModalOpenCreate(false);
+        formCreate.resetFields();
+        queryClient.invalidateQueries(["admin-users"]);
+      } else {
+        messageApi.error(dataCreate.message || "Tạo thất bại!");
+      }
+    } else if (isErrorCreate) {
+      messageApi.error(
+        errorCreate?.response?.data?.message ||
+          errorCreate?.message ||
+          "Lỗi tạo tài khoản!"
+      );
+    }
+  }, [
+    isSuccessCreate,
+    isErrorCreate,
+    dataCreate,
+    errorCreate,
+    messageApi,
+    formCreate,
+    queryClient,
+  ]);
+
+  // Xử lý Cập nhật
+  useEffect(() => {
+    if (isSuccessUpdate && dataUpdate) {
+      if (dataUpdate.status === "OK") {
+        messageApi.success("Cập nhật thành công!");
+        queryClient.invalidateQueries(["admin-users"]);
+        setIsOpenEditDrawer(false);
+      } else {
+        messageApi.error(dataUpdate.message || "Cập nhật thất bại!");
+      }
+    } else if (isErrorUpdate) {
+      messageApi.error(
+        errorUpdate?.response?.data?.message ||
+          errorUpdate?.message ||
+          "Lỗi kết nối!"
+      );
+    }
+  }, [
+    isSuccessUpdate,
+    isErrorUpdate,
+    dataUpdate,
+    errorUpdate,
+    messageApi,
+    queryClient,
+  ]);
+
+  // Xử lý Xóa
+  useEffect(() => {
+    if (isSuccessDelete && dataDelete) {
+      if (dataDelete.status === "OK") {
+        messageApi.success("Xóa thành công!");
+        queryClient.invalidateQueries(["admin-users"]);
+        setIsModalOpenDelete(false);
+      } else {
+        messageApi.error(dataDelete.message || "Xóa thất bại!");
+      }
+    } else if (isErrorDelete) {
+      messageApi.error(
+        errorDelete?.response?.data?.message ||
+          errorDelete?.message ||
+          "Lỗi kết nối!"
+      );
+    }
+  }, [
+    isSuccessDelete,
+    isErrorDelete,
+    dataDelete,
+    errorDelete,
+    messageApi,
+    queryClient,
+  ]);
+
+  // Xử lý Export Excel
+  useEffect(() => {
+    if (isSuccessExport && dataExport) {
+      messageApi.destroy("export_loading");
+      try {
+        const usersToExport = dataExport.data || [];
+        if (usersToExport.length === 0) {
+          messageApi.warning("Không có dữ liệu để xuất");
+          return;
+        }
+
+        const excel = usersToExport.map((u) => ({
+          ID: u._id,
+          Username: u.username,
+          Email: u.email,
+          SĐT: u.phone,
+          "Địa chỉ": [
+            u.address?.detailAddress,
+            u.address?.ward,
+            u.address?.district,
+            u.address?.province,
+          ]
+            .filter(Boolean)
+            .join(", "),
+          // Lấy tên role từ object role hoặc tìm trong rolesData nếu role chỉ là ID string
+          "Vai trò": u.isAdmin
+            ? u.role?.name ||
+              rolesData?.data?.find((r) => r._id === u.role)?.name ||
+              "Admin"
+            : "Khách hàng",
+          "Trạng thái": u.isBlocked ? "Đã khóa" : "Hoạt động",
+          "Ngày tạo": new Date(u.createdAt).toLocaleDateString("vi-VN"),
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(excel);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "DanhSachUser");
+        XLSX.writeFile(wb, "DanhSachNguoiDung.xlsx");
+
+        messageApi.success("Xuất file thành công!");
+        mutationExport.reset(); // Reset trạng thái
+      } catch (error) {
+        console.error("Export error:", error);
+        messageApi.error("Có lỗi khi tạo file Excel");
+      }
+    } else if (isErrorExport) {
+      messageApi.destroy("export_loading");
+      messageApi.error(
+        errorExport?.response?.data?.message || "Lỗi lấy dữ liệu xuất file!"
+      );
+    }
+  }, [
+    isSuccessExport,
+    isErrorExport,
+    dataExport,
+    errorExport,
+    messageApi,
+    mutationExport,
+    rolesData,
+  ]);
 
   // --- 3. HANDLERS ---
 
@@ -241,35 +390,12 @@ const AdminUsers = () => {
   };
 
   const handleExportExcel = () => {
-    // 1. Kiểm tra filteredData thay vì usersData
-    if (!filteredData || filteredData.length === 0) {
-      messageApi.warning("Không có dữ liệu để xuất");
-      return;
-    }
-
-    // 2. Map từ filteredData
-    const excel = filteredData.map((u) => ({
-      ID: u._id,
-      Username: u.username,
-      Email: u.email,
-      SĐT: u.phone,
-      "Địa chỉ": [
-        u.address?.detailAddress,
-        u.address?.ward,
-        u.address?.district,
-        u.address?.province,
-      ]
-        .filter(Boolean)
-        .join(", "),
-      "Vai trò": u.isAdmin ? "Admin" : "Khách hàng",
-      "Trạng thái": u.isBlocked ? "Đã khóa" : "Hoạt động",
-      "Ngày tạo": new Date(u.createdAt).toLocaleDateString("vi-VN"),
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(excel);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "DanhSachUser");
-    XLSX.writeFile(wb, "DanhSachNguoiDung.xlsx");
+    messageApi.loading({
+      content: "Đang lấy dữ liệu...",
+      key: "export_loading",
+      duration: 0,
+    });
+    mutationExport.mutate();
   };
 
   // --- 4. FILTERS LOGIC (Lấy giá trị từ URL) ---
@@ -438,6 +564,7 @@ const AdminUsers = () => {
             icon={<DownloadOutlined />}
             textButton="Xuất Excel"
             onClick={handleExportExcel}
+            loading={isPendingExport}
           />
         </div>
 
@@ -592,7 +719,7 @@ const AdminUsers = () => {
                 htmlType="submit"
                 textButton="Cập nhật"
                 block
-                loading={mutationUpdate.isPending}
+                loading={isPendingUpdate}
               />
             </Form.Item>
           </Form>
@@ -605,7 +732,7 @@ const AdminUsers = () => {
           onOk={formCreate.submit}
           onCancel={() => setIsModalOpenCreate(false)}
           width={600}
-          confirmLoading={mutationCreate.isPending}
+          confirmLoading={isPendingCreate}
         >
           <Form form={formCreate} layout="vertical" onFinish={onFinishCreate}>
             <Form.Item
@@ -723,7 +850,7 @@ const AdminUsers = () => {
           onCancel={() => setIsModalOpenDelete(false)}
           onOk={handleDeleteUser}
           okText="Xóa"
-          okButtonProps={{ danger: true, loading: mutationDelete.isPending }}
+          okButtonProps={{ danger: true, loading: isPendingDelete }}
         >
           <p>Bạn có chắc chắn muốn xóa tài khoản này không?</p>
           <p style={{ color: "red" }}>

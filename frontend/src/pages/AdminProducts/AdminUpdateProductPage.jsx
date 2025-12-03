@@ -14,7 +14,8 @@ import {
   Spin,
 } from "antd";
 import { motion } from "framer-motion";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutationHooks } from "../../hooks/useMutationHook";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import * as ProductService from "../../services/ProductService";
 import * as CategoryService from "../../services/CategoryService";
@@ -34,7 +35,7 @@ const AdminUpdateProductPage = () => {
   const { id: productId } = useParams();
   const queryClient = useQueryClient();
 
-  const { messageApi } = useMessageApi();
+  const { messageApi, showError, showSuccess } = useMessageApi();
 
   // 1. DÙNG useQuery ĐỂ FETCH DỮ LIỆU SẢN PHẨM CẦN SỬA
   const { data: productDetails, isLoading: isLoadingDetails } = useQuery({
@@ -88,20 +89,37 @@ const AdminUpdateProductPage = () => {
     }
   }, [productDetails, form]);
 
-  const updateMutation = useMutation({
-    mutationFn: (data) =>
-      ProductService.updateProduct(productId, data.formData),
-    onSuccess: () => {
-      messageApi.success("Cập nhật sản phẩm thành công!");
-      queryClient.invalidateQueries({ queryKey: ["admin-products"] }); // Làm mới danh sách sản phẩm
-      navigate("/system/admin/products");
-    },
-    onError: (error) => {
-      // "Mở thùng" error ra để đọc đúng message từ BE
-      const errorMessage = error.response?.data?.message || error.message;
-      messageApi.error(errorMessage); // Dùng hàm từ hook
-    },
+  const updateMutation = useMutationHooks((data) => {
+      const { id, formData } = data;
+      return ProductService.updateProduct(id, formData);
   });
+
+  const { 
+      isPending: isLoadingUpdate, 
+      isSuccess: isSuccessUpdate, 
+      isError: isErrorUpdate, 
+      data: dataUpdate, 
+      error: errorUpdate 
+  } = updateMutation;
+
+    // Xử lý kết quả cập nhật
+  useEffect(() => {
+    if (isSuccessUpdate && dataUpdate) {
+        if (dataUpdate.status === 'OK') {
+            showSuccess("Cập nhật sản phẩm thành công!");
+            queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+            queryClient.invalidateQueries({ queryKey: ["product-details", productId] });
+            navigate("/system/admin/products");
+        } else {
+            showError(dataUpdate.message || "Cập nhật thất bại");
+        }
+    } else if (isErrorUpdate) {
+        const errorMessage = errorUpdate?.response?.data?.message || errorUpdate?.message || "Có lỗi xảy ra";
+        showError(`Cập nhật thất bại: ${errorMessage}`);
+    }
+  }, [isSuccessUpdate, isErrorUpdate, dataUpdate, errorUpdate, navigate, queryClient, showSuccess, showError, productId]);
+
+
 
   const normFile = (e) => {
     if (Array.isArray(e)) {
@@ -384,7 +402,7 @@ const AdminUpdateProductPage = () => {
               type="primary"
               htmlType="submit"
               size="large"
-              loading={updateMutation.isPending}
+              loading={isLoadingUpdate}
             >
               Lưu thay đổi
             </Button>

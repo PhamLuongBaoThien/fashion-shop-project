@@ -1,5 +1,5 @@
 // src/pages/Admin/AdminAddProductPage.jsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Card,
   Form,
@@ -12,7 +12,8 @@ import {
   Switch,
   Space,
 } from "antd";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutationHooks } from "../../hooks/useMutationHook"; // Import custom hook
 import { useNavigate, Link } from "react-router-dom";
 import * as ProductService from "../../services/ProductService";
 import * as CategoryService from "../../services/CategoryService";
@@ -32,29 +33,40 @@ const AdminAddProductPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { messageApi } = useMessageApi();
+  const { messageApi, showSuccess, showError } = useMessageApi();
 
   const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
     queryKey: ["categories"],
     queryFn: CategoryService.getAllCategories,
   });
 
-  const createMutation = useMutation({
-    mutationFn: (newProduct) => ProductService.createProduct(newProduct),
-    onSuccess: () => {
-      messageApi.success("Thêm sản phẩm thành công!");
-      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
-      navigate("/system/admin/products");
-    },
-    onError: (error) => {
-      messageApi.error(
-        `Thêm sản phẩm thất bại: ${
-          error.response.data.message || error.message
-        }`
-      );
-    },
-  });
+  const createMutation = useMutationHooks((newProduct) => ProductService.createProduct(newProduct));
+  const { 
+      isPending, 
+      isSuccess, 
+      isError, 
+      data: dataResponse, 
+      error 
+  } = createMutation;
 
+  // 3. Xử lý side effects (Thông báo & Chuyển trang) bằng useEffect
+  useEffect(() => {
+    if (isSuccess && dataResponse) {
+        if (dataResponse.status === 'OK') {
+            showSuccess("Thêm sản phẩm thành công!");
+            // Làm mới danh sách sản phẩm
+            queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+            // Chuyển trang về danh sách
+            navigate("/system/admin/products");
+        } else {
+            showError(dataResponse.message || "Thêm sản phẩm thất bại");
+        }
+    } else if (isError) {
+        const errorMessage = error?.response?.data?.message || error?.message || "Có lỗi xảy ra";
+        showError(`Thêm sản phẩm thất bại: ${errorMessage}`);
+    }
+  }, [isSuccess, isError, dataResponse, error, navigate, queryClient, showSuccess, showError]);
+  
   // Hàm tiện ích của Ant Design để lấy file từ sự kiện upload
   const normFile = (e) => {
     if (Array.isArray(e)) {
@@ -339,7 +351,7 @@ const AdminAddProductPage = () => {
               type="primary"
               htmlType="submit"
               size="large"
-              loading={createMutation.isPending}
+              loading={isPending}
               textButton={"Tạo sản phẩm"}
             />
           </div>

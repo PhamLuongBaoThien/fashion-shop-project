@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   Table,
   Space,
@@ -22,6 +22,7 @@ import {
 import { motion } from "framer-motion";
 import { useSelector } from "react-redux"; // Đã kích hoạt
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutationHooks } from "../../hooks/useMutationHook";
 import { useSearchParams, Link } from "react-router-dom";
 import * as XLSX from "xlsx"; // Đã kích hoạt
 
@@ -105,6 +106,76 @@ const AdminOrders = () => {
 
   const totalOrders = ordersData?.length || 0;
 
+  const mutationExport = useMutationHooks(async () => {
+    // Gọi API lấy tất cả đơn hàng (không phân trang hoặc limit lớn)
+    // Hiện tại hàm getAllOrders của bạn chưa hỗ trợ params limit, nên nó sẽ lấy default theo Backend.
+    // Tốt nhất backend nên có API export riêng hoặc cho phép limit=0.
+    // Ở đây tạm dùng lại hàm getAllOrders hiện tại.
+    return await OrderService.getAllOrders(user?.access_token);
+  });
+
+  const {
+    isPending: isPendingExport,
+    isSuccess: isSuccessExport,
+    isError: isErrorExport,
+    data: dataExport,
+    error: errorExport,
+  } = mutationExport;
+
+  // Xử lý Export Excel
+  useEffect(() => {
+    if (isSuccessExport && dataExport) {
+      messageApi.destroy("export_loading");
+      try {
+        // Lấy data từ API trả về
+        const ordersToExport = dataExport.data || [];
+
+        if (ordersToExport.length === 0) {
+          messageApi.warning("Không có dữ liệu để xuất");
+          return;
+        }
+
+        const formattedData = ordersToExport.map((order) => ({
+          "Mã đơn": order._id,
+          "Ngày đặt": new Date(order.createdAt).toLocaleDateString("vi-VN"),
+          "Người đặt": order.customerInfo?.fullName,
+          "SĐT người đặt": order.customerInfo?.phone,
+          "Người nhận": order.shippingInfo?.fullName,
+          "SĐT người nhận": order.shippingInfo?.phone,
+          "Địa chỉ giao": `${order.shippingInfo?.detailAddress}, ${order.shippingInfo?.ward}, ${order.shippingInfo?.district}, ${order.shippingInfo?.province}`,
+          "Tổng tiền": order.totalPrice,
+          "Thanh toán": order.paymentMethod === "cod" ? "COD" : "Chuyển khoản",
+          "Trạng thái giao hàng": getStatusLabel(order.status),
+          "Trạng thái thanh toán": order.isPaid
+            ? "Đã thanh toán"
+            : "Chưa thanh toán",
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(formattedData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "DonHang");
+
+        XLSX.writeFile(workbook, "DanhSachDonHang.xlsx");
+        messageApi.success("Xuất file Excel thành công!");
+
+        mutationExport.reset();
+      } catch (error) {
+        console.error("Export error:", error);
+        messageApi.error("Có lỗi khi tạo file Excel");
+      }
+    } else if (isErrorExport) {
+      messageApi.destroy("export_loading");
+      messageApi.error(errorExport?.message || "Lỗi lấy dữ liệu xuất file!");
+    }
+  }, [
+    isSuccessExport,
+    isErrorExport,
+    dataExport,
+    errorExport,
+    messageApi,
+    mutationExport,
+  ]);
+
   // --- 2. HANDLERS ---
 
   const handleTableChange = (pagination) => {
@@ -156,55 +227,13 @@ const AdminOrders = () => {
 
   // --- HÀM XUẤT EXCEL (HOẠT ĐỘNG THẬT) ---
   const handleExportExcel = () => {
-    if (!ordersData || ordersData.length === 0) {
-      if (messageApi) messageApi.warning("Không có dữ liệu để xuất");
-      return;
-    }
-
-    if (messageApi)
-      messageApi.loading({ content: "Đang tạo file Excel...", key: "export" });
-
-    try {
-      // 1. Format dữ liệu cho Excel
-      const formattedData = ordersData.map((order) => ({
-        "Mã đơn": order._id,
-        "Ngày đặt": new Date(order.createdAt).toLocaleDateString("vi-VN"),
-        "Người đặt": order.customerInfo?.fullName,
-        "SĐT người đặt": order.customerInfo?.phone,
-        "Người nhận": order.shippingInfo?.fullName,
-        "SĐT người nhận": order.shippingInfo?.phone,
-        "Địa chỉ giao": `${order.shippingInfo?.detailAddress}, ${order.shippingInfo?.ward}, ${order.shippingInfo?.district}, ${order.shippingInfo?.province}`,
-        "Tổng tiền": order.totalPrice,
-        "Trạng thái giao hàng": getStatusLabel(order.status),
-        "Trạng thái thanh toán": order.isPaid
-          ? "Đã thanh toán"
-          : "Chưa thanh toán",
-      }));
-
-      // 2. Tạo Worksheet và Workbook
-      const worksheet = XLSX.utils.json_to_sheet(formattedData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "DonHang");
-
-      // 3. Xuất file
-      XLSX.writeFile(workbook, "DanhSachDonHang.xlsx");
-
-      // 4. Thông báo thành công
-      if (messageApi)
-        messageApi.success({
-          content: "Xuất file Excel thành công!",
-          key: "export",
-          duration: 2,
-        });
-    } catch (error) {
-      console.error("Export error:", error);
-      if (messageApi)
-        messageApi.error({
-          content: "Xuất file thất bại!",
-          key: "export",
-          duration: 2,
-        });
-    }
+    messageApi.loading({
+      content: "Đang lấy dữ liệu...",
+      key: "export_loading",
+      duration: 0,
+    });
+    // Gọi mutation để lấy dữ liệu mới nhất từ server
+    mutationExport.mutate();
   };
 
   const getStatusLabel = (status) => {
@@ -362,13 +391,13 @@ const AdminOrders = () => {
             />
           </Link>
 
-          <ButtonComponent
+          {/* <ButtonComponent
             danger
             type="primary"
             size="small"
             icon={<DeleteOutlined />}
             onClick={() => handleDeleteOrder(record._id)}
-          />
+          /> */}
         </Space>
       ),
     },
@@ -393,7 +422,11 @@ const AdminOrders = () => {
     return (
       <Alert
         message="Lỗi"
-        description={error.response?.data?.message + ". Bạn không thể tải danh sách Đơn hàng" || "Có lỗi xảy ra khi tải dữ liệu."}
+        description={
+          error.response?.data?.message +
+            ". Bạn không thể tải danh sách Đơn hàng" ||
+          "Có lỗi xảy ra khi tải dữ liệu."
+        }
         type="error"
         showIcon
       />
@@ -421,6 +454,7 @@ const AdminOrders = () => {
             type="primary"
             icon={<DownloadOutlined />}
             onClick={handleExportExcel}
+            loading={isPendingExport} 
             style={{ backgroundColor: "#10893E", borderColor: "#10893E" }}
             textButton={"Xuất Excel"}
           />

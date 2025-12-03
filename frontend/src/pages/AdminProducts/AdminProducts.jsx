@@ -17,7 +17,8 @@ import {
   DownloadOutlined,
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // 1. Import useQuery
+import { useQuery, useQueryClient } from "@tanstack/react-query"; // 1. Import useQuery
+import { useMutationHooks } from "../../hooks/useMutationHook";
 import * as ProductService from "../../services/ProductService"; // 2. Import ProductService
 import * as CategoryService from "../../services/CategoryService";
 import { useSearchParams, Link } from "react-router-dom";
@@ -70,70 +71,140 @@ const AdminProducts = () => {
     keepPreviousData: true, // Giữ lại dữ liệu cũ khi đang fetch dữ liệu mới, tránh màn hình nháy
   });
 
-  // MUTATION CHO VIỆC XUẤT EXCEL
-  const exportMutation = useMutation({
-    mutationFn: (params) => ProductService.getAllProducts(params),
-    onSuccess: (data) => {
-      messageApi.loading({ content: "Đang tạo file Excel...", key: "export" }); // DÙNG messageApi
-      // Lấy toàn bộ sản phẩm từ kết quả API
-      const productsToExport = data?.data || [];
+  // A. Mutation Xóa 1 sản phẩm
+  const mutationDelete = useMutationHooks((id) =>
+    ProductService.deleteProduct(id)
+  );
+  const {
+    isPending: isPendingDelete,
+    isSuccess: isSuccessDelete,
+    isError: isErrorDelete,
+    data: dataDelete,
+    error: errorDelete,
+  } = mutationDelete;
 
-      // Định dạng lại dữ liệu cho dễ đọc
-      const formattedData = productsToExport.map((product) => {
-        const finalPrice = product.price * (1 - (product.discount || 0) / 100);
-        return {
-          "ID Sản phẩm": product._id,
-          "Tên Sản phẩm": product.name,
-          "Danh mục": product.category?.name,
-          "Giá gốc (VNĐ)": product.price,
-          "Giảm giá (%)": product.discount,
-          "Giá bán (VNĐ)": finalPrice,
-          "Tình trạng kho": product.inventoryStatus,
-          "Hiển thị": product.isActive ? "Đang hoạt động" : "Ngừng",
-          "Ngày tạo": new Date(product.createdAt).toLocaleString("vi-VN"),
-        };
-      });
+  // B. Mutation Xóa nhiều sản phẩm
+  const mutationDeleteMany = useMutationHooks((ids) =>
+    ProductService.deleteManyProducts(ids)
+  );
+  const {
+    isPending: isPendingDeleteMany,
+    isSuccess: isSuccessDeleteMany,
+    isError: isErrorDeleteMany,
+    data: dataDeleteMany,
+    error: errorDeleteMany,
+  } = mutationDeleteMany;
 
-      // Tạo file Excel
-      const worksheet = XLSX.utils.json_to_sheet(formattedData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "DanhSachSanPham"); // Tên của sheet
+  // C. Mutation Xuất Excel
+  const mutationExport = useMutationHooks((params) =>
+    ProductService.getAllProducts(params)
+  );
+  const {
+    isPending: isPendingExport,
+    isSuccess: isSuccessExport,
+    isError: isErrorExport,
+    data: dataExport,
+    error: errorExport,
+  } = mutationExport;
 
-      // Tải file về máy
-      XLSX.writeFile(workbook, "DanhSachSanPham.xlsx");
-      messageApi.success({
-        content: "Xuất file Excel thành công!",
-        key: "export",
-        duration: 2,
-      });
-    },
-    onError: (error) => {
-      messageApi.error({
-        content: `Xuất file thất bại: ${
-          error.response.data.message || error.message
-        }`,
-        key: "export",
-        duration: 2,
-      });
-    },
-  });
+  // --- 3. USE EFFECTS (Xử lý Side Effects) ---
 
-  const deleteMutation = useMutation({
-    mutationFn: (id) => {
-      return ProductService.deleteProduct(id);
-    },
-    onSuccess: () => {
-      messageApi.success("Xóa sản phẩm thành công!");
-      // Ra lệnh đi lấy lại danh sách sản phẩm mới nhất
-      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
-    },
-    onError: (error) => {
+  // Xử lý Xóa 1 sản phẩm
+  useEffect(() => {
+    if (isSuccessDelete && dataDelete) {
+      if (dataDelete.status === "OK") {
+        messageApi.success("Xóa sản phẩm thành công!");
+        queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+        setIsDeleteModalOpen(false);
+        setDeletingProductId(null);
+      } else {
+        messageApi.error(dataDelete.message || "Xóa thất bại!");
+      }
+    } else if (isErrorDelete) {
       messageApi.error(
-        `Xóa thất bại: ${error.response.data.message || error.message}`
+        errorDelete?.response?.data?.message || "Lỗi xóa sản phẩm!"
       );
-    },
-  });
+    }
+  }, [
+    isSuccessDelete,
+    isErrorDelete,
+    dataDelete,
+    errorDelete,
+    messageApi,
+    queryClient,
+  ]);
 
+  // Xử lý Xóa nhiều sản phẩm
+  useEffect(() => {
+    if (isSuccessDeleteMany && dataDeleteMany) {
+      if (dataDeleteMany.status === "OK") {
+        messageApi.success("Đã xóa các sản phẩm đã chọn!");
+        queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+        setSelectedRowKeys([]);
+        setIsDeleteManyModalOpen(false);
+      } else {
+        messageApi.error(dataDeleteMany.message || "Xóa nhiều thất bại!");
+      }
+    } else if (isErrorDeleteMany) {
+      messageApi.error(
+        errorDeleteMany?.response?.data?.message || "Lỗi xóa nhiều!"
+      );
+    }
+  }, [
+    isSuccessDeleteMany,
+    isErrorDeleteMany,
+    dataDeleteMany,
+    errorDeleteMany,
+    messageApi,
+    queryClient,
+  ]);
+
+  // Xử lý Xuất Excel
+  useEffect(() => {
+    if (isSuccessExport && dataExport) {
+      messageApi.destroy("export_loading");
+
+      try {
+        const productsToExport = dataExport.data || [];
+        if (productsToExport.length === 0) {
+          messageApi.warning("Không có dữ liệu để xuất");
+          return;
+        }
+
+        const formattedData = productsToExport.map((product) => {
+          const finalPrice =
+            product.price * (1 - (product.discount || 0) / 100);
+          return {
+            "ID Sản phẩm": product._id,
+            "Tên Sản phẩm": product.name,
+            "Danh mục": product.category?.name,
+            "Giá gốc (VNĐ)": product.price,
+            "Giảm giá (%)": product.discount,
+            "Giá bán (VNĐ)": finalPrice,
+            "Tình trạng kho": product.inventoryStatus,
+            "Hiển thị": product.isActive ? "Đang hoạt động" : "Ngừng",
+            "Ngày tạo": new Date(product.createdAt).toLocaleString("vi-VN"),
+          };
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(formattedData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "DanhSachSanPham");
+
+        XLSX.writeFile(workbook, "DanhSachSanPham.xlsx");
+        messageApi.success("Xuất file Excel thành công!");
+      } catch (error) {
+        console.error("Export error:", error);
+        messageApi.error("Có lỗi khi tạo file Excel");
+      }
+    } else if (isErrorExport) {
+      messageApi.destroy("export_loading");
+
+      messageApi.error(
+        errorExport?.response?.data?.message || "Lỗi lấy dữ liệu xuất file!"
+      );
+    }
+  }, [isSuccessExport, isErrorExport, dataExport, errorExport, messageApi]);
   const handleDeleteProduct = (productId) => {
     console.log("Bước 1: handleDeleteProduct được gọi với ID:", productId);
     setDeletingProductId(productId);
@@ -145,7 +216,7 @@ const AdminProducts = () => {
       "Bước 2: Xác nhận xóa → gọi mutation với ID:",
       deletingProductId
     );
-    deleteMutation.mutate(deletingProductId);
+    mutationDelete.mutate(deletingProductId);
     setIsDeleteModalOpen(false);
   };
 
@@ -155,23 +226,12 @@ const AdminProducts = () => {
     setDeletingProductId(null);
   };
 
-  const deleteManyMutation = useMutation({
-    mutationFn: (ids) => ProductService.deleteManyProducts(ids),
-    onSuccess: () => {
-      messageApi.success("Đã xóa các sản phẩm đã chọn!");
-      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
-      setSelectedRowKeys([]); // Xóa các lựa chọn sau khi xóa thành công
-    },
-    onError: (error) =>
-      messageApi.error(error.response.data.message || error.message),
-  });
-
   const handleDeleteManyProducts = () => {
     setIsDeleteManyModalOpen(true);
   };
 
   const confirmDeleteMany = () => {
-    deleteManyMutation.mutate(selectedRowKeys);
+    mutationDeleteMany.mutate(selectedRowKeys);
     setIsDeleteManyModalOpen(false);
   };
 
@@ -283,10 +343,10 @@ const AdminProducts = () => {
             size="small"
             icon={<DeleteOutlined />}
             onClick={() => handleDeleteProduct(record._id)}
-            loading={
-              deleteMutation.isPending &&
-              deleteMutation.variables === record._id
-            }
+            // loading={
+            //   isPendingDelete &&
+            //   mutationDelete.variables === record._id
+            // }
           />
         </Space>
       ),
@@ -307,12 +367,12 @@ const AdminProducts = () => {
   const handleExportExcel = () => {
     messageApi.loading({
       content: "Đang tải dữ liệu...",
-      key: "export",
-      duration: 0,
+      key: "export_loading",
+      duration: 1,
     });
     // Gọi API để lấy TẤT CẢ sản phẩm (page 1, limit = tổng số sản phẩm)
     // với các bộ lọc hiện tại
-    exportMutation.mutate({
+    mutationExport.mutate({
       page: 1,
       limit: totalProducts > 0 ? totalProducts : 1000, // Lấy tất cả
       search,
@@ -358,7 +418,7 @@ const AdminProducts = () => {
         okText="Xóa"
         cancelText="Hủy"
         okButtonProps={{ danger: true }}
-        confirmLoading={deleteMutation.isPending}
+        confirmLoading={isPendingDelete}
       >
         <p>
           Bạn có chắc chắn muốn xóa sản phẩm này? Hành động này{" "}
@@ -375,7 +435,7 @@ const AdminProducts = () => {
         okText="Xóa"
         cancelText="Hủy"
         okButtonProps={{ danger: true }}
-        confirmLoading={deleteManyMutation.isPending}
+        confirmLoading={isPendingDeleteMany}
       >
         <p>Bạn có chắc chắn muốn xóa {selectedRowKeys.length} sản phẩm này?</p>
         <p>
@@ -395,7 +455,7 @@ const AdminProducts = () => {
               type="primary"
               icon={<DownloadOutlined />}
               onClick={handleExportExcel}
-              loading={exportMutation.isPending}
+              loading={isPendingExport}
               style={{ backgroundColor: "#10893E", borderColor: "#10893E" }}
             >
               Xuất Excel
@@ -465,7 +525,7 @@ const AdminProducts = () => {
                   type="primary"
                   icon={<DeleteOutlined />}
                   onClick={handleDeleteManyProducts}
-                  loading={deleteManyMutation.isPending}
+                  loading={mutationDeleteMany.isPending}
                   textButton={`Xóa ${selectedRowKeys.length} mục`}
                 />
               )}

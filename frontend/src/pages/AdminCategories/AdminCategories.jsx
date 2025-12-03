@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Table, Modal, Form, Input, Card, Space, Spin, Alert } from "antd";
 import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutationHooks } from "../../hooks/useMutationHook"; // Import hook
+
 import * as CategoryService from "../../services/CategoryService";
 import { useMessageApi } from "../../context/MessageContext";
 import ButtonComponent from "../../components/common/ButtonComponent/ButtonComponent";
@@ -30,40 +32,67 @@ const AdminCategories = () => {
     retryDelay: 1000,
   });
 
-  // 3. DÙNG useMutation ĐỂ TẠO DANH MỤC MỚI
-  const createMutation = useMutation({
-    mutationFn: (data) => CategoryService.createCategory(data),
-    onSuccess: (data) => {
-      showSuccess(data.message || "Thêm danh mục thành công!");
-      setIsModalOpen(false);
-      form.resetFields();
-      // Ra lệnh cho React Query làm mới lại dữ liệu có key là 'categories'
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
-    },
-    onError: (error) => {
-      showError(error.response?.data?.message || error.message);
-    },
-  });
+  // 2. MUTATION: TẠO MỚI
+  const mutationCreate = useMutationHooks((data) => CategoryService.createCategory(data));
+  const { 
+      isPending: isPendingCreate, 
+      isSuccess: isSuccessCreate, 
+      isError: isErrorCreate, 
+      data: dataCreate,
+      error: errorCreate
+  } = mutationCreate;
 
-  const updateMutation = useMutation({
-    mutationFn: (data) => CategoryService.updateCategory(data.id, data.data),
-    onSuccess: (data) => {
-      showSuccess(data.message || "Cập nhật danh mục thành công!");
-      setIsEditModalOpen(false);
-      form.resetFields();
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
-    },
-    onError: (error) => {
-      showError(error.response?.data?.message || error.message);
-    },
-  });
+  // 3. MUTATION: CẬP NHẬT
+  const mutationUpdate = useMutationHooks((data) => CategoryService.updateCategory(data.id, data.data));
+  const { 
+      isPending: isPendingUpdate, 
+      isSuccess: isSuccessUpdate, 
+      isError: isErrorUpdate, 
+      data: dataUpdate,
+      error: errorUpdate
+  } = mutationUpdate;
+
+// 4. USE EFFECT XỬ LÝ KẾT QUẢ TẠO MỚI
+  useEffect(() => {
+    if (isSuccessCreate && dataCreate) {
+        if(dataCreate.status === 'OK') {
+            showSuccess(dataCreate.message || "Thêm danh mục thành công!");
+            setIsModalOpen(false);
+            form.resetFields();
+            queryClient.invalidateQueries({ queryKey: ["categories"] });
+        } else {
+            showError(dataCreate.message || "Lỗi tạo danh mục");
+        }
+    } else if (isErrorCreate) {
+        showError(errorCreate?.response?.data?.message || "Đã xảy ra lỗi khi tạo!");
+    }
+  }, [isSuccessCreate, isErrorCreate, dataCreate, errorCreate, showSuccess, showError, form, queryClient]);
+
+  // 5. USE EFFECT XỬ LÝ KẾT QUẢ CẬP NHẬT
+  useEffect(() => {
+    if (isSuccessUpdate && dataUpdate) {
+        if(dataUpdate.status === 'OK') {
+            showSuccess(dataUpdate.message || "Cập nhật danh mục thành công!");
+            setIsEditModalOpen(false);
+            setEditingCategory(null);
+            form.resetFields();
+            queryClient.invalidateQueries({ queryKey: ["categories"] });
+        } else {
+            showError(dataUpdate.message || "Lỗi cập nhật");
+        }
+    } else if (isErrorUpdate) {
+        showError(errorUpdate?.response?.data?.message || "Đã xảy ra lỗi khi cập nhật!");
+    }
+  }, [isSuccessUpdate, isErrorUpdate, dataUpdate, errorUpdate, showSuccess, showError, form, queryClient]);
+
+
 
   // 4. KẾT NỐI MODAL VỚI FORM VÀ MUTATION
   const handleOk = () => {
     form.submit(); // Kích hoạt onFinish của Form
   };
   const onFinish = (values) => {
-    createMutation.mutate(values); // Gửi dữ liệu từ form đi
+    mutationCreate.mutate(values); // Gửi dữ liệu từ form đi
   };
 
   const handleEdit = (record) => {
@@ -82,7 +111,7 @@ const AdminCategories = () => {
 
   const onUpdateFinish = (values) => {
     // Gọi mutation với id và dữ liệu mới
-    updateMutation.mutate({ id: editingCategory._id, data: values });
+    mutationUpdate.mutate({ id: editingCategory._id, data: values });
   };
 
   const handleCancelEdit = () => {
@@ -107,12 +136,12 @@ const AdminCategories = () => {
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
           />
-          <ButtonComponent
+          {/* <ButtonComponent
             danger
             type="primary"
             size="small"
             icon={<DeleteOutlined />}
-          />
+          /> */}
         </Space>
       ),
     },
@@ -174,7 +203,7 @@ const AdminCategories = () => {
         open={isModalOpen}
         onOk={handleOk}
         onCancel={() => setIsModalOpen(false)}
-        confirmLoading={createMutation.isPending} // Nút OK sẽ loading khi đang gọi API
+        confirmLoading={isPendingCreate} // Nút OK sẽ loading khi đang gọi API
       >
         <Form form={form} layout="vertical" onFinish={onFinish}>
           <Form.Item
@@ -198,7 +227,7 @@ const AdminCategories = () => {
         open={isEditModalOpen}
         onOk={handleUpdateOk}
         onCancel={handleCancelEdit}
-        confirmLoading={updateMutation.isPending}
+        confirmLoading={isPendingUpdate}
         //forceRender // Xóa state của form khi đóng
       >
         <Form form={form} layout="vertical" onFinish={onUpdateFinish}>
