@@ -6,7 +6,7 @@ import { Card, Layout, Typography, Space, Result, Spin, Button } from "antd";
 import * as PaymentService from "../../services/PaymentService";
 import * as OrderService from "../../services/OrderService"; // Cần import để tạo đơn thật
 import ButtonComponent from "../../components/common/ButtonComponent/ButtonComponent";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { clearCart } from "../../redux/slides/cartSlide";
 import { useMessageApi } from "../../context/MessageContext";
 
@@ -19,6 +19,7 @@ const containerVariants = {
 };
 
 export default function OrderSuccess({ order }) {
+  const user = useSelector((state) => state.user);
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const dispatch = useDispatch();
@@ -187,6 +188,7 @@ export default function OrderSuccess({ order }) {
                         textButton={"Tiếp tục mua sắm"}
                       />
                     </Link>
+                    {user?.id && (
                     <Link to={`/my-order-details/${createdOrder?._id}`}>
                       <Button
                         size="large"
@@ -196,6 +198,7 @@ export default function OrderSuccess({ order }) {
                         Xem chi tiết đơn hàng
                       </Button>
                     </Link>
+                    )}
                   </Space>
                 </div>
               </>
