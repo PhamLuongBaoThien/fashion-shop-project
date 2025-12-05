@@ -2,8 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useSearchParams, useLocation, Link } from "react-router-dom";
 import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
-import { Card, Layout, Typography, Space, Result, Spin, Button } from "antd";
-import * as PaymentService from "../../services/PaymentService";
+import { Card, Layout, Typography, Space, Spin, Button } from "antd";
 import * as OrderService from "../../services/OrderService"; // Cần import để tạo đơn thật
 import ButtonComponent from "../../components/common/ButtonComponent/ButtonComponent";
 import { useDispatch, useSelector } from "react-redux";
