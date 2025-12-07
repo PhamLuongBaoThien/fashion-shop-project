@@ -20,7 +20,6 @@ import { Link } from "react-router-dom";
 import "./ProfilePage.css";
 import { useSelector } from "react-redux";
 import ButtonComponent from "../../components/common/ButtonComponent/ButtonComponent";
-import { useMessageApi } from "../../context/MessageContext";
 import * as OrderService from "../../services/OrderService";
 
 const ProfilePage = () => {
@@ -28,7 +27,6 @@ const ProfilePage = () => {
   const navigate = useNavigate();
 
   // Sử dụng optional chaining để tránh lỗi nếu context chưa sẵn sàng
-  const messageApi = useMessageApi();
 
   // --- STATE CHO ĐƠN HÀNG ---
   const [orders, setOrders] = useState([]);

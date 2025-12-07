@@ -5,14 +5,19 @@ const routes = require("./routes");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+
+// chat socket.io setup
+const { createServer } = require("http"); 
+const { Server } = require("socket.io");
+const socketManager = require("./socket/socketManager"); 
+
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT;
 
 
-// app.use(cors()); // tránh truy cập vào API từ domain khác
-app.use(cookieParser()); // luôn luôn đứng trước các route
+
 
 app.use(cors({
   origin: 'http://localhost:3000',        // FE URL
@@ -21,15 +26,37 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'token', 'Authorization'],
   exposedHeaders: ['Set-Cookie']
 }));
+app.use(express.json({ limit: "50mb" })); // Hỗ trợ đọc JSON body với kích thước lớn. Mặc định, Express chỉ cho phép request body (dữ liệu gửi lên) có kích thước rất nhỏ (khoảng 100kb).
+// app.use(bodyParser.json()); // luôn luôn đứng trước các route
+app.use(cookieParser()); // luôn luôn đứng trước các route
+
+// Thiết lập Socket.io
+// (Socket.io cần chạy trên HTTP Server thuần chứ không chạy trực tiếp trên Express app)
+const httpServer = createServer(app);
+
+// CORS giúp Frontend (port 3000) có thể kết nối tới Backend (port 3001)
+const io = new Server(httpServer, {
+  cors: {
+    origin: "http://localhost:3000", // Địa chỉ Frontend React của bạn
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
+
+// Truyền biến 'io' vào hàm socketManager để bắt đầu lắng nghe
+socketManager(io);
+
+
+app.use((req, res, next) => {
+    req.io = io;
+    next();
+});
 
 
 
-app.use(bodyParser.json()); // luôn luôn đứng trước các route
 
 routes(app);
 
-// app.use(express.json());
-// app.use(express.urlencoded({ extended: true }));
 
 mongoose
   .connect(
@@ -44,6 +71,6 @@ mongoose
 
 
 
-app.listen(port, () => {
+httpServer.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });

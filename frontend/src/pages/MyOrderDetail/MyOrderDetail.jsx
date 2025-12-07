@@ -1,14 +1,12 @@
 import { useState, useEffect, useRef } from "react"; // Thêm useRef
 import { motion } from "framer-motion";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link, useParams} from "react-router-dom";
 import {
-  ArrowLeftOutlined,
   PrinterOutlined,
   DownloadOutlined,
   CheckCircleOutlined,
   SyncOutlined,
   CloseCircleOutlined,
-  EyeOutlined,
   UserOutlined,
   EnvironmentOutlined,
   CarOutlined,

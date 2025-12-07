@@ -35,7 +35,7 @@ const AdminUpdateProductPage = () => {
   const { id: productId } = useParams();
   const queryClient = useQueryClient();
 
-  const { messageApi, showError, showSuccess } = useMessageApi();
+  const { showError, showSuccess } = useMessageApi();
 
   // 1. DÙNG useQuery ĐỂ FETCH DỮ LIỆU SẢN PHẨM CẦN SỬA
   const { data: productDetails, isLoading: isLoadingDetails } = useQuery({

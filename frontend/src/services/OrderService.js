@@ -1,4 +1,3 @@
-import axios from "axios";
 import { axiosJWT } from "./UserService"; // Import cả 2
 
 // Lấy base URL từ biến môi trường

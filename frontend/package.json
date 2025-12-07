@@ -29,6 +29,7 @@
     "recharts": "^3.3.0",
     "redux-persist": "^6.0.0",
     "slick-carousel": "^1.8.1",
+    "socket.io-client": "^4.8.1",
     "styled-components": "^6.1.19",
     "web-vitals": "^2.1.4",
     "xlsx": "^0.18.5"

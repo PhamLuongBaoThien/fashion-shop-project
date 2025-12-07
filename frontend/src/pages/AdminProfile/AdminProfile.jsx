@@ -56,7 +56,7 @@ const AdminProfile = () => {
   // --- 2. LOGIC TÍNH TOÁN TÊN QUYỀN ---
   const roleDisplay = useMemo(() => {
       // Nếu là email chủ sở hữu
-      if (user?.email === 'plbthien2004@gmail.com') {
+      if (user?.email === 'admin1@gmail.com') {
           return { name: "Super Admin (Owner)", color: "gold" };
       }
 

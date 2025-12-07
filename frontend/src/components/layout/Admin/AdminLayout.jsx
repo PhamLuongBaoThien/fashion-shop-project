@@ -20,6 +20,7 @@ import * as UserService from "../../../services/UserService";
 import { resetUser } from "../../../redux/slides/userSlide";
 import { clearCart } from "../../../redux/slides/cartSlide";
 import { persistor } from "../../../redux/store";
+import ButtonComponent from "../../common/ButtonComponent/ButtonComponent";
 
 const { Sider, Content, Header } = Layout;
 
@@ -79,6 +80,11 @@ function AdminLayout() {
       icon: <SettingOutlined />,
       label: <Link to="/system/admin/profile">Thông tin tài khoản</Link>,
     },
+    {
+      key: "/system/admin/chat",
+      icon: <UserOutlined />,
+      label: <Link to="/system/admin/chat">Chăm sóc khách hàng</Link>,
+    }
   ];
 
   const userMenu = [
@@ -162,14 +168,14 @@ function AdminLayout() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <Button
+            <ButtonComponent
               type="text"
               icon={collapsed ? <MenuOutlined /> : <CloseOutlined />}
               onClick={() => setCollapsed(!collapsed)}
               className="admin-toggle-btn"
             />
 
-            <Button
+            <ButtonComponent
               type="text"
               icon={<MenuOutlined />}
               onClick={() => setMobileDrawerOpen(true)}

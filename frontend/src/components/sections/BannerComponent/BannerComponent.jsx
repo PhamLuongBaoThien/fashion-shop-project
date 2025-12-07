@@ -12,7 +12,7 @@ const BannerComponent = ({ imgBanner1 }) => {
     if (user?.id) {
       // ĐÃ ĐĂNG NHẬP → ấm áp, sang trọng, gần gũi
       return [
-        `Chào ${user.username || "bạn"}!`,
+        `Chào ${user?.username || "bạn"}!`,
         "Lâu rồi không gặp!",
         "Giỏ hàng vẫn còn nhớ bạn lắm!",
         "Cảm ơn bạn đã chọn chúng mình!",
@@ -35,6 +35,8 @@ const BannerComponent = ({ imgBanner1 }) => {
   }, [user?.id]);
 
   useEffect(() => {
+    if (!texts[index]) return;
+
     const timeout = setTimeout(
       () => {
         const currentText = texts[index];
@@ -64,6 +66,9 @@ const BannerComponent = ({ imgBanner1 }) => {
     return () => clearTimeout(timeout);
   }, [subIndex, isDeleting, index, texts]);
 
+    const currentTextToRender = texts[index] || ""; 
+
+
   return (
     <div style={{ position: "relative" }}>
       <img
@@ -78,7 +83,7 @@ const BannerComponent = ({ imgBanner1 }) => {
 
       {/* Text Typing */}
       <h1 className="banner-text">
-        {texts[index].substring(0, subIndex)}
+        {currentTextToRender.substring(0, subIndex)}
         <span className="caret">|</span>
       </h1>
 

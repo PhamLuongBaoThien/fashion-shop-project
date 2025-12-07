@@ -4,8 +4,11 @@ import { useLocation } from "react-router-dom";
 import HeaderComponent from "../HeaderComponent/HeaderComponent";
 import FooterComponent from "../FooterComponent/FooterComponent";
 import BreadcrumbComponent from "../../common/BreadcrumbComponent/BreadcrumbComponent";
+import ChatBox from "../../ChatBox/ChatBox";
+import { useSelector } from "react-redux";
 
 const DefaultComponent = ({ children }) => {
+  const user = useSelector((state) => state.user);
   const { pathname } = useLocation();
   
   // Kiểm tra xem có phải trang chủ không
@@ -24,7 +27,10 @@ const DefaultComponent = ({ children }) => {
         {children}
         <FooterComponent />
       </div>
-    </div>
+      {user?.isAdmin === false &&
+      <ChatBox />
+      }
+      </div>
   );
 };
 

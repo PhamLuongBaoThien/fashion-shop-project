@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -51,7 +51,6 @@ const itemVariants = {
 };
 
 export default function CartPage() {
-  const [isLoading, setIsLoading] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null); // { product: 'id', size: 'M' }
 
@@ -537,7 +536,6 @@ export default function CartPage() {
                       type="primary"
                       block
                       size="large"
-                      loading={isLoading}
                       onClick={handleCheckout}
                       disabled={cart.cartItems.length === 0}
                       textButton={"Tiến hành thanh toán"}

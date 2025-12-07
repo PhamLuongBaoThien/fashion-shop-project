@@ -7,7 +7,6 @@ import {
   Card,
   Tag,
   Input,
-  Button,
   Modal,
   Drawer,
   Tooltip,
@@ -26,7 +25,6 @@ import {
   UnlockOutlined,
   HistoryOutlined,
   DownloadOutlined,
-  UserOutlined,
   UserAddOutlined,
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
@@ -99,7 +97,7 @@ const AdminUsers = () => {
   console.log("Tìm thấy Role:", currentUserRole);
   // 1. Xác định TRÙM CUỐI (Chỉ Owner hoặc người giữ chức Super Admin)
   const isSuperAdmin =
-    user?.email === "plbthien2004@gmail.com" || // Email cứng
+    user?.email === process.env.REACT_APP_ADMIN_MAIL || // Email cứng
     currentUserRole?.name === "Super Admin";
   // 2. Xác định ai được PHÉP QUẢN LÝ (Để hiện khung UI)
   // Bao gồm Trùm cuối HOẶC Admin thường có quyền 'system'
@@ -112,7 +110,7 @@ const AdminUsers = () => {
   // 3. LỌC DANH SÁCH ROLE (Quan trọng nhất)
   const availableRolesOptions = rolesData?.data
     ?.filter((r) => {
-      if (canManageRoles && user?.email === "plbthien1@gmail.com") return true; // Chủ sở hữu thấy hết
+      if (canManageRoles && user?.email === process.env.REACT_APP_ADMIN_MAIL) return true; // Chủ sở hữu thấy hết
       return r.name !== "Super Admin"; // Các Admin khác ko thấy Super Admin
     })
     .map((r) => ({ label: r.name, value: r._id }));

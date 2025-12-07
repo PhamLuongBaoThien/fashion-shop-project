@@ -23,6 +23,7 @@ import MyOrderDetail from "../pages/MyOrderDetail/MyOrderDetail.jsx";
 import OrderSuccess from "../pages/CheckoutPage/OrderSuccess.jsx";
 import AdminOrderDetails from "../pages/AdminOrders/AdminOrderDetails.jsx";
 import ChangePasswordPage from "../pages/ChangePasswordPage/ChangePasswordPage.jsx";
+import AdminChatPage from "../pages/AdminChatPage/AdminChatPage.jsx";
 
 export const routes = [
   {
@@ -130,7 +131,11 @@ export const routes = [
         path: "profile", // URL: /system/admin/users
         page: AdminProfile,
       },
-    ],
+      {
+        path: "chat",
+        page: AdminChatPage
+      }
+      ],
   },
   {
     path: "/admin/sign-in",
