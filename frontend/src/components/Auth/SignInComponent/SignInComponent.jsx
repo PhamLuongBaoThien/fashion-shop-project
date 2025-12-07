@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import ButtonComponent from "../../common/ButtonComponent/ButtonComponent";
 import InputComponent from "../../common/InputComponent/InputComponent";
 import * as UserService from "../../../services/UserService";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useMutationHooks } from "../../../hooks/useMutationHook";
 import { useMessageApi } from "../../../context/MessageContext";
 import { jwtDecode } from "jwt-decode";
@@ -19,6 +19,7 @@ import { persistor } from "../../../redux/store";
 
 const SignInComponent = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { showSuccess, showError } = useMessageApi();
   const dispatch = useDispatch();
   // Gọi API qua mutation hook
@@ -87,7 +88,11 @@ const SignInComponent = () => {
             }
 
             // D. Điều hướng
-            navigate("/"); // User về trang chủ
+            if (location.state) {
+              navigate(location.state);
+            } else {
+              navigate("/"); // User về trang chủ
+            }
           }
         }
       } else if (data.status === "ERR") {

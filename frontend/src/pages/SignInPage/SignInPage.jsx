@@ -7,17 +7,6 @@ import SignInComponent from "../../components/Auth/SignInComponent/SignInCompone
 import AuthLeftComponent from "../../components/Auth/AuthLeftComponent/AuthLeftComponent";
 
 const SignInPage = () => {
-  const navigate = useNavigate();
-  const user = useSelector((state) => state.user);
-  useEffect(() => {
-        // Nếu user.id đã tồn tại (nghĩa là đã đăng nhập)
-        if (user.id) {
-            navigate('/'); // Chuyển hướng về trang chủ
-        }
-
-
-    }, [user.id, user.isAdmin, navigate]); // Chạy lại khi user.id hoặc navigate thay đổi
-
   return (
     <div className="auth-page">
       <motion.div

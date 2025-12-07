@@ -131,15 +131,15 @@ const ChatBox = () => {
     if (user?.id) {
       const newSocket = io(ENDPOINT);
       setSocket(newSocket);
-      newSocket.emit("join_chat", user.id);
+      newSocket.emit("join_chat", user.id); // Tham gia phòng chat
 
       newSocket.on("new_message", (data) => {
         if (data.sender !== user.id) {
-          setMessages((prev) => [...prev, data]);
+          setMessages((prev) => [...prev, data]); // prev là tin cũ, data là tin mới
 
           // LOGIC BADGE: Nếu chat đang đóng thì tăng số
           if (!isOpen) {
-            setUnreadCount((prev) => prev + 1);
+            setUnreadCount((prev) => prev + 1); // prev là số hiện tại
           }
         }
       });
@@ -148,21 +148,20 @@ const ChatBox = () => {
     }
   }, [user?.id]); // Bỏ isOpen ra khỏi dependency connect để socket luôn chạy ngầm nhận thông báo
 
-  // 2. LẤY LỊCH SỬ + CHECK NGÀY MỚI (ĐÃ CẬP NHẬT)
+  // 2. LẤY LỊCH SỬ + CHECK NGÀY MỚI
   useEffect(() => {
     const fetchHistory = async () => {
       if (user?.id) {
         try {
           const res = await ChatService.getMessages();
           if (res?.status === "OK") {
-            let historyMessages = res.data || [];
+            let historyMessages = res.data || []; 
 
             // Lấy conversationId từ tin nhắn đầu tiên (nếu có) để dùng cho markAsRead
             if (historyMessages.length > 0) {
               setConversationId(historyMessages[0].conversationId);
             }
 
-            // ... (Logic chào mừng giữ nguyên) ...
             const today = new Date().toDateString();
             const lastMsg =
               historyMessages.length > 0
@@ -192,8 +191,7 @@ const ChatBox = () => {
       }
     };
 
-    // Gọi khi component mount (để check tin nhắn cũ nếu cần)
-    if (user?.id) fetchHistory();
+    if (user?.id) fetchHistory(); // chỉ fetch khi có user
   }, [user?.id, user?.name, user?.username]);
 
   // XỬ LÝ KHI MỞ KHUNG CHAT -> RESET BADGE & MARK READ
@@ -216,20 +214,20 @@ const ChatBox = () => {
 
     const msgData = {
       senderId: user.id,
-      receiverId: "ADMIN",
+      receiverId: "ADMIN", // Server sẽ xử lý "ADMIN" thành ID thực
       text: message,
-      senderType: "customer",
+      senderType: "customer", 
     };
 
-    // Optimistic Update
-    const tempMsg = { ...msgData, sender: user.id, _id: Date.now() };
+    // Optimistic Update 
+    const tempMsg = { ...msgData, sender: user.id, _id: Date.now() }; // Để hiển thị ngay không cần chờ server trả về
     setMessages((prev) => [...prev, tempMsg]);
     setMessage("");
 
     try {
       const res = await ChatService.createMessage(msgData);
       if (res?.status !== "OK") {
-        console.error("Gửi tin thất bại");
+        console.error("Gửi tin thất bại" || res?.message );
       }
     } catch (error) {
       console.error("Lỗi gửi tin nhắn:", error);
