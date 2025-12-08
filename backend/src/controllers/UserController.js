@@ -101,18 +101,18 @@ const updateUser = async (req, res) => {
     // BƯỚC 2: TÁI CẤU TRÚC DỮ LIỆU ĐỊA CHỈ
     // Gom các trường địa chỉ vào một object con
     updateData.address = {
-        province: data.province,
-        district: data.district,
-        ward: data.ward,
-        detailAddress: data.detailAddress,
+      province: data.province,
+      district: data.district,
+      ward: data.ward,
+      detailAddress: data.detailAddress,
     };
 
     // BƯỚC 3: THÊM CÁC TRƯỜNG CÒN LẠI VÀO updateData
     // Duyệt qua các key trong req.body và thêm vào nếu nó không phải là trường địa chỉ
-    Object.keys(data).forEach(key => {
-        if (!['province', 'district', 'ward', 'detailAddress'].includes(key)) {
-            updateData[key] = data[key];
-        }
+    Object.keys(data).forEach((key) => {
+      if (!["province", "district", "ward", "detailAddress"].includes(key)) {
+        updateData[key] = data[key];
+      }
     });
 
     // Kiểm tra xem Multer có xử lý file nào không
@@ -209,79 +209,98 @@ const logoutUser = async (req, res) => {
 };
 
 const loginAdmin = async (req, res) => {
-    try {
-        const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-        const emailReg = /^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;
-        if (!email || !password) {
-            return res.status(400).json({ status: "ERR", message: "The input is required" });
-        }
-        if (!emailReg.test(email)) {
-            return res.status(400).json({ status: "ERR", message: "The email is invalid" });
-        }
-
-        // Gọi đến một service function mới chỉ dành cho admin
-        const response = await UserService.loginAdmin({ email, password });
-        
-        // Đoạn code này giống hệt loginUser
-        const { refresh_token, ...newResponse } = response;
-        res.cookie("refresh_token", refresh_token, {
-            httpOnly: true,
-            secure: false, 
-            sameSite: "lax",
-            maxAge: 365 * 24 * 60 * 60 * 1000,
-        });
-        return res.status(200).json({ status: "OK", data: newResponse });
-
-    } catch (error) {
-        // Khối catch này sẽ bắt lỗi "Không phải admin" hoặc "Sai mật khẩu"
-        return res.status(400).json({ 
-            status: "ERR", 
-            message: error.message 
-        });
+    const emailReg = /^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ status: "ERR", message: "The input is required" });
     }
+    if (!emailReg.test(email)) {
+      return res
+        .status(400)
+        .json({ status: "ERR", message: "The email is invalid" });
+    }
+
+    // Gọi đến một service function mới chỉ dành cho admin
+    const response = await UserService.loginAdmin({ email, password });
+
+    // Kiểm tra xem đang chạy ở Production hay Local
+    // Render thường tự set NODE_ENV = 'production'
+    const isProduction = process.env.NODE_ENV === "production";
+
+    // Đoạn code này giống hệt loginUser
+    const { refresh_token, ...newResponse } = response;
+    res.cookie("refresh_token", refresh_token, {
+      httpOnly: true,
+      // Nếu là Production (Render) -> Bắt buộc True. Local -> False
+      secure: isProduction ? true : false,
+
+      // Nếu là Production (Khác domain) -> Bắt buộc 'None'. Local -> 'Lax'
+      sameSite: isProduction ? "None" : "Lax",
+      maxAge: 365 * 24 * 60 * 60 * 1000,
+    });
+    return res.status(200).json({ status: "OK", data: newResponse });
+  } catch (error) {
+    // Khối catch này sẽ bắt lỗi "Không phải admin" hoặc "Sai mật khẩu"
+    return res.status(400).json({
+      status: "ERR",
+      message: error.message,
+    });
+  }
 };
 
 const changePassword = async (req, res) => {
-    try {
-        const userId = req.params.id;
-        const data = req.body;
-        
-        if (!userId) {
-            return res.status(200).json({ status: 'ERR', message: 'User ID is required' });
-        }
-        
-        if (!data.oldPassword || !data.newPassword || !data.confirmPassword) {
-            return res.status(200).json({ status: 'ERR', message: 'Vui lòng nhập đầy đủ thông tin' });
-        }
+  try {
+    const userId = req.params.id;
+    const data = req.body;
 
-        const response = await UserService.changePassword(userId, data);
-        return res.status(200).json(response);
-    } catch (e) {
-        return res.status(404).json({ message: e });
+    if (!userId) {
+      return res
+        .status(200)
+        .json({ status: "ERR", message: "User ID is required" });
     }
-}
+
+    if (!data.oldPassword || !data.newPassword || !data.confirmPassword) {
+      return res
+        .status(200)
+        .json({ status: "ERR", message: "Vui lòng nhập đầy đủ thông tin" });
+    }
+
+    const response = await UserService.changePassword(userId, data);
+    return res.status(200).json(response);
+  } catch (e) {
+    return res.status(404).json({ message: e });
+  }
+};
 
 const createUserByAdmin = async (req, res) => {
-    try {
-        const { username, email, password, phone } = req.body;
-        
-        // Validate cơ bản
-        if (!username || !email || !password || !phone) {
-            return res.status(200).json({ status: 'ERR', message: 'Vui lòng nhập đầy đủ thông tin bắt buộc' });
-        }
-        
-        // Validate email
-        const reg = /^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;
-        if (!reg.test(email)) {
-            return res.status(200).json({ status: 'ERR', message: 'Email không hợp lệ' });
-        }
+  try {
+    const { username, email, password, phone } = req.body;
 
-        const response = await UserService.createUserByAdmin(req.body);
-        return res.status(200).json(response);
-    } catch (e) {
-        return res.status(404).json({ message: e });
+    // Validate cơ bản
+    if (!username || !email || !password || !phone) {
+      return res.status(200).json({
+        status: "ERR",
+        message: "Vui lòng nhập đầy đủ thông tin bắt buộc",
+      });
     }
+
+    // Validate email
+    const reg = /^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;
+    if (!reg.test(email)) {
+      return res
+        .status(200)
+        .json({ status: "ERR", message: "Email không hợp lệ" });
+    }
+
+    const response = await UserService.createUserByAdmin(req.body);
+    return res.status(200).json(response);
+  } catch (e) {
+    return res.status(404).json({ message: e });
+  }
 };
 
 module.exports = {
@@ -295,5 +314,5 @@ module.exports = {
   logoutUser,
   loginAdmin,
   changePassword,
-  createUserByAdmin
+  createUserByAdmin,
 };
