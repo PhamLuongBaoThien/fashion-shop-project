@@ -4,14 +4,15 @@ import "./Logo.css";
 const { Title } = Typography;
 
 
-const Logo = () => {
+const Logo = ({rest}) => {
   const logoStyle = {
     fontFamily: "'Playfair Display', serif",
-    fontSize: "28px",
+    fontSize: "23px",
     fontWeight: "bold",
     color: "#262626",
     letterSpacing: "-0.5px",
     cursor: "pointer",
+    ...rest
   };
   return (
     <Link to="/" className="logo-link-wrapper">

@@ -1,5 +1,6 @@
 const Chat = require("../models/MessageModel");
 const Conversation = require("../models/ConversationModel");
+const AIService = require("./AIService");
 
 // 1. Hàm lấy lịch sử tin nhắn
 const getMessages = (userId) => {
@@ -21,8 +22,8 @@ const getMessages = (userId) => {
 
       // Lấy tin nhắn, sắp xếp cũ -> mới
       const messages = await Chat.find({ conversationId: conversation._id })
-                .sort({ createdAt: 1 })
-                .populate('sender', 'username');
+        .sort({ createdAt: 1 })
+        .populate("sender", "username");
 
       resolve({
         status: "OK",
@@ -36,7 +37,14 @@ const getMessages = (userId) => {
 };
 
 // 2. Hàm TẠO TIN NHẮN (Dùng chung cho cả Socket và API HTTP)
-const createMessage = ({ senderId, receiverId, text, senderType, images }) => {
+const createMessage = ({
+  senderId,
+  receiverId,
+  text,
+  senderType,
+  images,
+  io,
+}) => {
   return new Promise(async (resolve, reject) => {
     try {
       // LOGIC MỚI: Xác định khách hàng là ai
@@ -69,27 +77,88 @@ const createMessage = ({ senderId, receiverId, text, senderType, images }) => {
         images: images || [],
       });
 
-  
       newMessage = await newMessage.populate("sender", "username"); // Lấy thêm thông tin người gửi để hiển thị
       //populate dùng để lấy thông tin từ một collection khác dựa trên ObjectId
 
       //Cập nhật lại cuộc hội thoại với tin nhất cuối và trạng thái
       await Conversation.findByIdAndUpdate(conversation._id, {
-                lastMessage: {
-                    text: text || (images?.length ? '[Hình ảnh]' : ''),
-                    sender: senderId,
-                    seen: false,
-                    createdAt: new Date()
-                },
-                ...(senderType === 'admin' ? { status: 'active' } : {})
-            });
+        lastMessage: {
+          text: text || (images?.length ? "[Hình ảnh]" : ""),
+          sender: senderId,
+          seen: false,
+          createdAt: new Date(),
+        },
+        ...(senderType === "admin" ? { status: "active" } : {}),
+      });
 
       // Logic thêm Admin vào participants
-            if (senderType === 'admin') {
-                await Conversation.findByIdAndUpdate(conversation._id, {
-                    $addToSet: { participants: senderId } 
-                });
+      if (senderType === "admin") {
+        await Conversation.findByIdAndUpdate(conversation._id, {
+          $addToSet: { participants: senderId },
+        });
+      }
+
+      // === LOGIC CHATBOT AI ===
+      if (senderType === "customer" && conversation.status === "bot_handling") {
+        resolve({ status: "OK", message: "Message sent", data: newMessage });
+
+        (async () => {
+          try {
+            const history = await Chat.find({
+              conversationId: conversation._id,
+            })
+              .sort({ createdAt: -1 })
+              .limit(10)
+              .sort({ createdAt: 1 });
+
+            const botReplyText = await AIService.chatWithGemini(history, text);
+
+            if (botReplyText.includes("HANDOVER_TO_ADMIN")) {
+              await Conversation.findByIdAndUpdate(conversation._id, {
+                status: "active",
+              });
+              const systemMsg = await Chat.create({
+                conversationId: conversation._id,
+                sender: conversation.participants[0],
+                text: "Đang kết nối với nhân viên hỗ trợ...",
+                senderType: "bot",
+              });
+              
+              if (io) {
+                const msgToSend = { ...systemMsg._doc, senderType: "bot" }; // Fix cấu trúc trả về
+                io.to(customerId).emit("new_message", msgToSend);
+                io.to("admin_channel").emit("new_message", msgToSend);
+              }
+              return;
             }
+
+            const botMsg = await Chat.create({
+              conversationId: conversation._id,
+              sender: conversation.participants[0], 
+              text: botReplyText,
+              senderType: "bot",
+            });
+
+            await Conversation.findByIdAndUpdate(conversation._id, {
+              lastMessage: {
+                text: botReplyText,
+                sender: conversation.participants[0],
+                seen: false,
+                createdAt: new Date(),
+              },
+            });
+
+            if (io) {
+              const msgToSend = { ...botMsg._doc, senderType: "bot" };
+              io.to(customerId).emit("new_message", msgToSend);
+              io.to("admin_channel").emit("new_message", msgToSend);
+            }
+          } catch (err) {
+            console.error("Bot Error:", err);
+          }
+        })();
+        return;
+      }
 
       resolve({
         status: "OK",
@@ -113,9 +182,9 @@ const getAllConversations = () => {
         .sort({ updatedAt: -1 })
         .populate("participants", "username avatar email") // Chỉ lấy các trường cần thiết
         .populate({
-                    path: 'lastMessage.sender',
-                    select: 'username isAdmin' // Lấy tên và quyền hạn
-                })
+          path: "lastMessage.sender",
+          select: "username isAdmin", // Lấy tên và quyền hạn
+        })
         .lean(); // Dùng lean() để trả về object thuần JS, dễ gắn thêm thuộc tính
 
       // Duyệt qua từng cuộc hội thoại để đếm tin chưa đọc từ KHÁCH HÀNG

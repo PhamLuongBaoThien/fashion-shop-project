@@ -134,7 +134,7 @@ const ChatBox = () => {
       newSocket.emit("join_chat", user.id); // Tham gia phòng chat
 
       newSocket.on("new_message", (data) => {
-        if (data.sender !== user.id) {
+        if (data.sender !== user.id || data.senderType === 'bot' || data.senderType === 'admin') { // nếu tin nhắn không phải do mình gửi hoặc là từ bot/admin sẽ hiển thị ngay
           setMessages((prev) => [...prev, data]); // prev là tin cũ, data là tin mới
 
           // LOGIC BADGE: Nếu chat đang đóng thì tăng số
@@ -146,7 +146,7 @@ const ChatBox = () => {
 
       return () => newSocket.disconnect();
     }
-  }, [user?.id]); // Bỏ isOpen ra khỏi dependency connect để socket luôn chạy ngầm nhận thông báo
+  }, [user?.id, isOpen]); // Chỉ chạy lại khi user.id hoặc isOpen thay đổi
 
   // 2. LẤY LỊCH SỬ + CHECK NGÀY MỚI
   useEffect(() => {
@@ -160,6 +160,17 @@ const ChatBox = () => {
             // Lấy conversationId từ tin nhắn đầu tiên (nếu có) để dùng cho markAsRead
             if (historyMessages.length > 0) {
               setConversationId(historyMessages[0].conversationId);
+            }
+
+             // Đếm số tin nhắn có isRead = false VÀ sender không phải mình
+            const unread = historyMessages.filter(msg => {
+                const senderId = typeof msg.sender === 'object' ? msg.sender._id : msg.sender;
+                return !msg.isRead && senderId !== user.id;
+            }).length;
+            
+            // Nếu Chat đang mở thì coi như đã đọc hết (0), nếu đóng thì set số unread
+            if (!isOpen) {
+                setUnreadCount(unread);
             }
 
             const today = new Date().toDateString();
@@ -192,7 +203,7 @@ const ChatBox = () => {
     };
 
     if (user?.id) fetchHistory(); // chỉ fetch khi có user
-  }, [user?.id, user?.name, user?.username]);
+  }, [user?.id, user?.name, user?.username]); // bỏ isOpen ra vì chỉ chạy 1 lần khi load trang
 
   // XỬ LÝ KHI MỞ KHUNG CHAT -> RESET BADGE & MARK READ
   useEffect(() => {
@@ -204,8 +215,10 @@ const ChatBox = () => {
   }, [isOpen, conversationId]);
 
   // 3. AUTO SCROLL
-  useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+useEffect(() => {
+    if (isOpen) { // Chỉ scroll khi chat mở
+        scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages, isOpen]);
 
   // 4. HANDLER GỬI
@@ -286,30 +299,19 @@ const ChatBox = () => {
               bordered={false}
             >
               <MessageList>
-                {messages.map((msg, index) => {
-                  const senderId =
-                    typeof msg.sender === "object"
-                      ? msg.sender._id
-                      : msg.sender;
-                  const isMine =
-                    msg.senderType === "customer" || senderId === user.id;
+                {messages.map((msg, i) => {
+                  // QUAN TRỌNG: Bot và Admin đều hiện bên trái
+                  const isMine = msg.senderType === "customer" && 
+                                (typeof msg.sender === "object" ? msg.sender._id : msg.sender) === user.id;
 
-                  // Lấy tên hiển thị
-                  let displayName = "Admin";
-                  if (msg.senderType === "bot") {
-                    displayName = "Trợ lý ảo";
-                  } else if (msg.senderType === "admin") {
-                    // Nếu msg.sender là object (đã populate), lấy tên thật
-                    if (typeof msg.sender === "object") {
-                      const adminName = msg.sender.username || msg.sender.name;
-                      displayName = adminName
-                        ? `Admin (${adminName})`
-                        : "Admin";
-                    }
-                  }
+                  const displayName = 
+                    msg.senderType === "bot" ? "Trợ lý ảo AI" :
+                    msg.senderType === "admin" ? 
+                      (typeof msg.sender === "object" && msg.sender.username ? `Admin (${msg.sender.username})` : "Admin") :
+                    "Bạn";
 
                   return (
-                    <MessageGroup key={index} isMine={isMine}>
+                    <MessageGroup key={i} isMine={isMine}>
                       {!isMine && <SenderName>{displayName}</SenderName>}
                       <MessageBubble isMine={isMine}>{msg.text}</MessageBubble>
                     </MessageGroup>

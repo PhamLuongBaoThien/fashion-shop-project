@@ -18,7 +18,7 @@ const socketManager = (io) => {
       
       try {
         // 1. Gọi Service để lưu vào DB
-        const response = await ChatService.createMessage(data);
+        const response = await ChatService.createMessage({ ...data, io });
         
         if (response.status === 'OK') {
             const newMessage = response.data;
