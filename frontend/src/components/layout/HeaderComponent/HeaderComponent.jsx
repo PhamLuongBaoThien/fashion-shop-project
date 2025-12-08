@@ -250,7 +250,7 @@ export default function HeaderComponent() {
           {/* Mobile Search Toggle */}
           <ButtonComponent
             type="text"
-            size="large"
+            size="medium"
             className="mobile-search-btn"
             onClick={() => setIsSearchOpen(!isSearchOpen)}
             icon={<SearchOutlined />}
@@ -259,7 +259,7 @@ export default function HeaderComponent() {
           {/* Wishlist */}
           <ButtonComponent
             type="text"
-            size="large"
+            size="medium"
             className="wishlist-btn"
             icon={<HeartOutlined />}
           />
@@ -273,7 +273,7 @@ export default function HeaderComponent() {
           >
             <ButtonComponent
               type="text"
-              size="large"
+              size="medium"
               className="account-btn"
               icon={<UserOutlined />}
             />
@@ -290,7 +290,7 @@ export default function HeaderComponent() {
             <Link to="/cart" > 
             <ButtonComponent
               type="text"
-              size="large"
+              size="medium"
               className="cart-btn"
               icon={<ShoppingCartOutlined />}
             />
@@ -300,7 +300,7 @@ export default function HeaderComponent() {
           {/* Mobile Menu Toggle */}
           <ButtonComponent
             type="text"
-            size="large"
+            size="medium"
             className="mobile-menu-btn"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             icon={isMobileMenuOpen ? <CloseOutlined /> : <MenuOutlined />}

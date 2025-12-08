@@ -31,7 +31,7 @@ export default function FeaturedProducts({ products, textButton }) {
       {
         breakpoint: 768, // Dưới 768px
         settings: {
-          slidesToShow: 2,
+          slidesToShow: 1,
         },
       },
       {
