@@ -21,14 +21,23 @@ const port = process.env.PORT;
 const allowedOrigins = [
   process.env.FE_URL_LOCAL, // Biến cho Localhost
   process.env.FE_URL_PROD, // Biến cho Cloudflare Pages
-].filter(Boolean); // Lệnh này sẽ xóa các giá trị null/undefined khỏi mảng;
+].filter(Boolean).map(url => url.replace(/\/$/, "")); // Lệnh này sẽ xóa các giá trị null/undefined khỏi mảng;
 
 console.log("Allowed Origins:", allowedOrigins); 
 
 
 app.use(
   cors({
-    origin: allowedOrigins, // Địa chỉ Frontend React của bạn
+    origin: function (origin, callback) {
+    // Cho phép request không có origin (như Postman, Mobile App)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log("❌ Blocked CORS form Origin:", origin); // Log để biết ai bị chặn
+      callback(new Error('Not allowed by CORS'));
+    }},
     credentials: true, // Cookies
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "token", "Authorization"],
@@ -37,6 +46,8 @@ app.use(
 );
 app.use(express.json({ limit: "50mb" })); // Hỗ trợ đọc JSON body với kích thước lớn. Mặc định, Express chỉ cho phép request body (dữ liệu gửi lên) có kích thước rất nhỏ (khoảng 100kb).
 // app.use(bodyParser.json()); // luôn luôn đứng trước các route
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
 app.use(cookieParser()); // luôn luôn đứng trước các route
 
 // Thiết lập Socket.io
@@ -45,32 +56,17 @@ const httpServer = createServer(app);
 
 // CORS giúp Frontend (port 3000) có thể kết nối tới Backend (port 3001)
 const io = new Server(httpServer, {
-  path: "/socket.io/",
   cors: {
-    origin: "*", // CHO PHÉP TẤT CẢ
+    origin: allowedOrigins, // Dùng chung whitelist với HTTP
     methods: ["GET", "POST"],
     credentials: true,
+    allowedHeaders: ["token"],
   },
-  transports: ["polling"],
-  allowEIO3: true,
+  // Quan trọng: Thêm cấu hình này để tối ưu trên môi trường Cloud
+  transports: ['websocket', 'polling'], 
+  path: '/socket.io/'
 });
 
-// FIX 404 + CORS CHO POLLING (CÁCH DUY NHẤT CHẠY TRÊN RENDER)
-io.engine.on("initial_headers", (headers, req) => {
-  headers["Access-Control-Allow-Origin"] = req.headers.origin || "*";
-  headers["Access-Control-Allow-Credentials"] = "true";
-});
-
-io.engine.on("headers", (headers, req) => {
-  headers["Access-Control-Allow-Origin"] = req.headers.origin || "*";
-  headers["Access-Control-Allow-Credentials"] = "true";
-});
-
-// Debug kết nối
-io.on("connection", (socket) => {
-  console.log("🟢 Socket connected (polling):", socket.id);
-  socket.on("disconnect", () => console.log("🔴 Socket disconnected:", socket.id));
-});
 // Truyền biến 'io' vào hàm socketManager để bắt đầu lắng nghe
 socketManager(io);
 

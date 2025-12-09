@@ -133,13 +133,9 @@ const ChatBox = () => {
   useEffect(() => {
     if (user?.id) {
       const newSocket = io(ENDPOINT, {
-        withCredentials: true,
-        transports: ["polling"], // Quan trọng: thử websocket trước
-        forceNew: true, // QUAN TRỌNG: FIX CACHE TRÊN RENDER
-        path: "/socket.io/",
-        reconnection: true, // auto reconnect khi mất kết nối
-        reconnectionAttempts: Infinity,
-        reconnectionDelay: 1000, // thời gian giữa các lần knoi (ms)
+        transports: ['websocket'], // ƯU TIÊN WEBSOCKET (Bỏ polling để tránh lỗi CORS HTTP 404/403)
+          withCredentials: true,
+          reconnectionAttempts: 5,
       });
 
       newSocket.on("connect", () => console.log("Socket connected!"));
