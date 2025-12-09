@@ -139,9 +139,7 @@ const AdminChatPage = () => {
     if (user?.access_token) {
       const newSocket = io(ENDPOINT, {
         transports: ["websocket"],
-        withCredentials: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 2000,
+        autoConnect: true,
       });
       setSocket(newSocket);
       newSocket.emit("join_admin_channel");
