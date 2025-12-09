@@ -47,11 +47,22 @@ const httpServer = createServer(app);
 const io = new Server(httpServer, {
   path: "/socket.io/", // Đảm bảo đúng path
   cors: {
-    origin: allowedOrigins, // Địa chỉ Frontend React của bạn
+    origin: true, // Địa chỉ Frontend React của bạn
     methods: ["GET", "POST"],
     credentials: true,
+    allowedHeaders: ["*"],
   },
-  transports: ["websocket"] 
+  transports: ['polling'] ,
+  allowEIO3: true,
+});
+
+// FORCE CORS HEADER (QUAN TRỌNG CHO RENDER)
+io.engine.on("headers", (headers, req) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    headers["Access-Control-Allow-Origin"] = origin;
+    headers["Access-Control-Allow-Credentials"] = "true";
+  }
 });
 
 // Truyền biến 'io' vào hàm socketManager để bắt đầu lắng nghe
