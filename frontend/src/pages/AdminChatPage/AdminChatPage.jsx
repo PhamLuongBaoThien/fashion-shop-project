@@ -138,7 +138,7 @@ const AdminChatPage = () => {
   useEffect(() => {
     if (user?.access_token) {
       const newSocket = io(ENDPOINT, {
-        transports: ["webtransport", "websocket", "polling"],
+        transports: ["flashsocket", "websocket", "polling"],
         withCredentials: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 2000,

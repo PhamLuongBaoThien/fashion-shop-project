@@ -133,7 +133,7 @@ const ChatBox = () => {
   useEffect(() => {
     if (user?.id) {
       const newSocket = io(ENDPOINT, {
-        transports: [ "webtransport" ,"websocket","polling"], 
+        transports: [ "flashsocket" ,"websocket","polling"], 
         withCredentials: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 2000,
