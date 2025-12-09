@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Button, Input, Card, Avatar, Tooltip, Badge } from "antd";
+import { Input, Card, Avatar, Tooltip, Badge } from "antd";
 import {
   MessageOutlined,
   SendOutlined,
@@ -14,6 +14,7 @@ import styled from "styled-components";
 import { useMessageApi } from "../../context/MessageContext";
 import * as ChatService from "../../services/ChatService";
 import { motion, AnimatePresence } from "framer-motion";
+import ButtonComponent from "../common/ButtonComponent/ButtonComponent";
 
 const WrapperChat = styled.div`
   position: fixed;
@@ -22,6 +23,7 @@ const WrapperChat = styled.div`
   z-index: 1000;
 `;
 
+// Khung chat
 const ChatWindow = styled(Card)`
   width: 340px;
   height: 480px;
@@ -53,6 +55,7 @@ const ChatWindow = styled(Card)`
   }
 `;
 
+// Khu vực hiển thị tin nhắn
 const MessageList = styled.div`
   flex: 1;
   padding: 16px;
@@ -72,6 +75,7 @@ const MessageList = styled.div`
   }
 `;
 
+// nhóm tin nhắn
 const MessageGroup = styled.div`
   display: flex;
   flex-direction: column;
@@ -79,6 +83,7 @@ const MessageGroup = styled.div`
   margin-bottom: 4px;
 `;
 
+// bong bóng tin nhắn
 const MessageBubble = styled.div`
   max-width: 75%;
   padding: 10px 14px;
@@ -94,6 +99,7 @@ const MessageBubble = styled.div`
   word-break: break-word;
 `;
 
+// tên người gửi
 const SenderName = styled.span`
   font-size: 11px;
   color: #999;
@@ -102,6 +108,7 @@ const SenderName = styled.span`
   margin-right: 8px;
 `;
 
+// khu vực nhập tin nhắn
 const InputArea = styled.div`
   padding: 12px;
   background: #fff;
@@ -109,6 +116,44 @@ const InputArea = styled.div`
   display: flex;
   gap: 8px;
   align-items: center;
+`;
+
+// Gợi ý trả lời nhanh
+const QuickRepliesContainer = styled.div`
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f9f9f9;
+  overflow-x: auto;
+  white-space: nowrap;
+  border-top: 1px solid #f0f0f0;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #ddd;
+    border-radius: 2px;
+  }
+`;
+
+// nút gợi ý
+const SuggestionChip = styled.button`
+  background: #e6f7ff;
+  border: 1px solid #91d5ff;
+  color: #1890ff;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+
+  &:hover {
+    background: #1890ff;
+    color: white;
+    border-color: #1890ff;
+  }
 `;
 
 const ENDPOINT =
@@ -133,9 +178,8 @@ const ChatBox = () => {
   useEffect(() => {
     if (user?.id) {
       const newSocket = io(ENDPOINT, {
-        transports: [ "websocket" ],
+        transports: ["websocket"],
         autoConnect: true,
-
       });
 
       newSocket.on("connect", () => console.log("Socket connected!"));
@@ -242,26 +286,30 @@ const ChatBox = () => {
   }, [messages, isOpen]);
 
   // 4. HANDLER GỬI
-  const handleSend = async () => {
-    if (!message.trim()) return;
+  const handleSend = async (customText = null) => {
+    // Nếu có customText (bấm nút gợi ý) thì dùng nó, không thì dùng state message
+    const textToSend = typeof customText === "string" ? customText : message;
+
+    if (!textToSend.trim()) return;
 
     const msgData = {
       senderId: user.id,
-      receiverId: "ADMIN", // Server sẽ xử lý "ADMIN" thành ID thực
-      text: message,
+      receiverId: "ADMIN",
+      text: textToSend,
       senderType: "customer",
     };
 
-    // Optimistic Update
-    const tempMsg = { ...msgData, sender: user.id, _id: Date.now() }; // Để hiển thị ngay không cần chờ server trả về
+    const tempMsg = {
+      ...msgData,
+      sender: user.id,
+      _id: Date.now(),
+      createdAt: new Date().toISOString(),
+    };
     setMessages((prev) => [...prev, tempMsg]);
-    setMessage("");
+    setMessage(""); // Xóa ô input
 
     try {
-      const res = await ChatService.createMessage(msgData);
-      if (res?.status !== "OK") {
-        console.error("Gửi tin thất bại" || res?.message);
-      }
+      await ChatService.createMessage(msgData);
     } catch (error) {
       console.error("Lỗi gửi tin nhắn:", error);
     }
@@ -320,12 +368,11 @@ const ChatBox = () => {
             >
               <MessageList>
                 {messages.map((msg, i) => {
-                  // QUAN TRỌNG: Bot và Admin đều hiện bên trái
                   const isMine =
                     msg.senderType === "customer" &&
                     (typeof msg.sender === "object"
                       ? msg.sender._id
-                      : msg.sender) === user.id;
+                      : msg.sender) === user.id; // Kiểm tra người gửi có phải là mình không
 
                   const displayName =
                     msg.senderType === "bot"
@@ -334,7 +381,7 @@ const ChatBox = () => {
                       ? typeof msg.sender === "object" && msg.sender.username
                         ? `Admin (${msg.sender.username})`
                         : "Admin"
-                      : "Bạn";
+                      : "Bạn"; // Tên hiển thị người gửi
 
                   return (
                     <MessageGroup key={i} isMine={isMine}>
@@ -345,6 +392,24 @@ const ChatBox = () => {
                 })}
                 <div ref={scrollRef} />
               </MessageList>
+
+              <QuickRepliesContainer>
+                <SuggestionChip
+                  onClick={() => handleSend("Tôi muốn gặp nhân viên hỗ trợ")}
+                >
+                  Gặp nhân viên
+                </SuggestionChip>
+                <SuggestionChip
+                  onClick={() => handleSend("Chính sách đổi trả như thế nào?")}
+                >
+                  Đổi trả hàng
+                </SuggestionChip>
+                <SuggestionChip
+                  onClick={() => handleSend("Phí vận chuyển tính sao?")}
+                >
+                  Phí vận chuyển
+                </SuggestionChip>
+              </QuickRepliesContainer>
 
               <InputArea>
                 <Input
@@ -359,7 +424,7 @@ const ChatBox = () => {
                     paddingLeft: 15,
                   }}
                 />
-                <Button
+                <ButtonComponent
                   type="primary"
                   shape="circle"
                   icon={<SendOutlined />}
@@ -373,7 +438,7 @@ const ChatBox = () => {
 
         <Tooltip title="Chat ngay" placement="left">
           <Badge count={unreadCount} overflowCount={99}>
-            <Button
+            <ButtonComponent
               type="primary"
               shape="circle"
               icon={isOpen ? <CloseOutlined /> : <MessageOutlined />}
