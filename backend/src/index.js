@@ -51,7 +51,7 @@ const io = new Server(httpServer, {
     methods: ["GET", "POST"],
     credentials: true,
   },
-  transports: ['websocket', 'polling'] 
+  transports: ['polling'] 
 });
 
 // Truyền biến 'io' vào hàm socketManager để bắt đầu lắng nghe
