@@ -111,9 +111,10 @@ const InputArea = styled.div`
   align-items: center;
 `;
 
-const ENDPOINT = process.env.REACT_APP_NODE_ENV === 'production' ?
-  process.env.REACT_APP_API_URL_PROD :
-  process.env.REACT_APP_API_URL;
+const ENDPOINT =
+  process.env.REACT_APP_NODE_ENV === "production"
+    ? process.env.REACT_APP_API_URL_PROD
+    : process.env.REACT_APP_API_URL;
 
 const ChatBox = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -131,18 +132,25 @@ const ChatBox = () => {
   // 1. LOGIC SOCKET (Giữ nguyên)
   useEffect(() => {
     if (user?.id) {
-      const newSocket = io(ENDPOINT,{
-      withCredentials: true,
-      transports: ["websocket", "polling"], // Quan trọng: thử websocket trước
-      reconnection: true, // auto reconnect khi mất kết nối
-      reconnectionAttempts: 5, // số lần thử kết nối
-      reconnectionDelay: 1000, // thời gian giữa các lần knoi (ms)
-    }); 
+      const newSocket = io(ENDPOINT, {
+        withCredentials: true,
+        transports: ["websocket", "polling"], // Quan trọng: thử websocket trước
+        upgrade: true,
+        path: "/socket.io/",
+        reconnection: true, // auto reconnect khi mất kết nối
+        reconnectionAttempts: 5, // số lần thử kết nối
+        reconnectionDelay: 1000, // thời gian giữa các lần knoi (ms)
+      });
       setSocket(newSocket);
       newSocket.emit("join_chat", user.id); // Tham gia phòng chat
 
       newSocket.on("new_message", (data) => {
-        if (data.sender !== user.id || data.senderType === 'bot' || data.senderType === 'admin') { // nếu tin nhắn không phải do mình gửi hoặc là từ bot/admin sẽ hiển thị ngay
+        if (
+          data.sender !== user.id ||
+          data.senderType === "bot" ||
+          data.senderType === "admin"
+        ) {
+          // nếu tin nhắn không phải do mình gửi hoặc là từ bot/admin sẽ hiển thị ngay
           setMessages((prev) => [...prev, data]); // prev là tin cũ, data là tin mới
 
           // LOGIC BADGE: Nếu chat đang đóng thì tăng số
@@ -163,22 +171,23 @@ const ChatBox = () => {
         try {
           const res = await ChatService.getMessages();
           if (res?.status === "OK") {
-            let historyMessages = res.data || []; 
+            let historyMessages = res.data || [];
 
             // Lấy conversationId từ tin nhắn đầu tiên (nếu có) để dùng cho markAsRead
             if (historyMessages.length > 0) {
               setConversationId(historyMessages[0].conversationId);
             }
 
-             // Đếm số tin nhắn có isRead = false VÀ sender không phải mình
-            const unread = historyMessages.filter(msg => {
-                const senderId = typeof msg.sender === 'object' ? msg.sender._id : msg.sender;
-                return !msg.isRead && senderId !== user.id;
+            // Đếm số tin nhắn có isRead = false VÀ sender không phải mình
+            const unread = historyMessages.filter((msg) => {
+              const senderId =
+                typeof msg.sender === "object" ? msg.sender._id : msg.sender;
+              return !msg.isRead && senderId !== user.id;
             }).length;
-            
+
             // Nếu Chat đang mở thì coi như đã đọc hết (0), nếu đóng thì set số unread
             if (!isOpen) {
-                setUnreadCount(unread);
+              setUnreadCount(unread);
             }
 
             const today = new Date().toDateString();
@@ -223,9 +232,10 @@ const ChatBox = () => {
   }, [isOpen, conversationId]);
 
   // 3. AUTO SCROLL
-useEffect(() => {
-    if (isOpen) { // Chỉ scroll khi chat mở
-        scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  useEffect(() => {
+    if (isOpen) {
+      // Chỉ scroll khi chat mở
+      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, isOpen]);
 
@@ -237,10 +247,10 @@ useEffect(() => {
       senderId: user.id,
       receiverId: "ADMIN", // Server sẽ xử lý "ADMIN" thành ID thực
       text: message,
-      senderType: "customer", 
+      senderType: "customer",
     };
 
-    // Optimistic Update 
+    // Optimistic Update
     const tempMsg = { ...msgData, sender: user.id, _id: Date.now() }; // Để hiển thị ngay không cần chờ server trả về
     setMessages((prev) => [...prev, tempMsg]);
     setMessage("");
@@ -248,7 +258,7 @@ useEffect(() => {
     try {
       const res = await ChatService.createMessage(msgData);
       if (res?.status !== "OK") {
-        console.error("Gửi tin thất bại" || res?.message );
+        console.error("Gửi tin thất bại" || res?.message);
       }
     } catch (error) {
       console.error("Lỗi gửi tin nhắn:", error);
@@ -309,14 +319,20 @@ useEffect(() => {
               <MessageList>
                 {messages.map((msg, i) => {
                   // QUAN TRỌNG: Bot và Admin đều hiện bên trái
-                  const isMine = msg.senderType === "customer" && 
-                                (typeof msg.sender === "object" ? msg.sender._id : msg.sender) === user.id;
+                  const isMine =
+                    msg.senderType === "customer" &&
+                    (typeof msg.sender === "object"
+                      ? msg.sender._id
+                      : msg.sender) === user.id;
 
-                  const displayName = 
-                    msg.senderType === "bot" ? "Trợ lý ảo AI" :
-                    msg.senderType === "admin" ? 
-                      (typeof msg.sender === "object" && msg.sender.username ? `Admin (${msg.sender.username})` : "Admin") :
-                    "Bạn";
+                  const displayName =
+                    msg.senderType === "bot"
+                      ? "Trợ lý ảo AI"
+                      : msg.senderType === "admin"
+                      ? typeof msg.sender === "object" && msg.sender.username
+                        ? `Admin (${msg.sender.username})`
+                        : "Admin"
+                      : "Bạn";
 
                   return (
                     <MessageGroup key={i} isMine={isMine}>
