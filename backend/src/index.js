@@ -16,10 +16,15 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT;
 
+
+
 const allowedOrigins = [
   process.env.FE_URL_LOCAL, // Biến cho Localhost
   process.env.FE_URL_PROD, // Biến cho Cloudflare Pages
-];
+].filter(Boolean); // Lệnh này sẽ xóa các giá trị null/undefined khỏi mảng;
+
+console.log("Allowed Origins:", allowedOrigins); 
+
 
 app.use(
   cors({
@@ -45,6 +50,7 @@ const io = new Server(httpServer, {
     methods: ["GET", "POST"],
     credentials: true,
   },
+  transports: ['websocket', 'polling'] 
 });
 
 // Truyền biến 'io' vào hàm socketManager để bắt đầu lắng nghe
