@@ -140,6 +140,7 @@ const AdminChatPage = () => {
       const newSocket = io(ENDPOINT, {
         transports: ["websocket"],
         autoConnect: true,
+        
       });
       setSocket(newSocket);
       newSocket.emit("join_admin_channel");
