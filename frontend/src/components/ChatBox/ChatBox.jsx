@@ -138,7 +138,7 @@ const ChatBox = () => {
         forceNew: true, // QUAN TRỌNG: FIX CACHE TRÊN RENDER
         path: "/socket.io/",
         reconnection: true, // auto reconnect khi mất kết nối
-        reconnectionAttempts: 5, // số lần thử kết nối
+        reconnectionAttempts: Infinity,
         reconnectionDelay: 1000, // thời gian giữa các lần knoi (ms)
       });
 

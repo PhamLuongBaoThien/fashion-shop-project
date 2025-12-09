@@ -45,32 +45,20 @@ const httpServer = createServer(app);
 
 // CORS giúp Frontend (port 3000) có thể kết nối tới Backend (port 3001)
 const io = new Server(httpServer, {
-  path: "/socket.io/", // Đảm bảo đúng path
+  path: "/socket.io/",
   cors: {
-    origin: "*", // Địa chỉ Frontend React của bạn
+    origin: "*", // CHO PHÉP TẤT CẢ
     methods: ["GET", "POST"],
     credentials: true,
-    allowedHeaders: ["*"],
   },
-  transports: ['polling'] ,
+  transports: ["polling"],
   allowEIO3: true,
 });
 
-
-
-// QUAN TRỌNG NHẤT: FORCE CORS CHO POLLING (Render bug)
-io.use((socket, next) => {
-  const origin = socket.handshake.headers.origin;
-  if (origin) {
-    socket.handshake.headers["access-control-allow-origin"] = origin;
-    socket.handshake.headers["access-control-allow-credentials"] = "true";
-  }
-  next();
-});
-
-// Force header cho tất cả request (cả polling)
-io.engine.on("connection_error", (err) => {
-  console.log("Connection error:", err);
+// FIX 404 + CORS CHO POLLING (CÁCH DUY NHẤT CHẠY TRÊN RENDER)
+io.engine.on("initial_headers", (headers, req) => {
+  headers["Access-Control-Allow-Origin"] = req.headers.origin || "*";
+  headers["Access-Control-Allow-Credentials"] = "true";
 });
 
 io.engine.on("headers", (headers, req) => {
@@ -78,11 +66,11 @@ io.engine.on("headers", (headers, req) => {
   headers["Access-Control-Allow-Credentials"] = "true";
 });
 
-// Debug
+// Debug kết nối
 io.on("connection", (socket) => {
   console.log("🟢 Socket connected (polling):", socket.id);
+  socket.on("disconnect", () => console.log("🔴 Socket disconnected:", socket.id));
 });
-
 // Truyền biến 'io' vào hàm socketManager để bắt đầu lắng nghe
 socketManager(io);
 
