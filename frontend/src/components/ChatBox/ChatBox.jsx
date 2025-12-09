@@ -133,7 +133,7 @@ const ChatBox = () => {
     if (user?.id) {
       const newSocket = io(ENDPOINT,{
       withCredentials: true,
-      transports: ["polling"], // Quan trọng: thử websocket trước
+      transports: ["websocket", "polling"], // Quan trọng: thử websocket trước
       reconnection: true, // auto reconnect khi mất kết nối
       reconnectionAttempts: 5, // số lần thử kết nối
       reconnectionDelay: 1000, // thời gian giữa các lần knoi (ms)
