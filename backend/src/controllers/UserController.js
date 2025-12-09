@@ -1,6 +1,7 @@
 const UserService = require("../services/UserService");
 const JwtService = require("../services/JwtService");
 const cloudinary = require("../config/cloudinary");
+const cookieConfig = require("../config/cookieConfig");
 
 const createUser = async (req, res) => {
   try {
@@ -71,13 +72,7 @@ const loginUser = async (req, res) => {
 
     const { refresh_token, ...newResponse } = response;
     // console.log('refresh_token', refresh_token);
-    res.cookie("refresh_token", refresh_token, {
-      httpOnly: true, // Http only: chỉ lấy được cookie bằng giao thức HTTP và không thể lấy bằng JS
-      secure: false, // để test local (đặt true khi dùng https)
-      // sameSite: "Strict", //sameSite chống tấn công CSRF
-      sameSite: "lax",
-      maxAge: 365 * 24 * 60 * 60 * 1000, // maxAge: 1 năm
-    }); // 1 năm
+    res.cookie('refresh_token', refresh_token, cookieConfig);
     return res.status(201).json({ status: "OK", data: newResponse });
   } catch (error) {
     return res.status(500).json({ status: "ERR", message: error.message });
@@ -227,21 +222,9 @@ const loginAdmin = async (req, res) => {
     // Gọi đến một service function mới chỉ dành cho admin
     const response = await UserService.loginAdmin({ email, password });
 
-    // Kiểm tra xem đang chạy ở Production hay Local
-    // Render thường tự set NODE_ENV = 'production'
-    const isProduction = process.env.NODE_ENV === "production";
-
     // Đoạn code này giống hệt loginUser
     const { refresh_token, ...newResponse } = response;
-    res.cookie("refresh_token", refresh_token, {
-      httpOnly: true,
-      // Nếu là Production (Render) -> Bắt buộc True. Local -> False
-      secure: isProduction ? true : false,
-
-      // Nếu là Production (Khác domain) -> Bắt buộc 'None'. Local -> 'Lax'
-      sameSite: isProduction ? "None" : "Lax",
-      maxAge: 365 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie('refresh_token', refresh_token, cookieConfig);
     return res.status(200).json({ status: "OK", data: newResponse });
   } catch (error) {
     // Khối catch này sẽ bắt lỗi "Không phải admin" hoặc "Sai mật khẩu"
