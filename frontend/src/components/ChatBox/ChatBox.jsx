@@ -111,7 +111,9 @@ const InputArea = styled.div`
   align-items: center;
 `;
 
-const ENDPOINT = process.env.REACT_APP_API_URL;
+const ENDPOINT = process.env.NODE_ENV === 'production' ?
+  process.env.REACT_APP_API_URL_PROD :
+  process.env.REACT_APP_API_URL;
 
 const ChatBox = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -129,7 +131,7 @@ const ChatBox = () => {
   // 1. LOGIC SOCKET (Giữ nguyên)
   useEffect(() => {
     if (user?.id) {
-      const newSocket = io(ENDPOINT);
+      const newSocket = io(ENDPOINT); 
       setSocket(newSocket);
       newSocket.emit("join_chat", user.id); // Tham gia phòng chat
 

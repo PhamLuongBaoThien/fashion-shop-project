@@ -142,7 +142,7 @@ const SignUpComponent = () => {
                     },
                     {
                       pattern: /^(84|0[3|5|7|8|9])[0-9]{8}$/, // Kiểm tra số điện thoại 10 chữ số
-                      message: "Số điện thoại phải là 10 - 11 chữ số và bắt đầu là 0!",
+                      message: "Số điện thoại không hợp lệ. Vui lòng nhập đúng định dạng số bắt đầu bằng 03, 05, 07, 08 hoặc 09 và có 10 - 11 số!",
                     },
                   ]}
                 >
