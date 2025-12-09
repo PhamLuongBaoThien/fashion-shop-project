@@ -111,7 +111,7 @@ const InputArea = styled.div`
   align-items: center;
 `;
 
-const ENDPOINT = process.env.NODE_ENV === 'production' ?
+const ENDPOINT = process.env.REACT_APP_NODE_ENV === 'production' ?
   process.env.REACT_APP_API_URL_PROD :
   process.env.REACT_APP_API_URL;
 
