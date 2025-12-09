@@ -116,7 +116,10 @@ const SenderName = styled.div`
 `;
 
 // --- CONFIG ---
-const ENDPOINT = process.env.REACT_APP_API_URL;
+const ENDPOINT =
+  process.env.REACT_APP_NODE_ENV === "production"
+    ? process.env.REACT_APP_API_URL_PROD
+    : process.env.REACT_APP_API_URL;
 
 const AdminChatPage = () => {
   const user = useSelector((state) => state.user);
@@ -134,7 +137,12 @@ const AdminChatPage = () => {
   // 1. KẾT NỐI SOCKET & LẤY DANH SÁCH CONVERSATION
   useEffect(() => {
     if (user?.access_token) {
-      const newSocket = io(ENDPOINT);
+      const newSocket = io(ENDPOINT, {
+        transports: ["webtransport", "websocket", "polling"],
+        withCredentials: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 2000,
+      });
       setSocket(newSocket);
       newSocket.emit("join_admin_channel");
 
