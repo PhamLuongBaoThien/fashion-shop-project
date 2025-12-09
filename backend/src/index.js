@@ -45,6 +45,7 @@ const httpServer = createServer(app);
 
 // CORS giúp Frontend (port 3000) có thể kết nối tới Backend (port 3001)
 const io = new Server(httpServer, {
+  path: "/socket.io/", // Đảm bảo đúng path
   cors: {
     origin: allowedOrigins, // Địa chỉ Frontend React của bạn
     methods: ["GET", "POST"],

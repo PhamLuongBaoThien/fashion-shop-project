@@ -131,7 +131,13 @@ const ChatBox = () => {
   // 1. LOGIC SOCKET (Giữ nguyên)
   useEffect(() => {
     if (user?.id) {
-      const newSocket = io(ENDPOINT); 
+      const newSocket = io(ENDPOINT,{
+      withCredentials: true,
+      transports: ["websocket", "polling"], // Quan trọng: thử websocket trước
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    }); 
       setSocket(newSocket);
       newSocket.emit("join_chat", user.id); // Tham gia phòng chat
 
