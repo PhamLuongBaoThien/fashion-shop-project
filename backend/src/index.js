@@ -47,7 +47,7 @@ const httpServer = createServer(app);
 const io = new Server(httpServer, {
   path: "/socket.io/", // Đảm bảo đúng path
   cors: {
-    origin: true, // Địa chỉ Frontend React của bạn
+    origin: "*", // Địa chỉ Frontend React của bạn
     methods: ["GET", "POST"],
     credentials: true,
     allowedHeaders: ["*"],
@@ -56,13 +56,31 @@ const io = new Server(httpServer, {
   allowEIO3: true,
 });
 
-// FORCE CORS HEADER (QUAN TRỌNG CHO RENDER)
-io.engine.on("headers", (headers, req) => {
-  const origin = req.headers.origin;
+
+
+// QUAN TRỌNG NHẤT: FORCE CORS CHO POLLING (Render bug)
+io.use((socket, next) => {
+  const origin = socket.handshake.headers.origin;
   if (origin) {
-    headers["Access-Control-Allow-Origin"] = origin;
-    headers["Access-Control-Allow-Credentials"] = "true";
+    socket.handshake.headers["access-control-allow-origin"] = origin;
+    socket.handshake.headers["access-control-allow-credentials"] = "true";
   }
+  next();
+});
+
+// Force header cho tất cả request (cả polling)
+io.engine.on("connection_error", (err) => {
+  console.log("Connection error:", err);
+});
+
+io.engine.on("headers", (headers, req) => {
+  headers["Access-Control-Allow-Origin"] = req.headers.origin || "*";
+  headers["Access-Control-Allow-Credentials"] = "true";
+});
+
+// Debug
+io.on("connection", (socket) => {
+  console.log("🟢 Socket connected (polling):", socket.id);
 });
 
 // Truyền biến 'io' vào hàm socketManager để bắt đầu lắng nghe

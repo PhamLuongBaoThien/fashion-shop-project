@@ -135,12 +135,18 @@ const ChatBox = () => {
       const newSocket = io(ENDPOINT, {
         withCredentials: true,
         transports: ["polling"], // Quan trọng: thử websocket trước
-        upgrade: true,
+        forceNew: true, // QUAN TRỌNG: FIX CACHE TRÊN RENDER
         path: "/socket.io/",
         reconnection: true, // auto reconnect khi mất kết nối
         reconnectionAttempts: 5, // số lần thử kết nối
         reconnectionDelay: 1000, // thời gian giữa các lần knoi (ms)
       });
+
+      newSocket.on("connect", () => console.log("Socket connected!"));
+      newSocket.on("connect_error", (err) =>
+        console.log("Connect error:", err.message)
+      );
+
       setSocket(newSocket);
       newSocket.emit("join_chat", user.id); // Tham gia phòng chat
 
