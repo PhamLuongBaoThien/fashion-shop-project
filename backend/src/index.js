@@ -63,7 +63,7 @@ const io = new Server(httpServer, {
     allowedHeaders: ["token"],
   },
   // Quan trọng: Thêm cấu hình này để tối ưu trên môi trường Cloud
-  transports: ['websocket', 'polling'], 
+  transports: ['polling','websocket', ], 
   path: '/socket.io/'
 });
 
