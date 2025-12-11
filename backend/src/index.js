@@ -21,6 +21,7 @@ const port = process.env.PORT;
 const allowedOrigins = [
   process.env.FE_URL_LOCAL, // Biến cho Localhost
   process.env.FE_URL_PROD, // Biến cho Cloudflare Pages
+  process.env.FE_URL_CLOUDFLARE
 ].filter(Boolean).map(url => url.replace(/\/$/, "")); // Lệnh này sẽ xóa các giá trị null/undefined khỏi mảng;
 
 console.log("Allowed Origins:", allowedOrigins); 
@@ -29,19 +30,39 @@ console.log("Allowed Origins:", allowedOrigins);
 app.use(
   cors({
     origin: function (origin, callback) {
-    // Cho phép request không có origin (như Postman, Mobile App)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.log("❌ Blocked CORS form Origin:", origin); // Log để biết ai bị chặn
-      callback(new Error('Not allowed by CORS'));
-    }},
-    credentials: true, // Cookies
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "token", "Authorization"],
-    exposedHeaders: ["Set-Cookie"],
+      if (!origin) return callback(null, true);
+      
+      // ✅ Check exact match
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        return callback(null, true);
+      }
+      
+      // ✅ Check wildcard patterns
+      const allowedPatterns = [
+        /\.vercel\.app$/,      // Bất kỳ subdomain.vercel.app
+        /\.pages\.dev$/,       // Bất kỳ subdomain.pages.dev
+        /^http:\/\/localhost(:\d+)?$/, // localhost với bất kỳ port
+      ];
+      
+      const isAllowed = allowedPatterns.some(pattern => pattern.test(origin));
+      
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        console.log("❌ Blocked CORS from Origin:", origin);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "token",
+      "X-Requested-With",
+      "Accept",
+      "Origin"
+    ],
   })
 );
 app.use(express.json({ limit: "50mb" })); // Hỗ trợ đọc JSON body với kích thước lớn. Mặc định, Express chỉ cho phép request body (dữ liệu gửi lên) có kích thước rất nhỏ (khoảng 100kb).
@@ -57,22 +78,36 @@ const httpServer = createServer(app);
 // CORS giúp Frontend (port 3000) có thể kết nối tới Backend (port 3001)
 const io = new Server(httpServer, {
   cors: {
-    origin: allowedOrigins, // Dùng chung whitelist với HTTP
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        return callback(null, true);
+      }
+      
+      // Pattern matching cho Socket.IO
+      const allowedPatterns = [
+        /\.vercel\.app$/,
+        /\.pages\.dev$/,
+        /^http:\/\/localhost(:\d+)?$/,
+      ];
+      
+      const isAllowed = allowedPatterns.some(pattern => pattern.test(origin));
+      
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        console.log("❌ Socket blocked from:", origin);
+        callback(new Error('Socket CORS blocked'));
+      }
+    }, // Dùng chung whitelist với HTTP
     methods: ["GET", "POST"],
     credentials: true,
-    allowedHeaders: ["*"],
+    allowedHeaders: ["token"],
   },
   // Quan trọng: Thêm cấu hình này để tối ưu trên môi trường Cloud
-  transports: ['polling','websocket', ], 
-  path: '/socket.io/',
-  cookie: false,
-  
-  pingTimeout: 60000,
-  pingInterval: 25000,
-  path: '/socket.io/',
-  
-  // ✅ Thêm option này
-  allowEIO3: true,
+  transports: ['websocket', 'polling'], 
+  path: '/socket.io/'
 });
 
 // Truyền biến 'io' vào hàm socketManager để bắt đầu lắng nghe

@@ -178,34 +178,8 @@ const ChatBox = () => {
   useEffect(() => {
     if (user?.id) {
       const newSocket = io(ENDPOINT, {
-        transports: ['polling'],
-      
-      // ✅ Bật withCredentials
-      withCredentials: true,
-      
-      autoConnect: true,
-      
-      timeout: 30000,
-      
-      reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 2000,
-      
-      path: '/socket.io/',
-      
-      // ✅ Thêm query để bypass cache
-      query: {
-        userId: user.id,
-        EIO: 4, // Engine.IO version
-        t: Date.now()
-      },
-      
-      // ✅ Tắt auto upgrade (quan trọng!)
-      upgrade: false,
-      rememberUpgrade: false,
-      
-      // ✅ Force new connection
-      forceNew: true,
+        transports: ["websocket"],
+        autoConnect: true,
       });
 
       newSocket.on("connect", () => console.log("Socket connected!"));
