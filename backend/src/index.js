@@ -60,11 +60,19 @@ const io = new Server(httpServer, {
     origin: allowedOrigins, // Dùng chung whitelist với HTTP
     methods: ["GET", "POST"],
     credentials: true,
-    allowedHeaders: ["token"],
+    allowedHeaders: ["*"],
   },
   // Quan trọng: Thêm cấu hình này để tối ưu trên môi trường Cloud
   transports: ['polling','websocket', ], 
-  path: '/socket.io/'
+  path: '/socket.io/',
+  cookie: false,
+  
+  pingTimeout: 60000,
+  pingInterval: 25000,
+  path: '/socket.io/',
+  
+  // ✅ Thêm option này
+  allowEIO3: true,
 });
 
 // Truyền biến 'io' vào hàm socketManager để bắt đầu lắng nghe
