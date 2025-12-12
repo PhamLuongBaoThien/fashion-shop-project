@@ -13,7 +13,7 @@ const socketManager = (io) => {
     });
 
     // --- GỬI TIN NHẮN ---
-    socket.on("send_message", async (data) => {
+    socket.on("send_message", async (data) => { 
       // data: { senderId, receiverId, text, senderType }
       
       try {

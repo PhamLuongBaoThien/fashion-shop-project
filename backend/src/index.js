@@ -55,7 +55,7 @@ const io = new Server(httpServer, {
     credentials: true,
     allowedHeaders: ["*"],
   },
-  transports: ["polling"], // BUỘC POLLING (RENDER + VERCEL ỔN ĐỊNH)
+  transports: ["polling"], 
 });
 
 
