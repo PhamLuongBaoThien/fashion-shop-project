@@ -179,6 +179,7 @@ const ChatBox = () => {
     if (user?.id) {
       const newSocket = io(ENDPOINT, {
         transports: ["polling"],
+        withCredentials: true,
         autoConnect: true,
       });
 

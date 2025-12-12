@@ -139,7 +139,10 @@ const AdminChatPage = () => {
     if (user?.access_token) {
       const newSocket = io(ENDPOINT, {
         transports: ["polling"],
+        withCredentials: true,
         autoConnect: true,
+        path: "/socket.io/",
+
         
       });
       setSocket(newSocket);

@@ -56,21 +56,10 @@ const io = new Server(httpServer, {
     allowedHeaders: ["*"],
   },
   transports: ["polling"], // BUỘC POLLING (RENDER + VERCEL ỔN ĐỊNH)
-  allowEIO3: true,
 });
 
 
-io.engine.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "*");
-  if (req.method === "OPTIONS") {
-    res.status(200).end();
-    return;
-  }
-  next();
-});
+
 
 // Truyền biến 'io' vào hàm socketManager để bắt đầu lắng nghe
 socketManager(io);
