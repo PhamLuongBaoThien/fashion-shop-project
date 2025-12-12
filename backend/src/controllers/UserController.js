@@ -181,7 +181,7 @@ const getDetailUser = async (req, res) => {
 const refreshToken = async (req, res) => {
   try {
     const token = req.cookies.refresh_token;
-    console.log("refresh_token", token);
+    // console.log("refresh_token", token);
     if (!token) {
       return res
         .status(400)
