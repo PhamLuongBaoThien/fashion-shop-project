@@ -29,16 +29,7 @@ console.log("Allowed Origins:", allowedOrigins);
 
 app.use(
   cors({
-    origin: function (origin, callback) {
-    // Cho phép request không có origin (như Postman, Mobile App)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.log("❌ Blocked CORS form Origin:", origin); // Log để biết ai bị chặn
-      callback(new Error('Not allowed by CORS'));
-    }},
+    origin: allowedOrigins,
     credentials: true, // Cookies
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "token", "Authorization"],
@@ -57,15 +48,28 @@ const httpServer = createServer(app);
 
 // CORS giúp Frontend (port 3000) có thể kết nối tới Backend (port 3001)
 const io = new Server(httpServer, {
+  path: "/socket.io/",
   cors: {
-    origin: allowedOrigins, // Dùng chung whitelist với HTTP
-    methods: ["GET", "POST"],
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "OPTIONS"],
     credentials: true,
-    allowedHeaders: ["token"],
+    allowedHeaders: ["*"],
   },
-  // Quan trọng: Thêm cấu hình này để tối ưu trên môi trường Cloud
-  transports: ['websocket', 'polling'], 
-  path: '/socket.io/'
+  transports: ["polling"], // BUỘC POLLING (RENDER + VERCEL ỔN ĐỊNH)
+  allowEIO3: true,
+});
+
+
+io.engine.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "*");
+  if (req.method === "OPTIONS") {
+    res.status(200).end();
+    return;
+  }
+  next();
 });
 
 // Truyền biến 'io' vào hàm socketManager để bắt đầu lắng nghe

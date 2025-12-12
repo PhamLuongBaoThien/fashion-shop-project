@@ -138,7 +138,7 @@ const AdminChatPage = () => {
   useEffect(() => {
     if (user?.access_token) {
       const newSocket = io(ENDPOINT, {
-        transports: ["websocket"],
+        transports: ["polling"],
         autoConnect: true,
         
       });

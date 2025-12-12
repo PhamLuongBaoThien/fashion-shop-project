@@ -78,15 +78,15 @@ function App() {
     }
   }, [handGetDetailUser]); //
 
-  useEffect(() => {
-    const { decoded } = handleDecoded();
-    if (decoded?.id) {
-      handGetDetailUser(decoded?.id);
-    } else {
-      persistor.persist();
-      setIsLoading(false); // 4. Dừng loading nếu không có token (không có user)
-    }
-  }, [handGetDetailUser]);
+  // useEffect(() => {
+  //   const { decoded } = handleDecoded();
+  //   if (decoded?.id) {
+  //     handGetDetailUser(decoded?.id);
+  //   } else {
+  //     persistor.persist(); 
+  //     setIsLoading(false); // 4. Dừng loading nếu không có token (không có user)
+  //   }
+  // }, [handGetDetailUser]);
 
   const handleDecoded = () => {
     let storageData = localStorage.getItem("access_token");
