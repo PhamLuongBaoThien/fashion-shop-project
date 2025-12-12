@@ -46,7 +46,7 @@ const AdminRoles = () => {
 
   // Lấy messageApi an toàn
   const messageApiData = useMessageApi();
-  const { messageApi,  } = messageApiData;
+  const { messageApi } = messageApiData;
 
   const queryClient = useQueryClient();
 
@@ -103,9 +103,9 @@ const AdminRoles = () => {
   } = mutationDelete;
 
   // --- 3. USE EFFECTS (Xử lý Side Effects) ---
-const handleCancel = useCallback(() => {
-      setIsModalOpen(false);
-      form.resetFields();
+  const handleCancel = useCallback(() => {
+    setIsModalOpen(false);
+    form.resetFields();
   }, [form]);
 
   // Xử lý Tạo mới
@@ -222,8 +222,6 @@ const handleCancel = useCallback(() => {
     }
   };
 
-  
-
   const onFinish = (values) => {
     if (isEditMode && editingRole) {
       mutationUpdate.mutate({ id: editingRole._id, body: values });
@@ -268,14 +266,16 @@ const handleCancel = useCallback(() => {
       key: "actions",
       render: (_, record) => (
         <Space>
-          <Tooltip title="Sửa">
-            <ButtonComponent
-              type="primary"
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => handleEditRole(record)}
-            />
-          </Tooltip>
+          {record.name !== "Super Admin" && (
+            <Tooltip title="Sửa">
+              <ButtonComponent
+                type="primary"
+                size="small"
+                icon={<EditOutlined />}
+                onClick={() => handleEditRole(record)}
+              />
+            </Tooltip>
+          )}
 
           {record.name !== "Super Admin" && (
             <Tooltip title="Xóa">
@@ -355,6 +355,7 @@ const handleCancel = useCallback(() => {
             label="Tên vai trò"
             name="name"
             rules={[{ required: true, message: "Vui lòng nhập tên vai trò" }]}
+            z
           >
             <Input placeholder="Ví dụ: Nhân viên kho" />
           </Form.Item>

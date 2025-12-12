@@ -27,8 +27,8 @@ const persistConfig = {
   key: 'root', // Key cho localStorage
   version: 1,
   storage,
-  //  QUAN TRỌNG: Chỉ lưu (whitelist) `cart`.
-  // Chúng ta KHÔNG lưu `user` vì bạn đang tự quản lý user bằng token/API
+  // Chỉ lưu (whitelist) `cart`.
+  // Chúng ta KHÔNG lưu `user` vì đang tự quản lý user bằng token/API
   whitelist: ['cart'] 
 }
 
@@ -40,7 +40,7 @@ const rootReducer = combineReducers({
 })
 
 // 4. "BỌC" REDUCER GỐC BẰNG `persistReducer`
-const persistedReducer = persistReducer(persistConfig, rootReducer)
+const persistedReducer = persistReducer(persistConfig, rootReducer) // biến này sẽ được dùng ở store bên dưới
 
 // 5. CẤU HÌNH STORE DÙNG `persistedReducer`
 export const store = configureStore({

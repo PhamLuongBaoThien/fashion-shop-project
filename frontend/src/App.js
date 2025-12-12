@@ -23,7 +23,7 @@ function App() {
 
   const user = useSelector((state) => state.user); // state.user là slice bạn đã tạo
 
-  // Cài đặt interceptor để bắt lỗi USER_BLOCKED
+  // Cài đặt interceptor để theo dõi trạng thái bị khóa tài khoản
   useEffect(() => {
     const interceptor = UserService.axiosJWT.interceptors.response.use(
       (response) => response,

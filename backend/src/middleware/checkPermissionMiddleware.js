@@ -24,7 +24,7 @@ const checkPermission = (...requiredPermissions) => {
 
       // --- LEVEL 1: KIỂM TRA QUYỀN TỐI THƯỢNG (SUPER ADMIN) ---
       // Đây là những người "Miễn tử kim bài", đi đâu cũng được.
-      const isSuperAdminEmail = user.email === "plbthien1@gmail.com"; // Email của bạn
+      const isSuperAdminEmail = user.email === "admin1@gmail.com"; // Email của bạn
       const isSuperAdminRole = user.role?.name === "Super Admin"; // Hoặc dựa vào tên Role
 
       if (isSuperAdminEmail || isSuperAdminRole) {
