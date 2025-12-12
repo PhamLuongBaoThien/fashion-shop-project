@@ -178,7 +178,7 @@ const ChatBox = () => {
   useEffect(() => {
     if (user?.id) {
       const newSocket = io(ENDPOINT, {
-        transports: ["websocket"],
+        transports: ["polling"],
         autoConnect: true,
       });
 
