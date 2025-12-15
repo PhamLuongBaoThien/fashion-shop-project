@@ -168,8 +168,10 @@ const AdminUpdateProductPage = () => {
       formData.append("stock", values.stock || 0);
     }
 
-    updateMutation.mutate({ formData });
+    updateMutation.mutate({ id: productId, formData });
   };
+
+
 
   // ... (phần còn lại của file)
 

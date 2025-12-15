@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useSearchParams, useLocation, Link } from "react-router-dom";
 import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
-import { Card, Layout, Typography, Space, Spin, Button } from "antd";
+import { Card, Layout, Typography, Space, Spin, Row, Col } from "antd";
 import * as OrderService from "../../services/OrderService"; // Cần import để tạo đơn thật
 import ButtonComponent from "../../components/common/ButtonComponent/ButtonComponent";
 import { useDispatch, useSelector } from "react-redux";
@@ -175,29 +175,35 @@ export default function OrderSuccess({ order }) {
                 </Text>
                 <div style={{ marginTop: "40px" }}>
                   <Space>
-                    <Link to="/products">
-                      <ButtonComponent
-                        type="primary"
-                        size="large"
-                        style={{
-                          backgroundColor: "#fa8c16",
-                          borderColor: "#fa8c16",
-                          height: "48px",
-                        }}
-                        textButton={"Tiếp tục mua sắm"}
-                      />
-                    </Link>
-                    {user?.id && (
-                    <Link to={`/my-order-details/${createdOrder?._id}`}>
-                      <Button
-                        size="large"
-                        style={{ height: "48px" }}
-                        disabled={!createdOrder?._id}
-                      >
-                        Xem chi tiết đơn hàng
-                      </Button>
-                    </Link>
-                    )}
+                    <Row gutter={[12, 12]}>
+                      <Col xs={24} md={12}>
+                        <Link to="/products">
+                          <ButtonComponent
+                            type="primary"
+                            size="large"
+                            style={{
+                              backgroundColor: "#fa8c16",
+                              borderColor: "#fa8c16",
+                              height: "48px",
+                            }}
+                            textButton={"Tiếp tục mua sắm"}
+                          />
+                        </Link>
+                      </Col>
+
+                      {user?.id && (
+                        <Col xs={24} md={12}>
+                          <Link to={`/my-order-details/${createdOrder?._id}`}>
+                            <ButtonComponent
+                              size="large"
+                              style={{ height: "48px" }}
+                              disabled={!createdOrder?._id}
+                              textButton={"Xem chi tiết đơn hàng"}
+                            />
+                          </Link>
+                        </Col>
+                      )}
+                    </Row>
                   </Space>
                 </div>
               </>
