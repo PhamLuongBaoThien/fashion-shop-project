@@ -1,13 +1,7 @@
 const PaymentService = require('../services/PaymentService');
 
-/**
- * API Tạo URL thanh toán VNPay
- * POST /api/payment/create_payment_url
- */
 const createPaymentUrl = async (req, res) => {
     try {
-        // Gọi service để tạo URL
-        // Kết quả trả về là object { status: 'OK', message: '...', url: '...' }
         const response = await PaymentService.createPaymentUrl(req);
         return res.status(200).json(response);
     } catch (e) {
@@ -18,17 +12,10 @@ const createPaymentUrl = async (req, res) => {
     }
 };
 
-/**
- * API Xử lý kết quả trả về từ VNPay (IPN / Return URL)
- * GET /api/payment/vnpay_return
- */
 const vnpayReturn = async (req, res) => {
     try {
-        // req.query chứa toàn bộ tham số mà VNPay trả về trên URL
-        const response = await PaymentService.vnpayReturn(req.query);
-        
-        // Trả kết quả xác thực về cho Frontend
-        // Frontend sẽ dựa vào status: 'OK' để hiển thị thông báo thành công
+        // req.query chứa tham số trả về từ VNPay khi redirect
+        const response = await PaymentService.verifyAndProcessPayment(req.query);
         return res.status(200).json(response);
     } catch (e) {
         return res.status(500).json({
@@ -38,20 +25,35 @@ const vnpayReturn = async (req, res) => {
     }
 };
 
-// POST /api/payment/vnpay_ipn
 const vnpayIPN = async (req, res) => {
     try {
-        console.log("VNPAY IPN:", req.body);
-        const response = await PaymentService.vnpayReturn(req.body);
-        res.status(200).json({ RspCode: 0, Message: 'OK' });
+        console.log("VNPAY IPN:", req.query); // IPN thường gửi qua Query String (GET)
+        // Lưu ý: VNPay IPN chính thức thường là GET, nhưng một số document cũ ghi POST.
+        // Bạn nên kiểm tra req.query hoặc req.body tùy theo cấu hình VNPay gửi về.
+        // Thường IPN là req.query.
+        
+        const params = Object.keys(req.body).length > 0 ? req.body : req.query;
+        
+        const response = await PaymentService.verifyAndProcessPayment(params);
+        
+        if (response.status === 'OK') {
+            res.status(200).json({ RspCode: '00', Message: 'Success' });
+        } else {
+            // Nếu lỗi signature
+            if (response.message === 'Invalid Signature') {
+                res.status(200).json({ RspCode: '97', Message: 'Invalid Checksum' });
+            } else {
+                res.status(200).json({ RspCode: '02', Message: 'Order already confirmed' }); // Hoặc mã lỗi khác tùy logic
+            }
+        }
     } catch (e) {
         console.error("IPN ERROR:", e);
-        res.status(200).json({ RspCode: 1, Message: 'Error' });
+        res.status(200).json({ RspCode: '99', Message: 'Unknow error' });
     }
 };
 
 module.exports = {
-  createPaymentUrl,
-  vnpayReturn,
-  vnpayIPN, 
+    createPaymentUrl,
+    vnpayReturn,
+    vnpayIPN, 
 };
