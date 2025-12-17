@@ -16,11 +16,11 @@ router.post("/add", authCustomerMiddleware, checkBlockMiddleware, CartController
 router.post("/merge", authCustomerMiddleware, CartController.mergeLocalCart);
 
 // API ĐỂ CẬP NHẬT SỐ LƯỢNG
-router.post("/update-quantity", authCustomerMiddleware, CartController.updateItemQuantity);
+router.post("/update-quantity", authCustomerMiddleware, checkBlockMiddleware, CartController.updateItemQuantity);
 
 // API ĐỂ XÓA 1 SẢN PHẨM
 // (Dùng 'delete' hoặc 'post' đều được, 'post' dễ gửi body hơn)
-router.post("/remove-item", authCustomerMiddleware, CartController.removeItemFromCart);
+router.post("/remove-item", authCustomerMiddleware,checkBlockMiddleware, CartController.removeItemFromCart);
 
 router.delete('/clear', authCustomerMiddleware, CartController.clearCart);
 

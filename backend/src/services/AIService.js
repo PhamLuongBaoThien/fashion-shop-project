@@ -43,7 +43,7 @@ const chatWithGemini = async (messageHistory, userMessage) => {
     const response = result.response;
     return response.text();
   } catch (error) {
-    // console.error("Gemini Error:", error);
+    console.error("Gemini Error:", error);
     return "Xin lỗi, hệ thống đang bận. Bạn vui lòng chờ nhân viên hỗ trợ nhé!";
   }
 };

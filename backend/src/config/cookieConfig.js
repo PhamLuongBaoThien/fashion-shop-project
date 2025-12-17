@@ -18,7 +18,7 @@ const cookieConfig = {
     sameSite: isProduction ? 'None' : 'Lax',
     
     // Thời hạn 1 năm (bạn có thể sửa số này tùy ý)
-    maxAge: 365 * 24 * 60 * 60 * 1000, 
+    maxAge: 7 * 24 * 60 * 60 * 1000, 
 };
 
 module.exports = cookieConfig;
