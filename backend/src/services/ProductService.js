@@ -284,7 +284,8 @@ const getAllProducts = (
   status,
   badges,
   sortOption,
-  isActive
+  isActive,
+  stockStatus
 ) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -298,6 +299,14 @@ const getAllProducts = (
       // Nếu có tham số `isActive`, chỉ lọc các sản phẩm có trạng thái đó
       if (isActive !== undefined && isActive !== null) {
         query.isActive = isActive === "true"; // Chuyển chuỗi "true" thành boolean
+      }
+
+      if (stockStatus) {
+        if (stockStatus === "in_stock") {
+          query.stock = { $gt: 0 };
+        } else if (stockStatus === "out_of_stock") {
+          query.stock = 0;
+        }
       }
 
       // XỬ LÝ DANH MỤC: MẢNG SLUG
@@ -351,7 +360,7 @@ const getAllProducts = (
           }
 
           if (orConditions.length > 0) {
-            query.$or = orConditions;
+            query.$or = orConditions; 
           }
         }
       }

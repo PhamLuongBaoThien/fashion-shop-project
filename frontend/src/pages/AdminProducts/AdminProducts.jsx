@@ -41,6 +41,8 @@ const AdminProducts = () => {
   const search = searchParams.get("search") || "";
   const category = searchParams.get("category") || "all";
   const sortOption = searchParams.get("sortOption") || "default";
+  const stockStatus = searchParams.get("stock") || "all"; // "all", "in_stock", "out_of_stock"
+  const activeFilter = searchParams.get("active") || "all"; // "all", "active", "inactive"
 
   const queryClient = useQueryClient();
 
@@ -57,7 +59,7 @@ const AdminProducts = () => {
 
   const { data, isLoading, isError, error } = useQuery({
     // queryKey bao gồm cả pagination để tự động fetch lại khi chuyển trang
-    queryKey: ["admin-products", page, limit, search, category, sortOption],
+    queryKey: ["admin-products", page, limit, search, category, sortOption, stockStatus, activeFilter],
     queryFn: () =>
       ProductService.getAllProducts({
         page,
@@ -65,6 +67,11 @@ const AdminProducts = () => {
         search,
         category: category === "all" ? null : category,
         sortOption,
+        stockStatus: stockStatus === "all" ? null : stockStatus,
+        isActive:
+          activeFilter === "all"
+            ? undefined
+            : activeFilter === "active",
       }),
     retry: 3,
     retryDelay: 1000,
@@ -254,23 +261,65 @@ const AdminProducts = () => {
     });
   };
 
-  const onSearch = (value) => {
-    setSearchParams({
-      search: value,
-      page: 1, // Luôn quay về trang 1 khi tìm kiếm
-      limit: limit,
-      category: category,
-      sortOption: sortOption,
-    });
-  };
+const handleSortChange = (value) => {
+  setSearchParams({
+    sortOption: value,
+    page: 1,
+    limit,
+    search,
+    category,
+    stock: searchParams.get("stock") || "all",     // Giữ param cũ nếu có
+    active: searchParams.get("active") || "all",    // Giữ param cũ nếu có
+  });
+};
 
-  const handleCategoryChange = (value) => {
-    setSearchParams({ category: value, page: 1, limit, search, sortOption });
-  };
+const handleStockStatusChange = (value) => {
+  setSearchParams({
+    stock: value,
+    page: 1,
+    limit,
+    search,
+    category,
+    sortOption,
+    active: searchParams.get("active") || "all",
+  });
+};
 
-  const handleSortChange = (value) => {
-    setSearchParams({ sortOption: value, page: 1, limit, search, category });
-  };
+const handleActiveFilterChange = (value) => {
+  setSearchParams({
+    active: value,
+    page: 1,
+    limit,
+    search,
+    category,
+    sortOption,
+    stock: searchParams.get("stock") || "all",
+  });
+};
+
+const handleCategoryChange = (value) => {
+  setSearchParams({
+    category: value,
+    page: 1,
+    limit,
+    search,
+    sortOption,
+    stock: searchParams.get("stock") || "all",
+    active: searchParams.get("active") || "all",
+  });
+};
+
+const onSearch = (value) => {
+  setSearchParams({
+    search: value,
+    page: 1,
+    limit,
+    category,
+    sortOption,
+    stock: searchParams.get("stock") || "all",
+    active: searchParams.get("active") || "all",
+  });
+};
 
   const columns = [
     { title: "Tên Sản phẩm", dataIndex: "name", key: "name" },
@@ -516,6 +565,26 @@ const AdminProducts = () => {
                     { value: "name_desc", label: "Tên: Z-A" },
                   ]}
                 />
+                <Select
+                  value={stockStatus}
+                  style={{ width: 180 }}
+                  onChange={handleStockStatusChange}
+                  options={[
+                    { value: "all", label: "Tất cả tồn kho" },
+                    { value: "in_stock", label: "Còn hàng" },
+                    { value: "out_of_stock", label: "Hết hàng" },
+                  ]}
+                />
+                <Select
+  value={activeFilter}
+  style={{ width: 180 }}
+  onChange={handleActiveFilterChange}
+  options={[
+    { value: "all", label: "Tất cả trạng thái" },
+    { value: "active", label: "Đang hoạt động" },
+    { value: "inactive", label: "Không hoạt động" },
+  ]}
+/>
                 {/* Thêm các bộ lọc khác ở đây nếu cần */}
               </Space>
               {/* NÚT XÓA NHIỀU */}

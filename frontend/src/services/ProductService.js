@@ -12,6 +12,7 @@ export const getAllProducts = async (params = {}) => {
     sizes,
     status,
     isActive,
+    stockStatus
   } = params;
 
   let queryString = `page=${page}&limit=${limit}`;
@@ -46,6 +47,10 @@ export const getAllProducts = async (params = {}) => {
 
   if (isActive !== undefined) {
     queryString += `&isActive=${encodeURIComponent(isActive)}`;
+  }
+
+  if (stockStatus && stockStatus !== "all") {
+    queryString += `&stockStatus=${encodeURIComponent(stockStatus)}`;
   }
 
   const response = await axios.get(

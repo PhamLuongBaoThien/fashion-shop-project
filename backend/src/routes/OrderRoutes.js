@@ -10,7 +10,7 @@ const { checkPermission } = require('../middleware/checkPermissionMiddleware');
 
 
 router.post('/create', authOptionalMiddleware, checkBlockMiddleware, OrderController.createOrder);
-router.get('/my-orders', authOptionalMiddleware, checkBlockMiddleware, OrderController.getAllOrdersDetails);
+router.get('/my-orders', authOptionalMiddleware, checkBlockMiddleware, OrderController.getAllOrdersDetails); // lấy đơn hàng của người dùng
 router.get('/detail/:id', authOptionalMiddleware, OrderController.getOrderDetails);
 router.get('/get-all', authMiddleware, checkPermission('order'),  OrderController.getAllOrders);
 router.put('/update/:id', authMiddleware,  checkPermission('order'),OrderController.updateOrder);

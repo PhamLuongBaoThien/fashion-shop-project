@@ -482,7 +482,13 @@ const AdminUsers = () => {
               />
             </Tooltip>
           )}
-
+{!(
+  // Nếu người đang đăng nhập KHÔNG PHẢI Super Admin
+  !isSuperAdmin &&
+  // VÀ tài khoản đang xem LÀ Super Admin (dựa trên email hoặc tên role)
+  (record.email === process.env.REACT_APP_ADMIN_MAIL || 
+   (record.role?.name === "Super Admin" ))
+) ? (
           <Tooltip title="Sửa thông tin">
             <ButtonComponent
               type="primary"
@@ -491,7 +497,7 @@ const AdminUsers = () => {
               onClick={() => handleDetailsUser(record)}
             />
           </Tooltip>
-
+) : null}
           {!record.isAdmin && (
             <Tooltip title={record.isBlocked ? "Mở khóa" : "Khóa"}>
               <ButtonComponent

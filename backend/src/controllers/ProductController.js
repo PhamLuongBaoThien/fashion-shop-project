@@ -276,6 +276,7 @@ const getAllProducts = async (req, res) => {
       badges,
       sortOption,
       isActive,
+      stockStatus
     } = req.query;
 
     let categorySlugs = null;
@@ -295,7 +296,8 @@ const getAllProducts = async (req, res) => {
       status,
       badges ? badges.split(",") : null, // Chuyển chuỗi thành mảng
       sortOption,
-      isActive
+      isActive,
+      stockStatus
     );
     return res.status(200).json(response);
   } catch (error) {
