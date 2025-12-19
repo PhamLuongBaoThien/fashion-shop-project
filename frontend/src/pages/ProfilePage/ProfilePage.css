@@ -44,12 +44,22 @@
   margin: 0;
 }
 
+
+.profile-actions-right {
+  display: flex;
+  flex-direction: column; /* Xếp chồng lên nhau (Dọc) */
+  align-items: flex-end;  /* Căn lề phải */
+  gap: 16px;              /* Khoảng cách giữa các nút */
+  width: 100%;            /* Chiếm hết chiều ngang của cha để đẩy sang phải được */
+}
+
+
 .profile-edit-btn {
   height: 48px;
   padding: 0 32px;
   font-size: 16px;
   border-radius: 4px;
-  background: #1a1a1a;
+width: 250px;  background: #1a1a1a;
   border-color: #1a1a1a;
 }
 
@@ -57,8 +67,18 @@
   height: 48px;
   padding: 0 32px;
   font-size: 16px;
-  border-radius: 4px;
+width: 250px;  border-radius: 4px;
   border-color: #1a1a1a;
+}
+
+.delete-account-btn {
+  height: 48px;
+  padding: 0 32px;
+  font-size: 16px;
+  border-radius: 4px;
+width: 250px;  background-color: #ff4d4f;
+  border-color: #1a1a1a;
+  color: white;
 }
 
 .profile-edit-btn:hover {
@@ -69,7 +89,13 @@
 .change-password-btn:hover {
   background: #4d4a4a;
   border-color: #333 !important;
-  color: black  !important;
+  color: black !important;
+}
+
+.delete-account-btn:hover {
+  background-color: #ff7875 !important;
+  border-color: #333 !important;
+  color: white !important;
 }
 
 /* Profile Section */

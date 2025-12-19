@@ -1,6 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Avatar, Divider, Tabs, Empty, Spin, Tag, Button } from "antd";
+import {
+  Avatar,
+  Divider,
+  Tabs,
+  Empty,
+  Spin,
+  Tag,
+  Button,
+  Modal,
+  Row,
+  Col,
+} from "antd";
 import {
   EditOutlined,
   ShoppingOutlined,
@@ -13,24 +24,35 @@ import {
   CloseCircleOutlined,
   DollarOutlined,
   LockOutlined,
+  DeleteOutlined, // Icon xóa
+  ExclamationCircleOutlined, // Icon cảnh báo
+  WarningOutlined,
 } from "@ant-design/icons";
+import { useMessageApi } from "../../context/MessageContext";
+
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
 import "./ProfilePage.css";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { resetUser } from "../../redux/slides/userSlide";
 import ButtonComponent from "../../components/common/ButtonComponent/ButtonComponent";
 import * as OrderService from "../../services/OrderService";
-
+import * as UserService from "../../services/UserService";
 const ProfilePage = () => {
   const user = useSelector((state) => state.user); // Lấy dữ liệu user từ Redux
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { messageApi } = useMessageApi();
 
   // Sử dụng optional chaining để tránh lỗi nếu context chưa sẵn sàng
 
   // --- STATE CHO ĐƠN HÀNG ---
   const [orders, setOrders] = useState([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+
+  const [isModalDeleteOpen, setIsModalDeleteOpen] = useState(false); // Đóng/Mở Modal
+  const [isDeleting, setIsDeleting] = useState(false); // Loading khi đang xóa
 
   useEffect(() => {
     // Nếu user.id đã tồn tại (nghĩa là đã đăng nhập)
@@ -116,6 +138,31 @@ const ProfilePage = () => {
       fetchMyOrders();
     }
   }, [user?.id]);
+
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true); // Bật loading
+    try {
+      const res = await UserService.deleteUser(user.id, user.access_token);
+      if (res.status === "OK") {
+        messageApi.success("Xóa tài khoản thành công.");
+
+        // Reset dữ liệu và logout
+        dispatch(resetUser());
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+
+        // Đóng modal
+        setIsModalDeleteOpen(false);
+        navigate("/");
+      } else {
+        messageApi.error(res.message || "Xóa thất bại");
+      }
+    } catch (error) {
+      messageApi.error("Có lỗi xảy ra, vui lòng thử lại sau.");
+    } finally {
+      setIsDeleting(false); // Tắt loading
+    }
+  };
 
   const getGenderLabel = (gender) => {
     switch (gender) {
@@ -240,28 +287,39 @@ const ProfilePage = () => {
                 : "Chưa cập nhật"}
             </p>
           </div>
-        </div>
-        <Link to="/edit-profile">
-          <ButtonComponent
-            type="primary"
-            size="large"
-            icon={<EditOutlined />}
-            textButton={"Chỉnh sửa thông tin"}
-            className="profile-edit-btn"
-            disabled={!user.email}
-          />
-        </Link>
+        </div> 
+        
+        <div className="profile-actions-right" >
+            <Link to="/edit-profile">
+              <ButtonComponent
+                type="primary"
+                size="large"
+                icon={<EditOutlined />}
+                textButton={"Chỉnh sửa thông tin"}
+                className="profile-edit-btn"
+                disabled={!user.email}
+              />
+            </Link>
+            <Link to="/change-password">
+              <ButtonComponent
+                size="large"
+                icon={<LockOutlined />}
+                textButton={"Đổi mật khẩu"}
+                className="change-password-btn"
+                disabled={!user.email}
+              />
+            </Link>
+            {/* NÚT MỞ MODAL XÓA */}
+            <ButtonComponent
+              size="large"
+              icon={<DeleteOutlined />}
+              textButton={"Xóa tài khoản"}
+              onClick={() => setIsModalDeleteOpen(true)} // Mở Modal tại đây
+              disabled={!user.email}
+              className="delete-account-btn"
+            />
 
-        <Link to="/change-password">
-          <ButtonComponent
-            size="large"
-            icon={<LockOutlined />}
-            textButton={"Đổi mật khẩu"}
-            style={{ width: "100%" }}
-            className="change-password-btn"
-            disabled={!user.email}
-          />
-        </Link>
+        </div>
       </motion.div>
 
       <Divider />
@@ -441,6 +499,41 @@ const ProfilePage = () => {
           ]}
         />
       </motion.div>
+      {/* --- ĐÂY LÀ MODAL RIÊNG BIỆT --- */}
+      <Modal
+        title={
+          <span style={{ color: "#cf1322", fontWeight: "bold" }}>
+            <WarningOutlined /> Cảnh báo xóa tài khoản
+          </span>
+        }
+        open={isModalDeleteOpen}
+        onCancel={() => setIsModalDeleteOpen(false)} // Đóng khi bấm hủy hoặc click ra ngoài
+        footer={[
+          <Button key="back" onClick={() => setIsModalDeleteOpen(false)}>
+            Hủy bỏ
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            danger
+            loading={isDeleting} // Hiệu ứng loading khi đang xóa
+            onClick={handleConfirmDelete}
+          >
+            Xác nhận Xóa
+          </Button>,
+        ]}
+      >
+        <div style={{ padding: "10px 0" }}>
+          <p style={{ fontSize: "16px", marginBottom: "10px" }}>
+            Bạn có chắc chắn muốn xóa tài khoản <b>{user.email}</b> không?
+          </p>
+          <p style={{ color: "#ff4d4f", fontStyle: "italic" }}>
+            <ExclamationCircleOutlined /> Lưu ý: Hành động này{" "}
+            <b>không thể hoàn tác</b>. Mọi lịch sử đơn hàng, thông tin cá nhân
+            và điểm tích lũy sẽ bị mất vĩnh viễn.
+          </p>
+        </div>
+      </Modal>
     </motion.div>
   );
 };

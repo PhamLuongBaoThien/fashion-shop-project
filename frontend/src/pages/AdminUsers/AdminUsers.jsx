@@ -19,7 +19,6 @@ import {
 } from "antd";
 import {
   EditOutlined,
-  DeleteOutlined,
   SearchOutlined,
   LockOutlined,
   UnlockOutlined,
@@ -65,8 +64,7 @@ const AdminUsers = () => {
   const [userSelectedHistory, setUserSelectedHistory] = useState(null);
   const [isOpenEditDrawer, setIsOpenEditDrawer] = useState(false);
   const [stateUserDetails, setStateUserDetails] = useState(null);
-  const [isModalOpenDelete, setIsModalOpenDelete] = useState(false);
-  const [rowSelected, setRowSelected] = useState("");
+
 
   const [isModalOpenCreate, setIsModalOpenCreate] = useState(false);
 
@@ -140,17 +138,7 @@ const AdminUsers = () => {
     error: errorUpdate,
   } = mutationUpdate;
 
-  // C. Mutation Xóa
-  const mutationDelete = useMutationHooks((id) =>
-    UserService.deleteUser(id, user?.access_token)
-  );
-  const {
-    isPending: isPendingDelete,
-    isSuccess: isSuccessDelete,
-    isError: isErrorDelete,
-    data: dataDelete,
-    error: errorDelete,
-  } = mutationDelete;
+
 
   // Gọi lại hàm getAllUser để lấy dữ liệu mới nhất (hoặc tạo API export riêng nếu backend hỗ trợ)
   const mutationExport = useMutationHooks(() =>
@@ -218,31 +206,7 @@ const AdminUsers = () => {
     queryClient,
   ]);
 
-  // Xử lý Xóa
-  useEffect(() => {
-    if (isSuccessDelete && dataDelete) {
-      if (dataDelete.status === "OK") {
-        messageApi.success("Xóa thành công!");
-        queryClient.invalidateQueries(["admin-users"]);
-        setIsModalOpenDelete(false);
-      } else {
-        messageApi.error(dataDelete.message || "Xóa thất bại!");
-      }
-    } else if (isErrorDelete) {
-      messageApi.error(
-        errorDelete?.response?.data?.message ||
-          errorDelete?.message ||
-          "Lỗi kết nối!"
-      );
-    }
-  }, [
-    isSuccessDelete,
-    isErrorDelete,
-    dataDelete,
-    errorDelete,
-    messageApi,
-    queryClient,
-  ]);
+
 
   // Xử lý Export Excel
   useEffect(() => {
@@ -383,9 +347,6 @@ const AdminUsers = () => {
     mutationUpdate.mutate({ id: stateUserDetails._id, ...updateData });
   };
 
-  const handleDeleteUser = () => {
-    mutationDelete.mutate(rowSelected);
-  };
 
   const handleExportExcel = () => {
     messageApi.loading({
@@ -515,20 +476,7 @@ const AdminUsers = () => {
             </Tooltip>
           )}
 
-          {!record.isAdmin && (
-            <Tooltip title="Xóa người dùng">
-              <ButtonComponent
-                danger
-                type="primary"
-                size="small"
-                icon={<DeleteOutlined />}
-                onClick={() => {
-                  setRowSelected(record._id);
-                  setIsModalOpenDelete(true);
-                }}
-              />
-            </Tooltip>
-          )}
+          
         </Space>
       ),
     },
@@ -847,20 +795,7 @@ const AdminUsers = () => {
           </Form>
         </Modal>
 
-        {/* MODAL XÓA USER */}
-        <Modal
-          title="Xác nhận xóa người dùng"
-          open={isModalOpenDelete}
-          onCancel={() => setIsModalOpenDelete(false)}
-          onOk={handleDeleteUser}
-          okText="Xóa"
-          okButtonProps={{ danger: true, loading: isPendingDelete }}
-        >
-          <p>Bạn có chắc chắn muốn xóa tài khoản này không?</p>
-          <p style={{ color: "red" }}>
-            Lưu ý: Hành động này không thể hoàn tác!
-          </p>
-        </Modal>
+     
       </Card>
     </motion.div>
   );
