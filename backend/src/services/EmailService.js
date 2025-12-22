@@ -21,22 +21,22 @@ const sendOrderConfirmationEmail = async (email, orderId, orderItems, totalPrice
 
     orderItems.forEach((order, index) => {
         // Tạo ID duy nhất cho mỗi ảnh (cid)
-        const cid = `product_image_${index}`; 
+        // const cid = `product_image_${index}`; 
         
-        // Thêm vào danh sách đính kèm nếu có ảnh
-        if (order.image) {
-            attachments.push({
-                filename: `product_${index}.jpg`,
-                path: order.image, // Nodemailer sẽ tự tải ảnh từ URL này
-                cid: cid // ID để tham chiếu trong HTML
-            });
-        }
+        // // Thêm vào danh sách đính kèm nếu có ảnh
+        // if (order.image) {
+        //     attachments.push({
+        //         filename: `product_${index}.jpg`,
+        //         path: order.image, // Nodemailer sẽ tự tải ảnh từ URL này
+        //         cid: cid // ID để tham chiếu trong HTML
+        //     });
+        // }
 
         // Tạo hàng bảng HTML
         listItemRows += `
             <tr>
                 <td style="padding: 10px 0; border-bottom: 1px solid #eee; width: 70px;">
-                    <img src="cid:${cid}" alt="${order.name}" width="60" height="60" style="border-radius: 4px; object-fit: cover; display: block;" />
+                    <img src="${order.image}" alt="${order.name}" width="60" height="60" style="border-radius: 4px; object-fit: cover; display: block;" />
                 </td>
                 <td style="padding: 10px 10px; border-bottom: 1px solid #eee;">
                     <div style="font-weight: bold; font-size: 14px; color: #333;">${order.name}</div>
@@ -81,14 +81,14 @@ const sendOrderConfirmationEmail = async (email, orderId, orderItems, totalPrice
                         </div>
                         
                         <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; font-size: 12px; color: #999; text-align: center;">
-                            <p>Mọi thắc mắc xin liên hệ hotline: <strong>0988804063</strong></p>
+                            <p>Mọi thắc mắc xin liên hệ hotline: <strong>0343613222</strong></p>
                             <p>DE Store - Thời trang phong cách</p>
                         </div>
                     </div>
                 </div>
             </div>
         `,
-        attachments: attachments // Đính kèm mảng ảnh vào mail
+        // attachments: attachments // Đính kèm mảng ảnh vào mail
     });
 
     return info;

@@ -2,7 +2,7 @@ const Order = require("../models/OrderModel");
 const Product = require("../models/ProductModel");
 const User = require("../models/UserModel");
 
-const getAllStats = () => {
+const getAllStats = (queryYear, queryMonth) => {
   return new Promise(async (resolve, reject) => {
     try {
       // 1. Đếm số lượng đơn giản
@@ -35,36 +35,55 @@ const getAllStats = () => {
         .populate("user", "name email") // Populate để lấy tên user nếu cần
         .populate("shippingInfo", "fullName"); // Lấy tên người nhận
 
-      // 4. Dữ liệu biểu đồ (Thống kê theo tháng trong năm nay)
-      const currentYear = new Date().getFullYear();
-      const monthlyStats = await Order.aggregate([
+      // 4. Dữ liệu biểu đồ 
+     const currentYear = queryYear ? Number(queryYear) : new Date().getFullYear();
+      const currentMonth = queryMonth ? Number(queryMonth) : null;
+      
+      let startFilterDate, endFilterDate, groupBy, sortField, lengthArray;
+      
+      if (currentMonth) {
+          // A. NẾU CÓ THÁNG: Lọc từ ngày 1 đến cuối tháng -> Group theo Ngày
+          startFilterDate = new Date(currentYear, currentMonth - 1, 1);
+          endFilterDate = new Date(currentYear, currentMonth, 0, 23, 59, 59);
+          
+          groupBy = { $dayOfMonth: "$createdAt" }; // MongoDB lấy ngày (1-31)
+          lengthArray = new Date(currentYear, currentMonth, 0).getDate(); // Lấy số ngày trong tháng (28, 30, 31)
+      } else {
+          // B. NẾU KHÔNG CÓ THÁNG: Lọc cả năm -> Group theo Tháng (Logic cũ)
+          startFilterDate = new Date(`${currentYear}-01-01`);
+          endFilterDate = new Date(`${currentYear}-12-31 23:59:59`);
+          
+          groupBy = { $month: "$createdAt" }; // MongoDB lấy tháng (1-12)
+          lengthArray = 12;
+      }
+
+      const chartStats = await Order.aggregate([
         {
           $match: {
             createdAt: {
-              $gte: new Date(`${currentYear}-01-01`),
-              $lte: new Date(`${currentYear}-12-31`),
+              $gte: startFilterDate,
+              $lte: endFilterDate,
             },
-            isPaid: true, // Chỉ tính đơn đã thanh toán vào doanh thu
+            isPaid: true,
             status: { $ne: "cancelled" },
           },
         },
         {
           $group: {
-            _id: { $month: "$createdAt" }, // Nhóm theo tháng (1-12)
-            revenue: { $sum: "$totalPrice" }, // Tổng doanh thu
-            sales: { $sum: 1 }, // Tổng số đơn thành công
+            _id: groupBy, // Group theo Ngày hoặc Tháng tùy điều kiện trên
+            revenue: { $sum: "$totalPrice" },
+            sales: { $sum: 1 },
           },
         },
-        { $sort: { _id: 1 } }, // Sắp xếp từ tháng 1 -> 12
+        { $sort: { _id: 1 } },
       ]);
 
-      // Format lại dữ liệu biểu đồ cho Frontend dễ dùng (lấp đầy các tháng thiếu nếu cần)
-      // Tạo mảng 12 tháng mặc định là 0
-      const finalChartData = Array.from({ length: 12 }, (_, i) => {
-        const month = i + 1;
-        const stats = monthlyStats.find((item) => item._id === month);
+      // Format lại dữ liệu biểu đồ cho Frontend dễ dùng 
+      const finalChartData = Array.from({ length: lengthArray }, (_, i) => {
+        const timeUnit = i + 1; // Ngày 1 hoặc Tháng 1
+        const stats = chartStats.find((item) => item._id === timeUnit);
         return {
-          name: `Thg ${month}`,
+          name: currentMonth ? `Ngảy ${timeUnit}` : `Thg ${timeUnit}`, // Label hiển thị
           revenue: stats ? stats.revenue : 0,
           sales: stats ? stats.sales : 0,
         };

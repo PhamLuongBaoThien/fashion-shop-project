@@ -25,6 +25,8 @@ import ButtonComponent from "../../common/ButtonComponent/ButtonComponent";
 const { Sider, Content, Header } = Layout;
 
 function AdminLayout() {
+  const user = useSelector((state) => state.user);
+
   const [collapsed, setCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const location = useLocation(); // LẤY VỊ TRÍ HIỆN TẠI
@@ -84,7 +86,7 @@ function AdminLayout() {
       key: "/system/admin/chat",
       icon: <UserOutlined />,
       label: <Link to="/system/admin/chat">Chăm sóc khách hàng</Link>,
-    }
+    },
   ];
 
   const userMenu = [
@@ -183,10 +185,21 @@ function AdminLayout() {
             />
 
             <Space className="admin-header-right">
+              <span
+                style={{
+                  color: "#000", // Đổi màu chữ tùy nền Header (đen hoặc trắng)
+                  fontWeight: "500", // Chữ đậm vừa phải
+                  fontSize: "14px", // Kích cỡ chữ
+                }}
+              >
+                {/* Lấy tên từ Redux, nếu không có thì hiện email hoặc chữ Admin */}
+                Xin chào, {user?.username || user?.email || "Admin"}
+              </span>
               <Dropdown menu={{ items: userMenu }} placement="bottomRight">
                 <Avatar
                   size={40}
-                  icon={<UserOutlined />}
+                  src={user?.avatar} // Sử dụng user.avatar nếu có
+                  icon={!user?.avatar && <UserOutlined />} // Hiển thị icon mặc định nếu không có avatar
                   className="admin-avatar"
                 />
               </Dropdown>
