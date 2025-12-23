@@ -24,6 +24,8 @@ import OrderSuccess from "../pages/CheckoutPage/OrderSuccess.jsx";
 import AdminOrderDetails from "../pages/AdminOrders/AdminOrderDetails.jsx";
 import ChangePasswordPage from "../pages/ChangePasswordPage/ChangePasswordPage.jsx";
 import AdminChatPage from "../pages/AdminChatPage/AdminChatPage.jsx";
+import ForgotPasswordPage from "../pages/ForgotPasswordPage/ForgotPasswordPage.jsx";
+import ResetPasswordPage from "../pages/ResetPasswordPage/ResetPasswordPage.jsx";
 
 export const routes = [
   {
@@ -85,6 +87,16 @@ export const routes = [
     isShowHeader: true
   },
   {
+    path: '/forgot-password',
+    page: ForgotPasswordPage,
+    isShowHeader: false
+  },
+  {
+    path: '/reset-password/:token',
+    page: ResetPasswordPage,
+    isShowHeader: false
+  }
+  ,{
     path: "/system/admin",
     page: AdminLayout,
     isShowHeader: false,

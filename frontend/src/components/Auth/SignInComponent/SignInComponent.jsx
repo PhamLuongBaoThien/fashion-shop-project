@@ -208,7 +208,7 @@ const SignInComponent = () => {
                 <Form.Item name="remember" valuePropName="checked" noStyle>
                   <Checkbox>Ghi nhớ</Checkbox>
                 </Form.Item>
-                <Link to="#" className="auth-forgot-link">
+                <Link to="/forgot-password" className="auth-forgot-link">
                   Quên mật khẩu?
                 </Link>
               </motion.div>

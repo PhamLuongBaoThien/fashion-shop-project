@@ -20,6 +20,10 @@ router.post("/admin/sign-in", userController.loginAdmin);
 router.put("/change-password/:id", authUserMiddleware, userController.changePassword);
 router.get("/get-all", authMiddleware, userController.getAllUser);
 
+// BE/routes/UserRouter.js
+router.post('/forgot-password', userController.forgotPassword);
+router.post('/reset-password', userController.resetPassword);
+
 router.post(
     "/create-user-admin", 
     authMiddleware, 

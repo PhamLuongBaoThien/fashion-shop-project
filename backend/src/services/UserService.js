@@ -1,6 +1,7 @@
 const User = require("../models/UserModel");
 const bcrypt = require("bcrypt");
-const { generalAccessToken, generalRefreshToken } = require("./JwtService");
+const { generalAccessToken, generalRefreshToken, generalResetToken, verifyResetToken } = require("./JwtService");
+const EmailService = require("./EmailService");
 
 const createUser = (newUser) => {
   return new Promise(async (resolve, reject) => {
@@ -213,6 +214,11 @@ const changePassword = (id, data) => {
                 return;
             }
 
+            if (oldPassword === newPassword) {
+              resolve({status: 'ERR', message: 'Mật khẩu mới không trùng với mật khẩu cũ'})
+              return;
+            }
+
             // 3. Check confirm password (Backend cũng nên check lại)
             if (newPassword !== confirmPassword) {
                 resolve({ status: 'ERR', message: 'Mật khẩu xác nhận không khớp' });
@@ -269,6 +275,78 @@ const createUserByAdmin = (newUser) => {
     });
 };
 
+// 1. Quên mật khẩu
+const forgotPassword = (email) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const user = await User.findOne({ email });
+            if (!user) {
+                resolve({ status: 'ERR', message: 'Email không tồn tại' });
+                return;
+            }
+
+            if (user.isAdmin) {
+                 resolve({ status: 'ERR', message: 'Tài khoản quản trị không được phép đặt lại mật khẩu qua Email. Vui lòng liên hệ bộ phận kỹ thuật.' });
+                 return;
+            }
+
+            if (user.isBlocked) {
+              resolve({status: 'ERR', message: 'Tài khoản đã bị khóa.'})
+            }
+
+            // 2. SỬ DỤNG HÀM CỦA JWT SERVICE 
+            const token = generalResetToken({ id: user._id, email: user.email });
+            
+            const resetLink = `${process.env.FE_URL_LOCAL}/reset-password/${token}`;
+
+            await EmailService.sendEmailResetPassword(email, resetLink);
+
+            resolve({ status: 'OK', message: 'Kiểm tra email của bạn!' });
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
+// 2. Đặt lại mật khẩu mới
+const resetPassword = (token, newPassword) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Gọi service verify thay vì dùng jwt.verify trực tiếp 
+      const verifyData = await verifyResetToken(token);
+
+      // Nếu verify thất bại (token lỗi/hết hạn)
+      if (verifyData.status === 'ERR') {
+         return resolve({
+            status: 'ERR',
+            message: 'Link đã hết hạn hoặc không hợp lệ'
+         });
+      }
+
+      // Nếu OK, lấy ID user từ dữ liệu đã giải mã
+      const { id } = verifyData.decoded;
+
+      const hashPassword = bcrypt.hashSync(newPassword, 10);
+      
+      // Cập nhật mật khẩu mới
+      const updatedUser = await User.findByIdAndUpdate(
+          id, 
+          { password: hashPassword }, 
+          { new: true }
+      );
+
+      if (!updatedUser) {
+          return resolve({ status: 'ERR', message: 'User không tồn tại' });
+      }
+
+      resolve({ status: 'OK', message: 'Đặt lại mật khẩu thành công' });
+
+    } catch (e) {
+      reject(e);
+    }
+  });
+};
+
 
 module.exports = {
   createUser,
@@ -279,5 +357,7 @@ module.exports = {
   getDetailUser,
   loginAdmin,
   changePassword,
-  createUserByAdmin
+  createUserByAdmin,
+  forgotPassword,
+  resetPassword
 };

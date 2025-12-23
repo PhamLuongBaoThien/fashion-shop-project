@@ -433,13 +433,13 @@ const ProfilePage = () => {
                               đ
                             </div>
                             <Link to={`/my-order-details/${order._id}`}>
-                              <Button
+                              <ButtonComponent
                                 type="link"
                                 size="small"
                                 icon={<EyeOutlined />}
                               >
                                 Chi tiết
-                              </Button>
+                              </ButtonComponent>
                             </Link>
                           </div>
                         </div>
@@ -509,18 +509,19 @@ const ProfilePage = () => {
         open={isModalDeleteOpen}
         onCancel={() => setIsModalDeleteOpen(false)} // Đóng khi bấm hủy hoặc click ra ngoài
         footer={[
-          <Button key="back" onClick={() => setIsModalDeleteOpen(false)}>
+          <ButtonComponent className="btn-cancel" key="back" onClick={() => setIsModalDeleteOpen(false)}>
             Hủy bỏ
-          </Button>,
-          <Button
+          </ButtonComponent>,
+          <ButtonComponent
             key="submit"
             type="primary"
             danger
             loading={isDeleting} // Hiệu ứng loading khi đang xóa
             onClick={handleConfirmDelete}
-          >
-            Xác nhận Xóa
-          </Button>,
+            
+            textButton={"Xác nhận Xóa"}
+          />
+            
         ]}
       >
         <div style={{ padding: "10px 0" }}>

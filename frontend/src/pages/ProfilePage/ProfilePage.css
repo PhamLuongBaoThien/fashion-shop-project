@@ -18,11 +18,17 @@
   align-items: center;
   gap: 24px;
   flex: 1;
+  min-width: 0; /* Quan trọng: Cho phép flex item co lại mà không vỡ layout */
 }
 
 .profile-avatar {
   border: 3px solid #f0f0f0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  object-fit: cover; /* Đảm bảo ảnh luôn lấp đầy khung mà không bị méo */
+  flex-shrink: 0;    /* Ngăn không cho avatar bị co lại khi màn hình nhỏ */
+  width: 120px;      /* Cố định chiều rộng (khớp với size={120} trong JSX) */
+  height: 120px;     /* Cố định chiều cao */
+  border-radius: 50%; /* Đảm bảo luôn tròn */
 }
 
 .profile-info h1 {
@@ -30,6 +36,11 @@
   font-weight: 600;
   margin: 0 0 8px 0;
   color: #1a1a1a;
+
+  white-space: nowrap;       /* Không cho xuống dòng */
+  overflow: hidden;          /* Ẩn phần chữ thừa nếu quá dài */
+  text-overflow: ellipsis;   /* Thêm dấu "..." nếu tên quá dài */
+  max-width: 100%;           /* Giới hạn chiều rộng */
 }
 
 .profile-email {
@@ -53,13 +64,17 @@
   width: 100%;            /* Chiếm hết chiều ngang của cha để đẩy sang phải được */
 }
 
+.btn-cancel:hover {
+  color: #1a1a1a !important;
+  border: 1px solid #1a1a1a !important;
+}
 
 .profile-edit-btn {
   height: 48px;
   padding: 0 32px;
   font-size: 16px;
   border-radius: 4px;
-width: 250px;  background: #1a1a1a;
+width: 200px;  background: #1a1a1a;
   border-color: #1a1a1a;
 }
 
@@ -67,7 +82,7 @@ width: 250px;  background: #1a1a1a;
   height: 48px;
   padding: 0 32px;
   font-size: 16px;
-width: 250px;  border-radius: 4px;
+width: 200px;  border-radius: 4px;
   border-color: #1a1a1a;
 }
 
@@ -76,7 +91,7 @@ width: 250px;  border-radius: 4px;
   padding: 0 32px;
   font-size: 16px;
   border-radius: 4px;
-width: 250px;  background-color: #ff4d4f;
+width: 200px;  background-color: #ff4d4f;
   border-color: #1a1a1a;
   color: white;
 }

@@ -86,3 +86,15 @@ export const createUserByAdmin = async (data) => {
     );
     return res.data;
 };
+
+
+export const forgotPassword = async (email) => {
+    const res = await axios.post(`${process.env.REACT_APP_API_KEY}/user/forgot-password`, { email });
+    return res.data;
+}
+
+export const resetPassword = async (data) => {
+    // data gồm { token, password, confirmPassword }
+    const res = await axios.post(`${process.env.REACT_APP_API_KEY}/user/reset-password`, data);
+    return res.data;
+}

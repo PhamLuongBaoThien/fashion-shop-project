@@ -94,6 +94,35 @@ const sendOrderConfirmationEmail = async (email, orderId, orderItems, totalPrice
     return info;
 }
 
+const sendEmailResetPassword = async (email, link) => {
+    const transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true,
+        auth: {
+            user: process.env.MAIL_ACCOUNT,
+            pass: process.env.MAIL_PASSWORD,
+        },
+    });
+
+    const info = await transporter.sendMail({
+        from: `"DE Store Support" <${process.env.MAIL_ACCOUNT}>`,
+        to: email,
+        subject: "Yêu cầu đặt lại mật khẩu - DE Store",
+        html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px;">
+                <h2>Xin chào,</h2>
+                <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản liên kết với email này.</p>
+                <p>Vui lòng nhấn vào link bên dưới để đặt lại mật khẩu (Link hết hạn sau 15 phút):</p>
+                <a href="${link}" style="background-color: #333; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Đặt lại mật khẩu</a>
+                <p>Nếu bạn không yêu cầu, vui lòng bỏ qua email này.</p>
+            </div>
+        `
+    });
+    return info;
+}
+
 module.exports = {
-    sendOrderConfirmationEmail
+    sendOrderConfirmationEmail,
+    sendEmailResetPassword
 }

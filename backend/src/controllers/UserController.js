@@ -286,6 +286,38 @@ const createUserByAdmin = async (req, res) => {
   }
 };
 
+const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(200).json({ status: 'ERR', message: 'Vui lòng nhập email' });
+        }
+        const response = await UserService.forgotPassword(email);
+        return res.status(200).json(response);
+    } catch (e) {
+        return res.status(500).json({ status: 'ERR', message: e.message });
+    }
+}
+
+const resetPassword = async (req, res) => {
+    try {
+        const { token, password, confirmPassword } = req.body;
+        // token ở đây lấy từ body (FE gửi lên) hoặc params tùy cách bạn xử lý
+        
+        if (!password || !confirmPassword || !token) {
+            return res.status(200).json({ status: 'ERR', message: 'Vui lòng nhập đầy đủ thông tin' });
+        }
+        if (password !== confirmPassword) {
+            return res.status(200).json({ status: 'ERR', message: 'Mật khẩu xác nhận không khớp' });
+        }
+        
+        const response = await UserService.resetPassword(token, password);
+        return res.status(200).json(response);
+    } catch (e) {
+        return res.status(500).json({ status: 'ERR', message: e.message });
+    }
+}
+
 module.exports = {
   createUser,
   loginUser,
@@ -298,4 +330,6 @@ module.exports = {
   loginAdmin,
   changePassword,
   createUserByAdmin,
+  forgotPassword,
+  resetPassword
 };
