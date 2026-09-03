@@ -1,99 +1,129 @@
 const ChatService = require("../services/ChatService");
 
-const getMessages = async (req, res) => {
+// API chỉ nhận nội dung text. sender/senderType/receiver luôn được backend suy ra
+// từ JWT và endpoint đang gọi để tránh frontend giả mạo danh tính người gửi.
+const getText = (req) => {
+  const text = String(req.body?.text || "").trim();
+  if (!text) throw new Error("Message text is required");
+  if (text.length > 2000) throw new Error("Message is too long");
+  return text;
+};
+
+const sendResponse = (res, response, successStatus = 200) => {
+  if (response.status === "ERR") {
+    const status = response.message === "Forbidden" ? 403 : 404;
+    return res.status(status).json(response);
+  }
+  return res.status(successStatus).json(response);
+};
+
+/** GET lịch sử AI của user hiện tại. */
+const getAIMessages = async (req, res) => {
   try {
-    // Lấy ID của người dùng:
-    // - Nếu Admin xem tin nhắn của khách (truyền qua params /:id)
-    // - Nếu Khách tự xem tin mình (lấy từ token req.user.id)
-    const userId = req.params.id || req.user.id;
-
-    if (!userId) {
-      return res.status(400).json({
-        status: "ERR",
-        message: "User ID is required",
-      });
-    }
-
-    // Gọi Service để lấy dữ liệu
-    const response = await ChatService.getMessages(userId);
-
-    return res.status(200).json(response);
-  } catch (e) {
-    return res.status(500).json({
-      status: "ERR",
-      message: e.message,
-    });
+    return res.json(await ChatService.getCustomerMessages(req.user.id, "ai"));
+  } catch (error) {
+    return res.status(500).json({ status: "ERR", message: error.message });
   }
 };
 
-const createMessage = async (req, res) => {
+/** POST câu hỏi vào AI conversation của user hiện tại. */
+const sendAIMessage = async (req, res) => {
   try {
-    const { senderId, receiverId, text, senderType, images } = req.body;
-
-    if (!senderId || !text) {
-      return res
-        .status(400)
-        .json({ status: "ERR", message: "Missing required fields" });
-    }
-
-    // Gọi Service
-    const response = await ChatService.createMessage({
-      senderId,
-      receiverId,
-      text,
-      senderType,
-      images,
-      io: req.io,
-    });
-
-    // Bắn Socket cho Realtime (Nếu có req.io)
-    if (response.status === "OK" && req.io) {
-      const newMessage = response.data;
-      // Nếu khách gửi -> Bắn cho Admin
-      if (senderType === "customer" || senderType === "guest") {
-        req.io.to("admin_channel").emit("new_message", newMessage);
-      } else {
-        // Admin/Bot gửi -> Bắn cho user cụ thể
-        req.io.to(receiverId).emit("new_message", newMessage);
-      }
-    }
-
-    return res.status(200).json(response);
-  } catch (e) {
-    return res.status(500).json({ message: e.message });
+    const response = await ChatService.sendAIMessage(
+      req.user.id,
+      getText(req),
+      req.io
+    );
+    return sendResponse(res, response, 201);
+  } catch (error) {
+    return res.status(400).json({ status: "ERR", message: error.message });
   }
 };
 
-const getAllConversations = async (req, res) => {
+/** GET lịch sử support của user hiện tại. */
+const getSupportMessages = async (req, res) => {
   try {
-    const response = await ChatService.getAllConversations();
-    return res.status(200).json(response);
-  } catch (e) {
-    return res.status(500).json({ message: e.message });
+    return res.json(
+      await ChatService.getCustomerMessages(req.user.id, "support")
+    );
+  } catch (error) {
+    return res.status(500).json({ status: "ERR", message: error.message });
   }
 };
 
+/** POST tin hỗ trợ; lần đầu gọi mới tạo support conversation. */
+const sendSupportMessage = async (req, res) => {
+  try {
+    const response = await ChatService.sendSupportMessage(
+      req.user.id,
+      getText(req),
+      req.io
+    );
+    return sendResponse(res, response, 201);
+  } catch (error) {
+    return res.status(400).json({ status: "ERR", message: error.message });
+  }
+};
+
+/** GET danh sách support chat dành cho Admin. */
+const getAdminSupportConversations = async (req, res) => {
+  try {
+    return res.json(await ChatService.getAdminSupportConversations());
+  } catch (error) {
+    return res.status(500).json({ status: "ERR", message: error.message });
+  }
+};
+
+/** GET lịch sử một support chat và ngữ cảnh AI đi kèm. */
+const getAdminSupportMessages = async (req, res) => {
+  try {
+    return sendResponse(
+      res,
+      await ChatService.getAdminSupportMessages(req.params.conversationId)
+    );
+  } catch (error) {
+    return res.status(500).json({ status: "ERR", message: error.message });
+  }
+};
+
+/** POST câu trả lời của Admin vào một support conversation. */
+const sendAdminSupportMessage = async (req, res) => {
+  try {
+    const response = await ChatService.sendAdminSupportMessage(
+      req.user.id,
+      req.params.conversationId,
+      getText(req),
+      req.io
+    );
+    return sendResponse(res, response, 201);
+  } catch (error) {
+    return res.status(400).json({ status: "ERR", message: error.message });
+  }
+};
+
+/** PATCH trạng thái đọc; service tự kiểm tra quyền sở hữu/vai trò. */
 const markAsRead = async (req, res) => {
   try {
-    const { conversationId } = req.body;
-    const userId = req.user.id; // Lấy từ token
-
-    if (!conversationId) {
-      return res
-        .status(400)
-        .json({ status: "ERR", message: "Conversation ID required" });
-    }
-
-    const response = await ChatService.markAsRead(conversationId, userId);
-    return res.status(200).json(response);
-  } catch (e) {
-    return res.status(500).json({ message: e.message });
+    return sendResponse(
+      res,
+      await ChatService.markAsRead({
+        conversationId: req.params.conversationId,
+        userId: req.user.id,
+        isAdmin: Boolean(req.user.isAdmin),
+      })
+    );
+  } catch (error) {
+    return res.status(500).json({ status: "ERR", message: error.message });
   }
 };
 
 module.exports = {
-  getMessages,
-  createMessage,
-  getAllConversations,
+  getAIMessages,
+  sendAIMessage,
+  getSupportMessages,
+  sendSupportMessage,
+  getAdminSupportConversations,
+  getAdminSupportMessages,
+  sendAdminSupportMessage,
   markAsRead,
 };

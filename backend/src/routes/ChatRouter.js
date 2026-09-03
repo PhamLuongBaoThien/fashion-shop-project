@@ -1,22 +1,52 @@
-const express = require('express');
+const express = require("express");
+const ChatController = require("../controllers/ChatController");
+const {
+  authMiddleware,
+  authUserMiddleware,
+} = require("../middleware/authMiddleware");
+const {
+  authCustomerMiddleware,
+} = require("../middleware/authCustomerMiddleware");
+
 const router = express.Router();
-const ChatController = require('../controllers/ChatController');
-const { authMiddleware, authUserMiddleware } = require('../middleware/authMiddleware');
 
-// API lấy tin nhắn của user hiện tại
-// Yêu cầu đăng nhập (authMiddleware)
-router.get('/get-messages', authUserMiddleware, ChatController.getMessages);
+// API của khách: authCustomerMiddleware lấy user từ access token và chặn Admin.
+router.get("/ai/messages", authCustomerMiddleware, ChatController.getAIMessages);
+router.post("/ai/messages", authCustomerMiddleware, ChatController.sendAIMessage);
 
-// API cho Admin lấy tin nhắn của khách cụ thể (sẽ dùng ở Phần 3)
-router.get('/get-messages/:id', authMiddleware, ChatController.getMessages);
+router.get(
+  "/support/messages",
+  authCustomerMiddleware,
+  ChatController.getSupportMessages
+);
+router.post(
+  "/support/messages",
+  authCustomerMiddleware,
+  ChatController.sendSupportMessage
+);
 
-router.post('/create', authUserMiddleware, ChatController.createMessage); // Dùng authUserMiddleware để khách cũng gửi được
+// API của Admin: chỉ thao tác support chat, không đọc AI conversation của khách.
+router.get(
+  "/admin/support",
+  authMiddleware,
+  ChatController.getAdminSupportConversations
+);
+router.get(
+  "/admin/support/:conversationId/messages",
+  authMiddleware,
+  ChatController.getAdminSupportMessages
+);
+router.post(
+  "/admin/support/:conversationId/messages",
+  authMiddleware,
+  ChatController.sendAdminSupportMessage
+);
 
-// API lấy danh sách hội thoại (Chỉ Admin được gọi)
-router.get('/get-conversations', authMiddleware, ChatController.getAllConversations);
-
-// Đánh dấu đã đọc tin nhắn
-router.post('/read', authUserMiddleware, ChatController.markAsRead);
-
+// Endpoint dùng chung; service quyết định loại tin cần đánh dấu theo vai trò JWT.
+router.patch(
+  "/:conversationId/read",
+  authUserMiddleware,
+  ChatController.markAsRead
+);
 
 module.exports = router;

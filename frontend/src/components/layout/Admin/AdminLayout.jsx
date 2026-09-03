@@ -113,6 +113,17 @@ function AdminLayout() {
       ),
       // icon: <LogoutOutlined />,
     },
+    {
+      key: "customer",
+      label: (
+        <Link
+          to="/"
+          style={{ fontWeight: 500, color: "#262626" }}
+        >
+          Trang khách
+        </Link>
+      ),
+    }
   ];
 
   return (
@@ -198,7 +209,7 @@ function AdminLayout() {
               <Dropdown menu={{ items: userMenu }} placement="bottomRight">
                 <Avatar
                   size={40}
-                  src={user?.avatar} // Sử dụng user.avatar nếu có
+                  src={user?.avatar ? user.avatar : <UserOutlined /> } // Sử dụng user.avatar nếu có
                   icon={!user?.avatar && <UserOutlined />} // Hiển thị icon mặc định nếu không có avatar
                   className="admin-avatar"
                 />

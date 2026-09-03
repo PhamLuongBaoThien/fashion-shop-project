@@ -1,239 +1,332 @@
-const Chat = require("../models/MessageModel");
+const Message = require("../models/MessageModel");
 const Conversation = require("../models/ConversationModel");
 const AIService = require("./AIService");
 
-// 1. Hàm lấy lịch sử tin nhắn
-const getMessages = (userId) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      // Tìm cuộc hội thoại mà user này tham gia
-      const conversation = await Conversation.findOne({
-        participants: { $in: [userId] }, // paraticipants là mảng vì vậy dùng $in (lý do lưu, mảng để sau này có thể hội thoại nhiều người)
-      });
+const CUSTOMER_POPULATE = "username avatar email";
+const SENDER_POPULATE = "username avatar email isAdmin";
 
-      // Nếu chưa chat bao giờ -> Trả về rỗng
-      if (!conversation) {
-        return resolve({
-          status: "OK",
-          message: "No conversation found",
-          data: [],
-        });
-      }
-
-      // Lấy tin nhắn, sắp xếp cũ -> mới
-      const messages = await Chat.find({ conversationId: conversation._id })
-        .sort({ createdAt: 1 })
-        .populate("sender", "username");
-
-      resolve({
-        status: "OK",
-        message: "Success",
-        data: messages,
-      });
-    } catch (e) {
-      reject(e);
+/**
+ * Lấy conversation cố định theo cặp customer + type, hoặc tạo khi gửi tin đầu.
+ * Unique index bảo đảm các request đồng thời không tạo ra conversation trùng.
+ */
+const getOrCreateConversation = async (customerId, type) => {
+  try {
+    return await Conversation.findOneAndUpdate(
+      { customer: customerId, type },
+      { $setOnInsert: { customer: customerId, type } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+  } catch (error) {
+    if (error.code === 11000) {
+      return Conversation.findOne({ customer: customerId, type });
     }
+    throw error;
+  }
+};
+
+// Hàm dùng chung để trả lịch sử theo thứ tự cũ -> mới và kèm thông tin người gửi.
+const getMessagesForConversation = (conversationId) =>
+  Message.find({ conversationId })
+    .sort({ createdAt: 1 })
+    .populate("sender", SENDER_POPULATE)
+    .lean();
+
+/** Tải riêng lịch sử AI/support của chính user cùng số tin chưa đọc. */
+const getCustomerMessages = async (customerId, type) => {
+  const conversation = await Conversation.findOne({ customer: customerId, type })
+    .populate("customer", CUSTOMER_POPULATE)
+    .lean();
+
+  if (!conversation) {
+    return {
+      status: "OK",
+      message: "Conversation not created",
+      data: { conversation: null, messages: [], unreadCount: 0 },
+    };
+  }
+
+  const [messages, unreadCount] = await Promise.all([
+    getMessagesForConversation(conversation._id),
+    Message.countDocuments({
+      conversationId: conversation._id,
+      senderType: { $in: ["admin", "bot", "system"] },
+      readByCustomer: false,
+    }),
+  ]);
+
+  return {
+    status: "OK",
+    message: "Success",
+    data: { conversation, messages, unreadCount },
+  };
+};
+
+// Đồng bộ bản tóm tắt tin cuối sau mỗi lần ghi Message.
+const updateLastMessage = (conversationId, message) =>
+  Conversation.findByIdAndUpdate(conversationId, {
+    lastMessage: {
+      text: message.text,
+      sender: message.sender || null,
+      senderType: message.senderType,
+      createdAt: message.createdAt,
+    },
+  });
+
+// Socket.IO chỉ phát sự kiện cập nhật; việc ghi tin nhắn luôn đi qua HTTP API.
+const emitMessage = (io, room, conversation, message) => {
+  if (!io) return;
+  io.to(room).emit("chat:message", {
+    conversationId: String(conversation._id),
+    conversationType: conversation.type,
+    message,
   });
 };
 
-// 2. Hàm TẠO TIN NHẮN (Dùng chung cho cả Socket và API HTTP)
-const createMessage = ({
-  senderId,
-  receiverId,
-  text,
-  senderType,
-  images,
+/** Tạo Message và thiết lập trạng thái đọc ban đầu theo phía gửi. */
+const createMessage = async ({ conversationId, sender, senderType, text }) => {
+  const message = await Message.create({
+    conversationId,
+    sender,
+    senderType,
+    text,
+    readByCustomer: senderType === "customer",
+    readByAdmin: senderType !== "customer",
+  });
+
+  await updateLastMessage(conversationId, message);
+  return message.populate("sender", SENDER_POPULATE);
+};
+
+/**
+ * Gọi Gemini bất đồng bộ với 10 tin AI trước đó và phát câu trả lời cho user.
+ * Bot không tự tạo support chat; HANDOVER chỉ hướng người dùng sang tab support.
+ */
+const createAIReply = async ({
+  conversation,
+  customerId,
+  currentMessageId,
+  userMessage,
   io,
 }) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      // LOGIC MỚI: Xác định khách hàng là ai
-      // Nếu khách nhắn -> Khách là senderId
-      // Nếu Admin nhắn -> Khách là receiverId
-      const customerId =
-        senderType === "customer" || senderType === "guest"
-          ? senderId
-          : receiverId;
+  try {
+    const history = await Message.find({
+      conversationId: conversation._id,
+      _id: { $ne: currentMessageId },
+    })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .sort({ createdAt: 1 })
+      .lean();
 
-      // Tìm cuộc hội thoại có chứa ID của khách hàng này
-      let conversation = await Conversation.findOne({
-        participants: { $in: [customerId] },
-      });
+    let reply = await AIService.chatWithGemini(history, userMessage);
+    if (reply.includes("HANDOVER_TO_ADMIN")) {
+      reply =
+        "Bạn hãy chuyển sang tab Nhân viên hỗ trợ và gửi nội dung cần hỗ trợ nhé.";
+    }
 
-      // Nếu chưa có -> Tạo mới (Chỉ lưu ID khách, KHÔNG lưu chữ "ADMIN")
-      if (!conversation) {
-        conversation = await Conversation.create({
-          participants: [customerId],
-          status: "bot_handling",
-        });
-      }
+    const botMessage = await createMessage({
+      conversationId: conversation._id,
+      sender: null,
+      senderType: "bot",
+      text: reply,
+    });
 
-      // Tạo tin nhắn, dùng let vì sau cần gán lại
-      let newMessage = await Chat.create({
+    emitMessage(io, `user:${customerId}`, conversation, botMessage);
+  } catch (error) {
+    console.error("AI reply error:", error);
+  }
+};
+
+/** Lưu câu hỏi vào AI conversation rồi khởi chạy phản hồi Gemini. */
+const sendAIMessage = async (customerId, text, io) => {
+  const conversation = await getOrCreateConversation(customerId, "ai");
+  const message = await createMessage({
+    conversationId: conversation._id,
+    sender: customerId,
+    senderType: "customer",
+    text,
+  });
+
+  void createAIReply({
+    conversation,
+    customerId,
+    currentMessageId: message._id,
+    userMessage: text,
+    io,
+  });
+
+  return {
+    status: "OK",
+    message: "Message sent",
+    data: { conversation, message },
+  };
+};
+
+/** Lấy ID của tối đa 10 tin AI gần nhất để gắn làm ngữ cảnh support. */
+const getLatestAIContext = async (customerId) => {
+  const aiConversation = await Conversation.findOne({
+    customer: customerId,
+    type: "ai",
+  }).lean();
+
+  if (!aiConversation) return [];
+
+  const messages = await Message.find({ conversationId: aiConversation._id })
+    .sort({ createdAt: -1 })
+    .limit(10)
+    .select("_id")
+    .lean();
+
+  return messages.reverse().map((message) => message._id);
+};
+
+/**
+ * Lưu tin khách vào support conversation, làm mới ngữ cảnh AI và báo cho
+ * toàn bộ Admin có quyền chat. Hàm này tuyệt đối không gọi Gemini.
+ */
+const sendSupportMessage = async (customerId, text, io) => {
+  const [conversation, contextMessages] = await Promise.all([
+    getOrCreateConversation(customerId, "support"),
+    getLatestAIContext(customerId),
+  ]);
+
+  const message = await createMessage({
+    conversationId: conversation._id,
+    sender: customerId,
+    senderType: "customer",
+    text,
+  });
+
+  await Conversation.findByIdAndUpdate(conversation._id, { contextMessages });
+  emitMessage(io, "admins:support", conversation, message);
+
+  return {
+    status: "OK",
+    message: "Message sent",
+    data: { conversation, message },
+  };
+};
+
+/** Danh sách chỉ gồm support chat, mới hoạt động nhất trước, kèm unread count. */
+const getAdminSupportConversations = async () => {
+  const conversations = await Conversation.find({ type: "support" })
+    .sort({ updatedAt: -1 })
+    .populate("customer", CUSTOMER_POPULATE)
+    .populate("lastMessage.sender", SENDER_POPULATE)
+    .lean();
+
+  const data = await Promise.all(
+    conversations.map(async (conversation) => ({
+      ...conversation,
+      unreadCount: await Message.countDocuments({
         conversationId: conversation._id,
-        sender: senderId, // User ID thật
-        text: text || "",
-        senderType: senderType,
-        images: images || [],
-      });
+        senderType: "customer",
+        readByAdmin: false,
+      }),
+    }))
+  );
 
-      newMessage = await newMessage.populate("sender", "username"); // Lấy thêm thông tin người gửi để hiển thị
-      //populate dùng để lấy thông tin từ một collection khác dựa trên ObjectId
-
-      //Cập nhật lại cuộc hội thoại với tin nhất cuối và trạng thái
-      await Conversation.findByIdAndUpdate(conversation._id, {
-        lastMessage: {
-          text: text || (images?.length ? "[Hình ảnh]" : ""),
-          sender: senderId,
-          seen: false,
-          createdAt: new Date(),
-        },
-        ...(senderType === "admin" ? { status: "active" } : {}),
-      });
-
-      // Logic thêm Admin vào participants
-      if (senderType === "admin") {
-        await Conversation.findByIdAndUpdate(conversation._id, {
-          $addToSet: { participants: senderId },
-        });
-      }
-
-      // === LOGIC CHATBOT AI ===
-      if (senderType === "customer" && conversation.status === "bot_handling") {
-        resolve({ status: "OK", message: "Message sent", data: newMessage });
-
-        (async () => {
-          try {
-            const history = await Chat.find({
-              conversationId: conversation._id,
-            })
-              .sort({ createdAt: -1 })
-              .limit(10)
-              .sort({ createdAt: 1 });
-
-            const botReplyText = await AIService.chatWithGemini(history, text);
-
-            if (botReplyText.includes("HANDOVER_TO_ADMIN")) {
-              await Conversation.findByIdAndUpdate(conversation._id, {
-                status: "active",
-              });
-              const systemMsg = await Chat.create({
-                conversationId: conversation._id,
-                sender: conversation.participants[0],
-                text: "Đang kết nối với nhân viên hỗ trợ...",
-                senderType: "bot",
-              });
-              
-              if (io) {
-                const msgToSend = { ...systemMsg._doc, senderType: "bot" }; // Fix cấu trúc trả về
-                io.to(customerId).emit("new_message", msgToSend);
-                io.to("admin_channel").emit("new_message", msgToSend);
-              }
-              return;
-            }
-
-            const botMsg = await Chat.create({
-              conversationId: conversation._id,
-              sender: conversation.participants[0], 
-              text: botReplyText,
-              senderType: "bot",
-            });
-
-            await Conversation.findByIdAndUpdate(conversation._id, {
-              lastMessage: {
-                text: botReplyText,
-                sender: conversation.participants[0],
-                seen: false,
-                createdAt: new Date(),
-              },
-            });
-
-            if (io) {
-              const msgToSend = { ...botMsg._doc, senderType: "bot" };
-              io.to(customerId).emit("new_message", msgToSend);
-              io.to("admin_channel").emit("new_message", msgToSend);
-            }
-          } catch (err) {
-            console.error("Bot Error:", err);
-          }
-        })();
-        return;
-      }
-
-      resolve({
-        status: "OK",
-        message: "Message sent",
-        data: newMessage,
-      });
-    } catch (e) {
-      // Log lỗi ra để debug
-      console.error("Create Message Service Error:", e);
-      reject(e);
-    }
-  });
+  return { status: "OK", message: "Success", data };
 };
 
-const getAllConversations = () => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      // Lấy tất cả conversation, sắp xếp mới nhất lên đầu
-      // Populate 'participants' để lấy thông tin User (Tên, Avatar) hiển thị ra
-      const conversations = await Conversation.find()
-        .sort({ updatedAt: -1 })
-        .populate("participants", "username avatar email") // Chỉ lấy các trường cần thiết
-        .populate({
-          path: "lastMessage.sender",
-          select: "username isAdmin", // Lấy tên và quyền hạn
-        })
-        .lean(); // Dùng lean() để trả về object thuần JS, dễ gắn thêm thuộc tính
+/** Tải lịch sử support và snapshot ngữ cảnh AI để Admin tham khảo. */
+const getAdminSupportMessages = async (conversationId) => {
+  const conversation = await Conversation.findOne({
+    _id: conversationId,
+    type: "support",
+  })
+    .populate("customer", CUSTOMER_POPULATE)
+    .populate({
+      path: "contextMessages",
+      populate: { path: "sender", select: SENDER_POPULATE },
+    })
+    .lean();
 
-      // Duyệt qua từng cuộc hội thoại để đếm tin chưa đọc từ KHÁCH HÀNG
-      // (Đây là logic đơn giản, với Big Data nên dùng Aggregation)
-      const conversationsWithCount = await Promise.all(
-        conversations.map(async (conv) => {
-          const unreadCount = await Chat.countDocuments({
-            conversationId: conv._id,
-            senderType: { $in: ["customer", "guest"] }, // Tin của khách
-            isRead: false,
-          });
-          return { ...conv, unreadCount };
-        })
-      );
+  if (!conversation) {
+    return { status: "ERR", message: "Support conversation not found" };
+  }
 
-      resolve({
-        status: "OK",
-        message: "Success",
-        data: conversationsWithCount,
-      });
-    } catch (e) {
-      reject(e);
-    }
-  });
+  const messages = await getMessagesForConversation(conversation._id);
+  return {
+    status: "OK",
+    message: "Success",
+    data: {
+      conversation,
+      messages,
+      contextMessages: conversation.contextMessages || [],
+    },
+  };
 };
 
-const markAsRead = (conversationId, readerId) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      // Update tất cả tin nhắn KHÔNG PHẢI do mình gửi -> thành đã đọc
-      await Chat.updateMany(
-        {
-          conversationId: conversationId,
-          sender: { $ne: readerId },
-          isRead: false,
-        },
-        { $set: { isRead: true } }
-      );
-
-      resolve({ status: "OK", message: "Marked as read" });
-    } catch (e) {
-      reject(e);
-    }
+/** Lưu câu trả lời Admin và phát realtime cho khách lẫn các Admin khác. */
+const sendAdminSupportMessage = async (adminId, conversationId, text, io) => {
+  const conversation = await Conversation.findOne({
+    _id: conversationId,
+    type: "support",
   });
+
+  if (!conversation) {
+    return { status: "ERR", message: "Support conversation not found" };
+  }
+
+  const message = await createMessage({
+    conversationId,
+    sender: adminId,
+    senderType: "admin",
+    text,
+  });
+
+  emitMessage(io, `user:${conversation.customer}`, conversation, message);
+  emitMessage(io, "admins:support", conversation, message);
+
+  return {
+    status: "OK",
+    message: "Message sent",
+    data: { conversation, message },
+  };
+};
+
+/**
+ * Đánh dấu đã đọc theo vai trò. Khách chỉ được thao tác conversation của mình;
+ * Admin chỉ được đánh dấu support conversation, không truy cập AI chat riêng.
+ */
+const markAsRead = async ({ conversationId, userId, isAdmin }) => {
+  const conversation = await Conversation.findById(conversationId).lean();
+  if (!conversation) {
+    return { status: "ERR", message: "Conversation not found" };
+  }
+
+  if (isAdmin) {
+    if (conversation.type !== "support") {
+      return { status: "ERR", message: "Forbidden" };
+    }
+    await Message.updateMany(
+      { conversationId, senderType: "customer", readByAdmin: false },
+      { $set: { readByAdmin: true } }
+    );
+  } else {
+    if (String(conversation.customer) !== String(userId)) {
+      return { status: "ERR", message: "Forbidden" };
+    }
+    await Message.updateMany(
+      {
+        conversationId,
+        senderType: { $in: ["admin", "bot", "system"] },
+        readByCustomer: false,
+      },
+      { $set: { readByCustomer: true } }
+    );
+  }
+
+  return { status: "OK", message: "Marked as read" };
 };
 
 module.exports = {
-  getMessages,
-  createMessage,
-  getAllConversations,
+  getCustomerMessages,
+  sendAIMessage,
+  sendSupportMessage,
+  getAdminSupportConversations,
+  getAdminSupportMessages,
+  sendAdminSupportMessage,
   markAsRead,
 };

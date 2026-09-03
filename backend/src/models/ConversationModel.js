@@ -1,29 +1,46 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const conversationSchema = new mongoose.Schema({
-    // Danh sách người tham gia chat (Thường là [ID_Khach, ID_Admin])
-    // Dùng mảng để sau này có thể mở rộng chat nhóm nếu cần
-    participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], 
-    
-    // Lưu tin nhắn cuối cùng để hiển thị ở danh sách chat bên ngoài cho nhanh
-    // (Giống Zalo/Messenger hiện 1 dòng tin nhắn cuối)
-    lastMessage: {
-        text: String,
-        sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-        seen: { type: Boolean, default: false }, // Đã xem chưa
-        createdAt: { type: Date, default: Date.now }
+// Bản tóm tắt tin cuối giúp trang Admin sắp xếp và hiển thị danh sách chat
+// mà không phải truy vấn toàn bộ Message của từng conversation.
+const lastMessageSchema = new mongoose.Schema(
+  {
+    text: { type: String, default: "" },
+    sender: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    senderType: {
+      type: String,
+      enum: ["customer", "admin", "bot", "system"],
     },
+    createdAt: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
 
-    // Quan trọng cho Chatbot sau này:
-    // 'active': Đang chat với nhân viên
-    // 'closed': Đã xong việc
-    // 'bot_handling': Bot đang trả lời (Admin chưa can thiệp)
-    status: { 
-        type: String, 
-        default: 'bot_handling', // Mặc định để Bot tiếp khách trước
-        enum: ['active', 'closed', 'bot_handling'] 
-    } 
-}, { timestamps: true });
+const conversationSchema = new mongoose.Schema(
+  {
+    // Mỗi conversation thuộc đúng một khách hàng đã đăng nhập.
+    customer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    type: {
+      type: String,
+      enum: ["ai", "support"],
+      required: true,
+    },
+    lastMessage: { type: lastMessageSchema, default: null },
+    // Với support chat, lưu tối đa 10 Message gần nhất từ AI chat tại thời
+    // điểm khách gửi yêu cầu để Admin hiểu ngữ cảnh trước đó.
+    contextMessages: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "Message" },
+    ],
+  },
+  { timestamps: true }
+);
 
-const Conversation = mongoose.model('Conversation', conversationSchema);
-module.exports = Conversation;
+// Ràng buộc quan trọng: một user chỉ có một AI chat và một support chat.
+conversationSchema.index({ customer: 1, type: 1 }, { unique: true });
+// Tối ưu danh sách support chat được sắp theo hoạt động gần nhất.
+conversationSchema.index({ type: 1, updatedAt: -1 });
+
+module.exports = mongoose.model("Conversation", conversationSchema);

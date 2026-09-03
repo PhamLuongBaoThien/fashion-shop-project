@@ -20,8 +20,8 @@ Website thương mại điện tử hoàn chỉnh với đầy đủ chức năn
 - Upload ảnh qua Cloudinary (tối ưu ảnh sản phẩm và avatar).
 - Thanh toán COD & VNPay sandbox.
 - Gửi email xác nhận đơn hàng tự động bằng Nodemailer.
-- Chat realtime với Admin bằng Socket.IO.
-- Chatbot AI thông minh bằng Google Gemini API.
+- Hai lịch sử chat độc lập: trợ lý AI và hỗ trợ trực tiếp với Admin qua Socket.IO.
+- Gemini gợi ý sản phẩm dựa trên dữ liệu thực trong MongoDB và trả link sản phẩm.
 
 ## Công nghệ sử dụng (đúng theo CV)
 **Frontend**
@@ -49,8 +49,7 @@ cd fashion-shop-project
 cd backend
 npm install
 
-# TẠO FILE .env TRONG THƯ MỤC server (repo KHÔNG chứa .env thật để bảo mật)
-# Tạo file server/.env và điền các biến sau:
+# Tạo file backend/.env (repo không chứa .env thật)
 
 PORT=3001
 MONGO_USER=your_mongo_username
@@ -58,7 +57,9 @@ MONGO_PASSWORD=your_mongo_password
 MONGO_CLUSTER=your_cluster.mongodb.net
 
 FE_URL_LOCAL=http://localhost:3000
-# FE_URL_PROD=... (khi deploy)
+FE_URL_PROD=https://your-production-frontend.example
+FE_URL_CLOUDFLARE=https://your-project.pages.dev
+NODE_ENV=development
 
 ACCESS_TOKEN=your_very_long_random_string_123
 REFRESH_TOKEN=another_very_long_random_string_456
@@ -69,20 +70,31 @@ CLOUDINARY_API_SECRET=your_api_secret
 
 VNP_TMN_CODE=your_vnpay_tmn_code          # tùy chọn
 VNP_HASH_SECRET=your_vnpay_hash_secret    # tùy chọn
+VNP_RETURN_URL=http://localhost:3000/payment-result
 
 MAIL_ACCOUNT=yourgmail@gmail.com
 MAIL_PASSWORD=your_16_char_app_password   # Gmail App Password
 
 GEMINI_API_KEY=your_gemini_api_key        # tùy chọn cho chatbot
 
+# Chạy backend tại http://localhost:3001
+npm run dev
+
 # 3. Frontend (terminal mới)
 cd ../frontend
 npm install
 
-# Tạo file .env trong thư mục client
-# Tạo file client/.env với nội dung:
+# Tạo file frontend/.env với nội dung:
 
 REACT_APP_API_KEY=http://localhost:3001/api
 REACT_APP_API_URL=http://localhost:3001
-# REACT_APP_API_URL_PROD=https://your-backend.onrender.com
+REACT_APP_API_URL_PROD=https://your-production-backend.example
+REACT_APP_NODE_ENV=development
+REACT_APP_ADMIN_MAIL=your-admin@example.com
+
+# Chạy frontend tại http://localhost:3000
+npm start
+```
+
+Đăng nhập bằng tài khoản khách để dùng hai tab **Trợ lý AI** và **Nhân viên hỗ trợ**. Tài khoản có quyền quản trị chat có thể trả lời tất cả cuộc trò chuyện hỗ trợ tại trang Admin Chat.
 

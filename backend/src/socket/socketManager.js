@@ -1,43 +1,32 @@
-const ChatService = require("../services/ChatService"); // Import Service
+const jwt = require("jsonwebtoken");
+
+// Token được gửi trong socket.handshake.auth khi frontend kết nối.
+const getSocketToken = (socket) => {
+  const rawToken = socket.handshake.auth?.token;
+  if (!rawToken) return null;
+  return rawToken.startsWith("Bearer ") ? rawToken.slice(7) : rawToken;
+};
 
 const socketManager = (io) => {
-  io.on("connection", (socket) => { // Lắng nghe sự kiện kết nối
-    console.log("🟢 User connected:", socket.id);
+  // Xác thực trước khi cho socket kết nối; client không được tự khai báo user/role.
+  io.use((socket, next) => {
+    const token = getSocketToken(socket);
+    if (!token) return next(new Error("Unauthorized"));
 
-    socket.on("join_chat", (userId) => { //  gửi tín hiệu đến sự kiện có tên 'joim_chat' từ client 
-      socket.join(userId); // Tham gia room của chính mình (userId)
+    jwt.verify(token, process.env.ACCESS_TOKEN, (error, user) => {
+      if (error) return next(new Error("Unauthorized"));
+      socket.user = user;
+      return next();
     });
+  });
 
-    socket.on("join_admin_channel", () => { // Admin tham gia kênh chung
-      socket.join("admin_channel"); // Tham gia room admin_channel
-    });
-
-    // --- GỬI TIN NHẮN ---
-    socket.on("send_message", async (data) => { 
-      // data: { senderId, receiverId, text, senderType }
-      
-      try {
-        // 1. Gọi Service để lưu vào DB
-        const response = await ChatService.createMessage({ ...data, io });
-        
-        if (response.status === 'OK') {
-            const newMessage = response.data;
-
-            // 2. Bắn socket đi
-            if (data.senderType === 'customer' || data.senderType === 'guest') {
-                io.to("admin_channel").emit("new_message", newMessage); // Bắn cho Admin nếu người dùng là khách
-            } else {
-                // Admin/Bot gửi
-                io.to(data.receiverId).emit("new_message", newMessage); // Bắn cho user cụ thể
-            }
-        }
-      } catch (error) {
-        console.error("Socket Error:", error);
-      }
-    });
+  io.on("connection", (socket) => {
+    // Server tự gán room từ JWT. Không có event join room do client điều khiển.
+    socket.join(`user:${socket.user.id}`);
+    if (socket.user.isAdmin) socket.join("admins:support");
 
     socket.on("disconnect", () => {
-      console.log("🔴 User disconnected", socket.id);
+      console.log("Socket disconnected:", socket.id);
     });
   });
 };

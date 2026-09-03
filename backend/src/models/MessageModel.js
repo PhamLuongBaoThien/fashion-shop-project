@@ -1,32 +1,37 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const messageSchema = new mongoose.Schema({
-    // Liên kết tin nhắn này thuộc cuộc hội thoại nào
-    conversationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Conversation', required: true },
-    
-    // Người gửi tin nhắn (User ID)
-    sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    
-    // Nội dung tin nhắn
-    text: { type: String, default: "" },
-    
-    // QUAN TRỌNG: Đánh dấu loại người gửi để Frontend vẽ giao diện
-    // 'customer': Khách hàng (Vẽ bên phải)
-    // 'admin': Nhân viên tư vấn (Vẽ bên trái)
-    // 'bot': Chatbot tự động (Vẽ bên trái nhưng có icon Bot)
-    senderType: { 
-        type: String, 
-        enum: ['customer', 'admin', 'bot'], 
-        required: true 
+const messageSchema = new mongoose.Schema(
+  {
+    conversationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Conversation",
+      required: true,
+      index: true,
     },
-    
-    // Trạng thái đã đọc
-    isRead: { type: Boolean, default: false },
-    
-    // Hỗ trợ gửi ảnh (nếu có sau này)
-    images: [{ type: String }] 
+    sender: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+      // Bot/system không có User tương ứng; customer/admin bắt buộc có sender.
+      required() {
+        return ["customer", "admin"].includes(this.senderType);
+      },
+    },
+    text: { type: String, required: true, trim: true, maxlength: 2000 },
+    senderType: {
+      type: String,
+      enum: ["customer", "admin", "bot", "system"],
+      required: true,
+    },
+    // Hai cờ đọc độc lập để tính badge chưa đọc cho khách và phía Admin.
+    readByCustomer: { type: Boolean, default: false },
+    readByAdmin: { type: Boolean, default: false },
+    images: [{ type: String }],
+  },
+  { timestamps: true }
+);
 
-}, { timestamps: true });
+// Tối ưu việc tải lịch sử theo đúng thứ tự thời gian.
+messageSchema.index({ conversationId: 1, createdAt: 1 });
 
-const Message = mongoose.model('Message', messageSchema);
-module.exports = Message;
+module.exports = mongoose.model("Message", messageSchema);

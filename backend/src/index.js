@@ -31,7 +31,8 @@ app.use(
   cors({
     origin: allowedOrigins,
     credentials: true, // Cookies
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    // Chat dùng PATCH /api/chat/:conversationId/read để cập nhật trạng thái đọc.
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "token", "Authorization"],
     exposedHeaders: ["Set-Cookie"],
   })
