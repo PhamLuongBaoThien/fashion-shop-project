@@ -26,7 +26,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { addToCart, setCart } from "../../../redux/slides/cartSlide";
 import * as CartService from "../../../services/CartService";
 import { useMessageApi } from "../../../context/MessageContext";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const ProductDetail = ({ product }) => {
   const [selectedSize, setSelectedSize] = useState(null);
@@ -165,18 +165,14 @@ const ProductDetail = ({ product }) => {
         <div className="tab-content">
           <h3>Chính sách vận chuyển</h3>
           <ul>
-            <li>Miễn phí vận chuyển cho đơn hàng từ 500.000đ</li>
-            <li>Giao hàng toàn quốc trong 2-5 ngày</li>
-            <li>Giao hàng nhanh trong nội thành trong 24h</li>
-            <li>Kiểm tra hàng trước khi thanh toán</li>
+            <li>Tiêu chuẩn: 30.000đ, dự kiến 3–5 ngày làm việc</li>
+            <li>Nhanh: 60.000đ, dự kiến 1–2 ngày làm việc</li>
+            <li>Qua đêm: 100.000đ, dự kiến giao vào ngày hôm sau</li>
           </ul>
+          <Link to="/policies/shipping-policy">Xem đầy đủ chính sách giao hàng</Link>
           <h3>Chính sách đổi trả</h3>
-          <ul>
-            <li>Đổi trả trong vòng 7 ngày nếu sản phẩm lỗi</li>
-            <li>Miễn phí đổi size trong 3 ngày đầu</li>
-            <li>Sản phẩm chưa qua sử dụng, còn nguyên tem mác</li>
-            <li>Hoàn tiền 100% nếu sản phẩm lỗi do nhà sản xuất</li>
-          </ul>
+          <p>Đổi trả sản phẩm lỗi trong 7 ngày; hỗ trợ đổi size trong 3 ngày đầu.</p>
+          <Link to="/policies/return-policy">Xem đầy đủ chính sách đổi trả</Link>
         </div>
       ),
     },

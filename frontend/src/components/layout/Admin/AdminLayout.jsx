@@ -10,6 +10,7 @@ import {
   LogoutOutlined,
   MenuOutlined,
   CloseOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -86,6 +87,11 @@ function AdminLayout() {
       key: "/system/admin/chat",
       icon: <UserOutlined />,
       label: <Link to="/system/admin/chat">Chăm sóc khách hàng</Link>,
+    },
+    {
+      key: "/system/admin/policies",
+      icon: <FileTextOutlined />,
+      label: <Link to="/system/admin/policies">Chính sách</Link>,
     },
   ];
 

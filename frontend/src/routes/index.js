@@ -26,6 +26,8 @@ import ChangePasswordPage from "../pages/ChangePasswordPage/ChangePasswordPage.j
 import AdminChatPage from "../pages/AdminChatPage/AdminChatPage.jsx";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage/ForgotPasswordPage.jsx";
 import ResetPasswordPage from "../pages/ResetPasswordPage/ResetPasswordPage.jsx";
+import AdminPolicies from "../pages/AdminPolicies/AdminPolicies.jsx";
+import PolicyPage from "../pages/PolicyPage/PolicyPage.jsx";
 
 export const routes = [
   {
@@ -87,6 +89,11 @@ export const routes = [
     isShowHeader: true
   },
   {
+    path: "/policies/:slug",
+    page: PolicyPage,
+    isShowHeader: true,
+  },
+  {
     path: '/forgot-password',
     page: ForgotPasswordPage,
     isShowHeader: false
@@ -146,6 +153,10 @@ export const routes = [
       {
         path: "chat",
         page: AdminChatPage
+      },
+      {
+        path: "policies",
+        page: AdminPolicies
       }
       ],
   },

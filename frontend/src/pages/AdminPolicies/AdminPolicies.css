@@ -1,0 +1,5 @@
+@media (max-width: 576px) {
+  .ant-modal .tiptap-editor {
+    min-height: 220px;
+  }
+}

@@ -7,6 +7,7 @@ const PaymentRouter = require("./PaymentRouter");
 const RoleRouter = require("../routes/RoleRouter");
 const ChatRouter = require("../routes/ChatRouter");
 const DashboardRouter = require("../routes/DashboardRouter");
+const PolicyRouter = require("../routes/PolicyRouter");
 
 const routes = (app) => {
   app.use("/api/user", UserRouter);
@@ -18,6 +19,7 @@ const routes = (app) => {
   app.use("/api/role", RoleRouter);
   app.use('/api/chat', ChatRouter);
   app.use("/api/dashboard", DashboardRouter);
+  app.use("/api/policy", PolicyRouter);
 };
 
 module.exports = routes;

@@ -77,11 +77,14 @@ export default function FooterComponent() {
               Hỗ trợ khách hàng
             </Title>
             <Space direction="vertical" size="middle">
-              <Link href="/shipping" className="quick-link">
+              <Link href="/policies/shipping-policy" className="quick-link">
                 Chính sách giao hàng
               </Link>
-              <Link href="/returns" className="quick-link">
+              <Link href="/policies/return-policy" className="quick-link">
                 Đổi trả & Hoàn tiền
+              </Link>
+              <Link href="/policies/payment-policy" className="quick-link">
+                Chính sách thanh toán
               </Link>
               <Link href="/size-guide" className="quick-link">
                 Hướng dẫn chọn size
@@ -89,10 +92,10 @@ export default function FooterComponent() {
               <Link href="/care" className="quick-link">
                 Bảo quản sản phẩm
               </Link>
-              <Link href="/privacy" className="quick-link">
+              <Link href="/policies/privacy-policy" className="quick-link">
                 Chính sách bảo mật
               </Link>
-              <Link href="/terms" className="quick-link">
+              <Link href="/policies/terms-and-conditions" className="quick-link">
                 Điều khoản sử dụng
               </Link>
             </Space>
@@ -150,10 +153,10 @@ export default function FooterComponent() {
           </Col>
           <Col xs={24} md={12} style={{ textAlign: "right" }}>
             <Space size="large">
-              <Link href="/privacy" className="bottom-link">
+              <Link href="/policies/privacy-policy" className="bottom-link">
                 Chính sách bảo mật
               </Link>
-              <Link href="/terms" className="bottom-link">
+              <Link href="/policies/terms-and-conditions" className="bottom-link">
                 Điều khoản
               </Link>
               <Link href="/sitemap" className="bottom-link">
