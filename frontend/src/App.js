@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Navigate,
+  Route,
+  Routes,
+} from "react-router-dom";
 import { routes } from "./routes";
 import DefaultComponent from "./components/layout/DefaultComponent/DefaultComponent";
 import { isJsonString } from "./utils";
@@ -52,11 +57,16 @@ function App() {
           const token = localStorage.getItem("access_token");
           dispatch(
             updateUser({ ...res?.data, access_token: JSON.parse(token) })
-          ); // Tải giỏ hàng của User
-          await persistor.pause(); // Tạm dừng persist
-          const cartFromDB = await CartService.getCart();
-          if (cartFromDB.status === "OK") {
-            dispatch(setCart(cartFromDB.data.items));
+          );
+
+          // Giỏ hàng chỉ thuộc về khách hàng; tránh gọi API customer khi
+          // đang khôi phục phiên đăng nhập của Admin.
+          if (!res.data.isAdmin) {
+            await persistor.pause();
+            const cartFromDB = await CartService.getCart();
+            if (cartFromDB.status === "OK") {
+              dispatch(setCart(cartFromDB.data.items));
+            }
           }
         }
       } catch (error) {
@@ -161,6 +171,10 @@ function App() {
     window.location.href = "/sign-in";
   };
 
+  const isAuthenticated = Boolean(user.id);
+  const authenticatedHome = user.isAdmin ? "/system/admin" : "/";
+  const guestOnlyPaths = ["/sign-in", "/sign-up", "/admin/sign-in"];
+
   return (
     <MessageProvider>
       <div>
@@ -185,28 +199,39 @@ function App() {
                   ? DefaultComponent
                   : React.Fragment;
 
-                // Render route bình thường nếu không có children
-                if (route.isPrivate && !user.isAdmin) {
-                  return null; // Trang cho admin, nhưng
+                // Người đã đăng nhập không quay lại các trang đăng nhập/đăng ký.
+                if (isAuthenticated && guestOnlyPaths.includes(route.path)) {
+                  return (
+                    <Route
+                      key={route.path}
+                      path={route.path}
+                      element={<Navigate to={authenticatedHome} replace />}
+                    />
+                  );
                 }
 
-                // SỬA LẠI: Nếu route có children, tạo một Route cha lồng các con
+                // Khách được đưa tới trang đăng nhập Admin; customer đăng nhập
+                // nhưng không có quyền Admin được đưa về trang chủ.
+                const privateRedirect = isAuthenticated
+                  ? "/"
+                  : "/admin/sign-in";
+
                 if (route.children) {
                   return (
                     <Route
                       key={route.path}
                       path={route.path}
                       element={
-                        <Layout>
-                          <Page />
-                        </Layout>
+                        route.isPrivate && !user.isAdmin ? (
+                          <Navigate to={privateRedirect} replace />
+                        ) : (
+                          <Layout>
+                            <Page />
+                          </Layout>
+                        )
                       }
                     >
                       {route.children.map((childRoute) => {
-                        if (childRoute.isPrivate && !user.isAdmin) {
-                          return null;
-                        }
-
                         const ChildPage = childRoute.page;
                         return (
                           <Route
