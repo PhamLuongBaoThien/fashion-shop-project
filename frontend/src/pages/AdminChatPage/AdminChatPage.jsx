@@ -127,10 +127,8 @@ const ConversationItem = styled(List.Item)`
   }
 `;
 
-const ENDPOINT =
-  process.env.REACT_APP_NODE_ENV === "production"
-    ? process.env.REACT_APP_API_URL_PROD
-    : process.env.REACT_APP_API_URL;
+// Cloudflare và local cùng dùng một tên biến; mỗi môi trường tự đặt giá trị phù hợp.
+const ENDPOINT = process.env.REACT_APP_API_URL;
 
 // Chống hiển thị trùng khi Admin vừa nhận HTTP response vừa nhận Socket event.
 const appendUnique = (messages, message) => {

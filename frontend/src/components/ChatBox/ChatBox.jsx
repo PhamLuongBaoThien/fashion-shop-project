@@ -165,10 +165,8 @@ const SuggestionChip = styled.button`
   }
 `;
 
-const ENDPOINT =
-  process.env.REACT_APP_NODE_ENV === "production"
-    ? process.env.REACT_APP_API_URL_PROD
-    : process.env.REACT_APP_API_URL;
+// Cloudflare và local cùng dùng một tên biến; mỗi môi trường tự đặt giá trị phù hợp.
+const ENDPOINT = process.env.REACT_APP_API_URL;
 
 // HTTP response và Socket event có thể mang cùng một tin; lọc theo _id để tránh lặp.
 const appendUnique = (messages, message) => {

@@ -57,8 +57,7 @@ MONGO_PASSWORD=your_mongo_password
 MONGO_CLUSTER=your_cluster.mongodb.net
 
 FE_URL_LOCAL=http://localhost:3000
-FE_URL_PROD=https://your-production-frontend.example
-FE_URL_CLOUDFLARE=https://your-project.pages.dev
+FE_URL_PROD=https://your-project.pages.dev
 NODE_ENV=development
 
 ACCESS_TOKEN=your_very_long_random_string_123
@@ -88,13 +87,21 @@ npm install
 
 REACT_APP_API_KEY=http://localhost:3001/api
 REACT_APP_API_URL=http://localhost:3001
-REACT_APP_API_URL_PROD=https://your-production-backend.example
-REACT_APP_NODE_ENV=development
 REACT_APP_ADMIN_MAIL=your-admin@example.com
 
 # Chạy frontend tại http://localhost:3000
 npm start
 ```
+
+Trên Cloudflare Pages, cấu hình các biến build cùng tên nhưng trỏ tới Render:
+
+```env
+REACT_APP_API_KEY=https://your-render-service.onrender.com/api
+REACT_APP_API_URL=https://your-render-service.onrender.com
+REACT_APP_ADMIN_MAIL=your-admin@example.com
+```
+
+Trên Render, đặt `NODE_ENV=production` và `FE_URL_PROD` bằng URL Cloudflare Pages.
 
 Đăng nhập bằng tài khoản khách để dùng hai tab **Trợ lý AI** và **Nhân viên hỗ trợ**. Tài khoản có quyền quản trị chat có thể trả lời tất cả cuộc trò chuyện hỗ trợ tại trang Admin Chat.
 

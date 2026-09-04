@@ -19,9 +19,8 @@ const port = process.env.PORT;
 
 
 const allowedOrigins = [
-  process.env.FE_URL_LOCAL, // Biến cho Localhost
-  process.env.FE_URL_PROD, // Biến cho Cloudflare Pages
-  process.env.FE_URL_CLOUDFLARE
+  process.env.FE_URL_LOCAL, // Frontend chạy local
+  process.env.FE_URL_PROD, // Frontend production duy nhất: Cloudflare Pages
 ].filter(Boolean).map(url => url.replace(/\/$/, "")); // Lệnh này sẽ xóa các giá trị null/undefined khỏi mảng;
 
 console.log("Allowed Origins:", allowedOrigins); 

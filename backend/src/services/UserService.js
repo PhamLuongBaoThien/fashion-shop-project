@@ -297,7 +297,18 @@ const forgotPassword = (email) => {
             // 2. SỬ DỤNG HÀM CỦA JWT SERVICE 
             const token = generalResetToken({ id: user._id, email: user.email });
             
-            const resetLink = `${process.env.FE_URL_LOCAL}/reset-password/${token}`;
+            // Local gửi link localhost; Render gửi link frontend production Cloudflare.
+            const frontendUrl = (
+              process.env.NODE_ENV === 'production'
+                ? process.env.FE_URL_PROD
+                : process.env.FE_URL_LOCAL
+            )?.replace(/\/$/, '');
+
+            if (!frontendUrl) {
+              throw new Error('Frontend URL is not configured');
+            }
+
+            const resetLink = `${frontendUrl}/reset-password/${token}`;
 
             await EmailService.sendEmailResetPassword(email, resetLink);
 
