@@ -27,6 +27,11 @@ const messageSchema = new mongoose.Schema(
     readByCustomer: { type: Boolean, default: false },
     readByAdmin: { type: Boolean, default: false },
     images: [{ type: String }],
+    // Danh sách sản phẩm thật được bot gợi ý; lưu reference để reload vẫn có card
+    // và luôn hiển thị thông tin catalog hiện tại.
+    recommendations: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
+    ],
   },
   { timestamps: true }
 );

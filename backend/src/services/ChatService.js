@@ -4,6 +4,8 @@ const AIService = require("./AIService");
 
 const CUSTOMER_POPULATE = "username avatar email";
 const SENDER_POPULATE = "username avatar email isAdmin";
+const RECOMMENDATION_POPULATE =
+  "name image price discount slug stock sizes hasSizes isActive";
 
 /**
  * Lấy conversation cố định theo cặp customer + type, hoặc tạo khi gửi tin đầu.
@@ -29,6 +31,7 @@ const getMessagesForConversation = (conversationId) =>
   Message.find({ conversationId })
     .sort({ createdAt: 1 })
     .populate("sender", SENDER_POPULATE)
+    .populate("recommendations", RECOMMENDATION_POPULATE)
     .lean();
 
 /** Tải riêng lịch sử AI/support của chính user cùng số tin chưa đọc. */
@@ -83,23 +86,33 @@ const emitMessage = (io, room, conversation, message) => {
 };
 
 /** Tạo Message và thiết lập trạng thái đọc ban đầu theo phía gửi. */
-const createMessage = async ({ conversationId, sender, senderType, text }) => {
+const createMessage = async ({
+  conversationId,
+  sender,
+  senderType,
+  text,
+  recommendations = [],
+}) => {
   const message = await Message.create({
     conversationId,
     sender,
     senderType,
     text,
+    recommendations,
     readByCustomer: senderType === "customer",
     readByAdmin: senderType !== "customer",
   });
 
   await updateLastMessage(conversationId, message);
-  return message.populate("sender", SENDER_POPULATE);
+  return message.populate([
+    { path: "sender", select: SENDER_POPULATE },
+    { path: "recommendations", select: RECOMMENDATION_POPULATE },
+  ]);
 };
 
 /**
- * Gọi Gemini bất đồng bộ với 10 tin AI trước đó và phát câu trả lời cho user.
- * Bot không tự tạo support chat; HANDOVER chỉ hướng người dùng sang tab support.
+ * Gọi Gemini Function Calling với 10 tin AI trước đó và phát câu trả lời.
+ * Bot không tự tạo support conversation; request_support chỉ hướng sang tab.
  */
 const createAIReply = async ({
   conversation,
@@ -118,17 +131,13 @@ const createAIReply = async ({
       .sort({ createdAt: 1 })
       .lean();
 
-    let reply = await AIService.chatWithGemini(history, userMessage);
-    if (reply.includes("HANDOVER_TO_ADMIN")) {
-      reply =
-        "Bạn hãy chuyển sang tab Nhân viên hỗ trợ và gửi nội dung cần hỗ trợ nhé.";
-    }
-
+    const aiResult = await AIService.chatWithGemini(history, userMessage);
     const botMessage = await createMessage({
       conversationId: conversation._id,
       sender: null,
       senderType: "bot",
-      text: reply,
+      text: aiResult.text,
+      recommendations: aiResult.recommendations,
     });
 
     emitMessage(io, `user:${customerId}`, conversation, botMessage);

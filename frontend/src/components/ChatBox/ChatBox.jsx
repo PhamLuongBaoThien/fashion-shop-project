@@ -122,6 +122,76 @@ const SenderName = styled.span`
   margin: 0 8px 4px;
 `;
 
+const RecommendationList = styled.div`
+  width: 92%;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const RecommendationCard = styled(Card)`
+  cursor: pointer;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+
+  && .ant-card-body {
+    padding: 8px;
+    flex: none;
+    min-height: auto;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    background: #fff;
+  }
+`;
+
+const RecommendationImage = styled.img`
+  width: 68px;
+  height: 68px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+`;
+
+const RecommendationInfo = styled.div`
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+`;
+
+const RecommendationName = styled.div`
+  color: #262626;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+`;
+
+const RecommendationPrice = styled.div`
+  color: #f5222d;
+  font-size: 13px;
+  font-weight: 600;
+
+  del {
+    margin-left: 6px;
+    color: #999;
+    font-size: 11px;
+    font-weight: 400;
+  }
+`;
+
 const EmptyState = styled.div`
   flex: 1;
   display: flex;
@@ -163,6 +233,11 @@ const SuggestionChip = styled.button`
     background: #1890ff;
     color: white;
   }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
 `;
 
 // Cloudflare và local cùng dùng một tên biến; mỗi môi trường tự đặt giá trị phù hợp.
@@ -177,10 +252,10 @@ const appendUnique = (messages, message) => {
   return [...messages, message];
 };
 
-// Biến URL sản phẩm do Gemini trả về thành link có thể nhấn.
+// Biến URL Product/Policy trong câu trả lời thành link có thể nhấn.
 const renderMessageText = (text, isMine) => {
   const value = String(text || "");
-  const linkPattern = /(https?:\/\/[^\s]+|\/product\/[a-z0-9-]+)/gi;
+  const linkPattern = /(https?:\/\/[^\s]+|\/(?:product|policies)\/[a-z0-9-]+)/gi;
 
   return value.split(linkPattern).map((part, index) => {
     linkPattern.lastIndex = 0;
@@ -204,6 +279,9 @@ const renderMessageText = (text, isMine) => {
   });
 };
 
+const formatPrice = (value) =>
+  `${Number(value || 0).toLocaleString("vi-VN")}đ`;
+
 const ChatBox = () => {
   const user = useSelector((state) => state.user);
   const navigate = useNavigate();
@@ -212,12 +290,14 @@ const ChatBox = () => {
   const activeTabRef = useRef("ai");
   const isOpenRef = useRef(false);
   const conversationIdsRef = useRef({ ai: null, support: null });
+  const aiTimeoutRef = useRef(null);
 
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("ai");
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isAIThinking, setIsAIThinking] = useState(false);
   const [messages, setMessages] = useState({ ai: [], support: [] });
   const [conversationIds, setConversationIds] = useState({
     ai: null,
@@ -230,6 +310,13 @@ const ChatBox = () => {
     isOpenRef.current = isOpen;
     conversationIdsRef.current = conversationIds;
   }, [activeTab, isOpen, conversationIds]);
+
+  useEffect(
+    () => () => {
+      if (aiTimeoutRef.current) clearTimeout(aiTimeoutRef.current);
+    },
+    []
+  );
 
   useEffect(() => {
     if (!user?.id || !user?.access_token) return undefined;
@@ -289,6 +376,12 @@ const ChatBox = () => {
         [conversationType]: conversationId,
       }));
 
+      // Nhận được bot reply nghĩa là request AI gần nhất đã xử lý xong.
+      if (conversationType === "ai" && message.senderType === "bot") {
+        setIsAIThinking(false);
+        if (aiTimeoutRef.current) clearTimeout(aiTimeoutRef.current);
+      }
+
       const isViewing =
         isOpenRef.current && activeTabRef.current === conversationType;
       if (isViewing) {
@@ -322,31 +415,47 @@ const ChatBox = () => {
   const visibleMessages = useMemo(() => messages[activeTab] || [], [activeTab, messages]);
   const totalUnread = unreadCounts.ai + unreadCounts.support;
 
+  // Đây là hành động UI đã xác định rõ nên chuyển tab trực tiếp, không gọi Gemini.
+  const openSupportTab = () => setActiveTab("support");
+
   // Endpoint gửi được chọn theo tab; conversation chỉ được tạo ở tin đầu tiên.
   const handleSend = async (customText) => {
     const text = typeof customText === "string" ? customText : inputText;
-    if (!text.trim() || isSending) return;
+    const targetTab = activeTab;
+    if (!text.trim() || isSending || (targetTab === "ai" && isAIThinking)) {
+      return;
+    }
 
     setInputText("");
     setIsSending(true);
+    if (targetTab === "ai") {
+      setIsAIThinking(true);
+      if (aiTimeoutRef.current) clearTimeout(aiTimeoutRef.current);
+      // Tránh khóa vĩnh viễn nếu thiết bị bỏ lỡ Socket event bot reply.
+      aiTimeoutRef.current = setTimeout(() => setIsAIThinking(false), 60000);
+    }
     try {
       const response =
-        activeTab === "ai"
+        targetTab === "ai"
           ? await ChatService.sendAIMessage(text.trim())
           : await ChatService.sendSupportMessage(text.trim());
       const { conversation, message } = response.data;
 
       setMessages((current) => ({
         ...current,
-        [activeTab]: appendUnique(current[activeTab], message),
+        [targetTab]: appendUnique(current[targetTab], message),
       }));
       setConversationIds((current) => ({
         ...current,
-        [activeTab]: conversation._id,
+        [targetTab]: conversation._id,
       }));
     } catch (error) {
       console.error("Không thể gửi tin nhắn:", error);
       setInputText(text);
+      if (targetTab === "ai") {
+        setIsAIThinking(false);
+        if (aiTimeoutRef.current) clearTimeout(aiTimeoutRef.current);
+      }
       messageApi?.error("Gửi tin nhắn thất bại");
     } finally {
       setIsSending(false);
@@ -378,7 +487,7 @@ const ChatBox = () => {
             image={Empty.PRESENTED_IMAGE_SIMPLE}
             description={
               activeTab === "ai"
-                ? "Hãy hỏi AI về sản phẩm bạn đang tìm"
+                ? "Hãy hỏi AI về sản phẩm hoặc chính sách"
                 : "Hãy mô tả vấn đề để nhân viên hỗ trợ"
             }
           />
@@ -403,6 +512,12 @@ const ChatBox = () => {
               : item.senderType === "system"
               ? "Hệ thống"
               : "Bạn";
+          const recommendations =
+            activeTab === "ai" && item.senderType === "bot"
+              ? (item.recommendations || []).filter(
+                  (product) => product && product.isActive !== false
+                )
+              : [];
 
           return (
             <MessageGroup key={item._id} isMine={isMine}>
@@ -410,9 +525,49 @@ const ChatBox = () => {
               <MessageBubble isMine={isMine}>
                 {renderMessageText(item.text, isMine)}
               </MessageBubble>
+              {recommendations.length > 0 && (
+                <RecommendationList>
+                  {recommendations.map((product) => {
+                    const salePrice = Math.round(
+                      product.price * (1 - (product.discount || 0) / 100)
+                    );
+
+                    return (
+                      <RecommendationCard
+                        key={product._id}
+                        size="small"
+                        onClick={() => navigate(`/product/${product.slug}`)}
+                      >
+                        <RecommendationImage
+                          src={product.image}
+                          alt={product.name}
+                          loading="lazy"
+                        />
+                        <RecommendationInfo>
+                          <RecommendationName>{product.name}</RecommendationName>
+                          <RecommendationPrice>
+                            {formatPrice(salePrice)}
+                            {product.discount > 0 && (
+                              <del>{formatPrice(product.price)}</del>
+                            )}
+                          </RecommendationPrice>
+                        </RecommendationInfo>
+                      </RecommendationCard>
+                    );
+                  })}
+                </RecommendationList>
+              )}
             </MessageGroup>
           );
         })}
+        {activeTab === "ai" && isAIThinking && (
+          <MessageGroup isMine={false}>
+            <SenderName>Trợ lý AI</SenderName>
+            <MessageBubble isMine={false}>
+              <Spin size="small" /> Đang tìm thông tin...
+            </MessageBubble>
+          </MessageGroup>
+        )}
         <div ref={scrollRef} />
       </MessageList>
     );
@@ -423,13 +578,13 @@ const ChatBox = () => {
       {renderMessages()}
       {activeTab === "ai" && (
         <QuickRepliesContainer>
-          <SuggestionChip onClick={() => handleSend("Gợi ý cho tôi sản phẩm mới") }>
+          <SuggestionChip disabled={isAIThinking || isSending} onClick={() => handleSend("Gợi ý cho tôi sản phẩm mới") }>
             Sản phẩm mới
           </SuggestionChip>
-          <SuggestionChip onClick={() => handleSend("Gợi ý sản phẩm dưới 500k") }>
+          <SuggestionChip disabled={isAIThinking || isSending} onClick={() => handleSend("Gợi ý sản phẩm dưới 500k") }>
             Dưới 500k
           </SuggestionChip>
-          <SuggestionChip onClick={() => setActiveTab("support") }>
+          <SuggestionChip disabled={isSending} onClick={openSupportTab}>
             Gặp nhân viên
           </SuggestionChip>
         </QuickRepliesContainer>
@@ -441,10 +596,10 @@ const ChatBox = () => {
           onPressEnter={() => handleSend()}
           placeholder={
             activeTab === "ai"
-              ? "Hỏi AI về sản phẩm..."
+              ? "Hỏi về sản phẩm hoặc chính sách..."
               : "Nhập nội dung cần hỗ trợ..."
           }
-          disabled={isSending}
+          disabled={isSending || (activeTab === "ai" && isAIThinking)}
           bordered={false}
           style={{ backgroundColor: "#f5f5f5", borderRadius: 20, paddingLeft: 15 }}
         />
@@ -453,6 +608,7 @@ const ChatBox = () => {
           shape="circle"
           icon={<SendOutlined />}
           loading={isSending}
+          disabled={activeTab === "ai" && isAIThinking}
           onClick={() => handleSend()}
         />
       </InputArea>
