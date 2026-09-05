@@ -159,38 +159,10 @@ cd fashion-shop-project
 ```bash
 cd backend
 npm install
+cp .env.example .env
 ```
 
-Tạo file `backend/.env`:
-
-```env
-PORT=3001
-NODE_ENV=development
-
-MONGO_USER=your_mongodb_username
-MONGO_PASSWORD=your_mongodb_password
-MONGO_CLUSTER=your_cluster.mongodb.net
-
-ACCESS_TOKEN=your_long_random_access_token_secret
-REFRESH_TOKEN=your_long_random_refresh_token_secret
-
-FE_URL_LOCAL=http://localhost:3000
-FE_URL_PROD=https://your-project.pages.dev
-
-CLOUDINARY_NAME=your_cloudinary_cloud_name
-CLOUDINARY_API_KEY=your_cloudinary_api_key
-CLOUDINARY_API_SECRET=your_cloudinary_api_secret
-
-MAIL_ACCOUNT=your_email@gmail.com
-MAIL_PASSWORD=your_gmail_app_password
-
-VNP_TMN_CODE=your_vnpay_terminal_code
-VNP_HASH_SECRET=your_vnpay_hash_secret
-VNP_RETURN_URL=http://localhost:3000/order-success
-
-GEMINI_API_KEY=your_gemini_api_key
-GEMINI_MODEL=gemini-2.5-flash
-```
+Mở file `backend/.env` vừa tạo và thay các giá trị mẫu bằng thông tin của bạn. Danh sách biến cần thiết và chú thích cho từng nhóm cấu hình đã có sẵn trong [`backend/.env.example`](backend/.env.example).
 
 Khởi chạy backend ở chế độ phát triển:
 
@@ -217,15 +189,10 @@ Mở terminal khác:
 ```bash
 cd frontend
 npm install
+cp .env.example .env
 ```
 
-Tạo file `frontend/.env`:
-
-```env
-REACT_APP_API_KEY=http://localhost:3001/api
-REACT_APP_API_URL=http://localhost:3001
-REACT_APP_ADMIN_MAIL=your_super_admin_email@example.com
-```
+Mở file `frontend/.env` vừa tạo và cập nhật địa chỉ backend cùng email quản trị theo [`frontend/.env.example`](frontend/.env.example).
 
 Khởi chạy React development server:
 
